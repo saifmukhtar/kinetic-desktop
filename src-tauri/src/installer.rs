@@ -18,7 +18,7 @@ pub async fn install_profile(profile: String, clean: bool) -> Result<String, Str
         }
         "complete" => {
             bins.push("kinetic-daemon");
-            bins.push("kinetic-dns-server");
+            bins.push("kinetic-dns");
             install_dns = true;
         }
         _ => return Err("Invalid profile selected".into()),
@@ -37,12 +37,12 @@ fn install_linux(bins: Vec<&str>, install_dns: bool, clean: bool, username: &str
     script.push_str("set -e\n");
 
     if clean {
-        script.push_str("rm -f /usr/local/bin/kinetic-daemon /usr/local/bin/kinetic-cli /usr/local/bin/kinetic-dns-server\n");
+        script.push_str("rm -f /usr/local/bin/kinetic-daemon /usr/local/bin/kinetic-cli /usr/local/bin/kinetic-dns\n");
         script.push_str("if systemctl is-active --quiet kinetic-daemon; then systemctl stop kinetic-daemon || true; fi\n");
-        script.push_str("if systemctl is-active --quiet kinetic-dns-server; then systemctl stop kinetic-dns-server || true; fi\n");
+        script.push_str("if systemctl is-active --quiet kinetic-dns; then systemctl stop kinetic-dns || true; fi\n");
         script.push_str("systemctl disable kinetic-daemon || true\n");
-        script.push_str("systemctl disable kinetic-dns-server || true\n");
-        script.push_str("rm -f /etc/systemd/system/kinetic-daemon.service /etc/systemd/system/kinetic-dns-server.service\n");
+        script.push_str("systemctl disable kinetic-dns || true\n");
+        script.push_str("rm -f /etc/systemd/system/kinetic-daemon.service /etc/systemd/system/kinetic-dns.service\n");
         script.push_str("systemctl daemon-reload || true\n");
         script.push_str("sleep 1\n");
         script.push_str(&format!("rm -rf '{}/kinetic'\n", config_dir));
@@ -50,9 +50,10 @@ fn install_linux(bins: Vec<&str>, install_dns: bool, clean: bool, username: &str
     }
     
     for bin in bins {
+        let url = format!("https://github.com/saifmukhtar/kinetic/releases/latest/download/{}-linux", bin);
         script.push_str(&format!(
-            "echo 'Copying local {} for testing...'\ncp /home/saif/kinetic/target/release/{} /usr/local/bin/{}\nchmod +x /usr/local/bin/{}\n",
-            bin, bin, bin, bin
+            "echo 'Downloading {} from GitHub releases...'\ncurl -sL {} -o /tmp/{}\ncp /tmp/{} /usr/local/bin/{}\nchmod +x /usr/local/bin/{}\nrm /tmp/{}\n",
+            bin, url, bin, bin, bin, bin, bin
         ));
         if bin != "kinetic-cli" {
             if bin == "kinetic-daemon" {
@@ -104,9 +105,9 @@ fn install_macos(bins: Vec<&str>, install_dns: bool, clean: bool, username: &str
     script.push_str("set -e\n");
 
     if clean {
-        script.push_str("rm -f /usr/local/bin/kinetic-daemon /usr/local/bin/kinetic-cli /usr/local/bin/kinetic-dns-server\n");
+        script.push_str("rm -f /usr/local/bin/kinetic-daemon /usr/local/bin/kinetic-cli /usr/local/bin/kinetic-dns\n");
         script.push_str("launchctl remove kinetic-daemon || true\n");
-        script.push_str("launchctl remove kinetic-dns-server || true\n");
+        script.push_str("launchctl remove kinetic-dns || true\n");
         script.push_str("rm -f /Library/LaunchDaemons/*kinetic*.plist /Library/LaunchAgents/*kinetic*.plist || true\n");
         script.push_str("sleep 1\n");
         script.push_str(&format!("rm -rf '{}/kinetic'\n", config_dir));
@@ -165,9 +166,9 @@ fn install_windows(bins: Vec<&str>, install_dns: bool, clean: bool, username: &s
     if clean {
         script.push_str("Remove-Item -Force $InstallDir\\* -ErrorAction SilentlyContinue; ");
         script.push_str("Stop-Service -Name \"kinetic-daemon\" -ErrorAction SilentlyContinue; ");
-        script.push_str("Stop-Service -Name \"kinetic-dns-server\" -ErrorAction SilentlyContinue; ");
+        script.push_str("Stop-Service -Name \"kinetic-dns\" -ErrorAction SilentlyContinue; ");
         script.push_str("sc.exe delete \"kinetic-daemon\" | Out-Null; ");
-        script.push_str("sc.exe delete \"kinetic-dns-server\" | Out-Null; ");
+        script.push_str("sc.exe delete \"kinetic-dns\" | Out-Null; ");
         script.push_str("Start-Sleep -Seconds 1; ");
         script.push_str(&format!("Remove-Item -Recurse -Force \"{}\\kinetic\" -ErrorAction SilentlyContinue; ", config_dir));
         script.push_str("Start-Sleep -Seconds 1; ");
