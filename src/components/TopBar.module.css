@@ -1,0 +1,138 @@
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  height: var(--topbar-height);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+  padding: 0 var(--sp-6);
+  background: rgba(248, 247, 242, 0.85);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  border-bottom: 1px solid var(--border);
+  /* Enable native window drag from the titlebar */
+  -webkit-app-region: drag;
+}
+
+/* ── Logo ── */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  text-decoration: none;
+  flex-shrink: 0;
+  -webkit-app-region: no-drag;
+}
+
+.logoMark {
+  width: 26px;
+  height: 26px;
+  background: var(--amber);
+  border-radius: var(--r-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-offset);
+  transition:
+    transform var(--dur-fast) var(--ease-spring),
+    box-shadow var(--dur-fast) var(--ease-spring);
+}
+
+.logo:hover .logoMark {
+  transform: translate(-1px, -1px);
+  box-shadow: var(--shadow-offset-hover);
+}
+
+.logoName {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+
+/* ── Daemon status ── */
+.daemonStatus {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-shrink: 0;
+  -webkit-app-region: no-drag;
+}
+
+.daemonDot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-full);
+  background: var(--ink-muted);
+  transition: background var(--dur-base) var(--ease-smooth);
+  flex-shrink: 0;
+}
+
+.daemonDot[data-online="true"]  { background: var(--status-ok); }
+.daemonDot[data-offline="true"] { background: var(--status-err); }
+
+.daemonLabel {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+}
+
+/* ── Pill navigation ── */
+.pill {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-full);
+  padding: 3px;
+  margin-left: auto;
+  -webkit-app-region: no-drag;
+}
+
+/* The spring-animated sliding bubble */
+.bubble {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  border-radius: var(--r-full);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-xs);
+  border: 1px solid var(--border);
+  pointer-events: none;
+  will-change: left, width;
+}
+
+/* Individual nav links */
+.pillLink {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--ink-muted);
+  text-decoration: none;
+  border-radius: var(--r-full);
+  white-space: nowrap;
+  transition: color var(--dur-fast) var(--ease-smooth);
+  cursor: pointer;
+}
+
+.pillLink:hover,
+.pillLinkActive {
+  color: var(--ink);
+}
+
+.pillLinkActive svg {
+  color: var(--amber);
+}

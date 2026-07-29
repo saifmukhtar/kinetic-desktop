@@ -1,4 +1,5 @@
 mod installer;
+mod api_commands;
 
 use tauri::{
     menu::{Menu, MenuItem, PredefinedMenuItem},
@@ -6,48 +7,9 @@ use tauri::{
     Manager,
 };
 
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
-}
-
-#[tauri::command]
-fn get_api_token() -> Result<String, String> {
-    let token_path = kinetic_core::config::get_base_dir().join("api.token");
-    std::fs::read_to_string(token_path)
-        .map(|s| s.trim().to_string())
-        .map_err(|e| format!("Failed to read API token: {}", e))
-}
-
-#[tauri::command]
-fn generate_seed() -> Result<String, String> {
-    use bip39::{Language, Mnemonic};
-    use getrandom::getrandom;
-
-    let mut entropy = [0u8; 32];
-    getrandom(&mut entropy).map_err(|e| format!("Failed to generate random entropy: {}", e))?;
-    let mnemonic = Mnemonic::from_entropy_in(Language::English, &entropy)
-        .map_err(|e| format!("Failed to generate mnemonic: {}", e))?;
-    
-    Ok(mnemonic.to_string())
-}
-
-#[tauri::command]
-fn save_identity(phrase: String) -> Result<(), String> {
-    kinetic_core::types::save_keypair_from_mnemonic("identity.key", &phrase)
-        .map_err(|e| format!("Failed to save identity: {}", e))?;
-    
-    // Attempt to restart the service to pick up the new identity
-    use std::process::Command;
-    let _ = Command::new("kinetic-daemon")
-        .arg("stop-service")
-        .output();
-    let _ = Command::new("kinetic-daemon")
-        .arg("start-service")
-        .output();
-        
-    Ok(())
 }
 
 fn show_main_window(app: &tauri::AppHandle) {
@@ -102,10 +64,29 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             greet,
-            get_api_token,
-            generate_seed,
-            save_identity,
-            installer::install_profile
+            installer::install_profile,
+            api_commands::get_network_status,
+            api_commands::resolve_name,
+            api_commands::get_config_info,
+            api_commands::sync_atlas,
+            api_commands::get_health,
+            api_commands::get_peer_id,
+            api_commands::get_time,
+            api_commands::resolve_kid,
+            api_commands::get_zone,
+            api_commands::get_owned_names,
+            api_commands::publish_zone,
+            api_commands::sign_and_publish_zone,
+            api_commands::commit_name,
+            api_commands::publish_name,
+            api_commands::publish_kid,
+            api_commands::publish_manifest,
+            api_commands::update_config,
+            api_commands::register_vdf,
+            api_commands::renew_vdf,
+            api_commands::get_vdf_status,
+            api_commands::delete_vdf_task,
+            api_commands::get_atlas_networks
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

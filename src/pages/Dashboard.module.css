@@ -1,0 +1,165 @@
+.page {
+  padding: var(--sp-8) var(--sp-8) var(--sp-12);
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-8);
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: var(--ink-muted);
+}
+
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+
+.title {
+  font-size: var(--text-2xl);
+  margin-top: var(--sp-1);
+}
+
+.errorBanner {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--status-err-soft);
+  border: 1px solid rgba(138, 59, 59, 0.2);
+  border-radius: var(--r-md);
+  font-size: var(--text-sm);
+  color: var(--status-err);
+}
+
+/* Stat cards — 3 columns */
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-5);
+}
+
+/* Lower panels — 2 columns */
+.panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-5);
+}
+
+.panel {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-offset);
+  overflow: hidden;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-4) var(--sp-5);
+  border-bottom: 1px solid var(--border);
+}
+
+.emptyState {
+  padding: var(--sp-8) var(--sp-5);
+  text-align: center;
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+  font-style: italic;
+}
+
+/* VDF table */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-xs);
+}
+
+.table th {
+  padding: var(--sp-2) var(--sp-5);
+  text-align: left;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: var(--ink-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: var(--text-2xs);
+  border-bottom: 1px solid var(--border);
+}
+
+.table td {
+  padding: var(--sp-3) var(--sp-5);
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--ink-secondary);
+}
+
+.progressBar {
+  height: 3px;
+  background: var(--bg-muted);
+  border-radius: var(--r-full);
+  overflow: hidden;
+  margin-bottom: 3px;
+  width: 80px;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--amber);
+  border-radius: var(--r-full);
+  transition: width var(--dur-slow) var(--ease-smooth);
+}
+
+.progressLabel {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  color: var(--ink-muted);
+}
+
+/* Names list */
+.nameList {
+  list-style: none;
+  padding: 0;
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-3) var(--sp-5);
+  border-bottom: 1px solid var(--border);
+  transition: background var(--dur-fast) var(--ease-smooth);
+}
+
+.nameRow:last-child {
+  border-bottom: none;
+}
+
+.nameRow:hover {
+  background: var(--bg-hover, var(--bg-subtle));
+}
+
+.nameMono {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--ink);
+  font-weight: 500;
+}

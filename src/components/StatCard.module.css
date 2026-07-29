@@ -1,0 +1,49 @@
+.card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-offset);
+  overflow: hidden;
+  transition:
+    box-shadow var(--dur-base) var(--ease-spring),
+    transform var(--dur-base) var(--ease-spring);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-offset-hover);
+  transform: translate(-1px, -1px);
+}
+
+.accentBar {
+  height: 2px;
+  background: linear-gradient(90deg, var(--amber), transparent 80%);
+  opacity: 0.6;
+}
+
+.body {
+  padding: var(--sp-5) var(--sp-6) var(--sp-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.eyebrow {
+  /* extends .eyebrow from global.css */
+}
+
+.value {
+  font-size: var(--text-3xl);
+  color: var(--ink);
+  line-height: 1;
+  margin-top: var(--sp-1);
+}
+
+.label {
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+  font-family: var(--font-sans);
+}
+
+.accent .accentBar {
+  opacity: 1;
+}

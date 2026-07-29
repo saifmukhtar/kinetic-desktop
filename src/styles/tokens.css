@@ -1,0 +1,98 @@
+/* ============================================================
+   DESIGN TOKENS — Kinetic Desktop
+   "Notebook & Proof" — cream, ink, asymmetric
+   Derived from saifmukhtar.dev tokens.css
+   ============================================================ */
+
+:root {
+  /* ---- Backgrounds ---- */
+  --bg-base:      #F8F7F2;   /* warm cream */
+  --bg-subtle:    #F0EEE6;   /* slightly richer cream */
+  --bg-muted:     #E5E2D6;   /* warm grey */
+  --bg-elevated:  #FFFFFF;   /* pure white — cards, panels */
+
+  /* ---- Ink (text + borders) ---- */
+  --ink:           #1A1714;
+  --ink-secondary: #4E4A45;
+  --ink-muted:     #96918B;
+  --ink-faint:     rgba(26, 23, 20, 0.35);
+
+  /* ---- Borders ---- */
+  --border:        rgba(26, 23, 20, 0.10);
+  --border-strong: rgba(26, 23, 20, 0.20);
+  --border-focus:  rgba(26, 23, 20, 0.55);
+
+  /* ---- Kinetic Amber accent ---- */
+  --amber:         #C4781A;
+  --amber-soft:    #F5E8D0;
+  --amber-dim:     rgba(196, 120, 26, 0.12);
+
+  /* ---- Status colours (muted, not saturated) ---- */
+  --status-ok:       #4A7C59;
+  --status-ok-soft:  #EDF4EF;
+  --status-warn:     #8A6D3B;
+  --status-warn-soft:#FAF4EA;
+  --status-err:      #8A3B3B;
+  --status-err-soft: #FAEEEE;
+  --status-pending:  #4A5E8A;
+  --status-pending-soft: #EEF1F6;
+
+  /* ---- Shadows (warm-tinted) ---- */
+  --shadow-xs:  0 1px 2px  rgba(26, 23, 20, 0.06);
+  --shadow-sm:  0 2px 8px  rgba(26, 23, 20, 0.08);
+  --shadow-md:  0 6px 20px rgba(26, 23, 20, 0.10);
+  --shadow-lg:  0 16px 48px rgba(26, 23, 20, 0.12);
+
+  /* ---- Asymmetric offset shadow — the "paper stack" feel ---- */
+  --shadow-offset:       3px 4px 0px rgba(26, 23, 20, 0.15);
+  --shadow-offset-hover: 5px 6px 0px rgba(26, 23, 20, 0.18);
+  --shadow-offset-press: 1px 2px 0px rgba(26, 23, 20, 0.15);
+
+  /* ---- Typography ---- */
+  --font-display: 'Instrument Serif', Georgia, serif;
+  --font-sans:    'Inter', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', 'Courier New', monospace;
+
+  /* ---- Type Scale ---- */
+  --text-2xs:  0.625rem;   /* 10px */
+  --text-xs:   0.75rem;    /* 12px */
+  --text-sm:   0.875rem;   /* 14px */
+  --text-base: 1rem;       /* 16px */
+  --text-lg:   1.125rem;   /* 18px */
+  --text-xl:   1.375rem;   /* 22px */
+  --text-2xl:  1.75rem;    /* 28px */
+  --text-3xl:  2.25rem;    /* 36px */
+
+  /* ---- Spacing ---- */
+  --sp-1:  0.25rem;
+  --sp-2:  0.5rem;
+  --sp-3:  0.75rem;
+  --sp-4:  1rem;
+  --sp-5:  1.25rem;
+  --sp-6:  1.5rem;
+  --sp-8:  2rem;
+  --sp-10: 2.5rem;
+  --sp-12: 3rem;
+  --sp-16: 4rem;
+
+  /* ---- Border radius ---- */
+  --r-none: 0px;
+  --r-sm:   2px;
+  --r-md:   4px;
+  --r-lg:   8px;
+  --r-full: 9999px;
+
+  /* ---- Easing ---- */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-out:    cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* ---- Durations ---- */
+  --dur-fast:   120ms;
+  --dur-base:   220ms;
+  --dur-slow:   380ms;
+
+  /* ---- Layout ---- */
+  --topbar-height: 60px;
+}
