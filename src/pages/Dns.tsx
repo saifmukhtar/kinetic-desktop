@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { daemon, DnsRecord } from '../api/daemon';
-import { IconTrash } from '../components/Icons';
+import DnsRecordRow from '../components/DnsRecordRow';
 import styles from './Dns.module.css';
 
 export default function Dns() {
@@ -106,34 +106,13 @@ export default function Dns() {
             {records.length === 0 && <p className={styles.empty}>No records found.</p>}
             
             {records.map((rec, idx) => (
-              <div key={idx} className={styles.recordRow}>
-                <div className={styles.recordType}>
-                  <select 
-                    className={`input input-mono ${styles.recordTypeSelect}`}
-                    value={rec.type}
-                    onChange={e => updateRecordType(idx, e.target.value as DnsRecord['type'])}
-                  >
-                    <option value="A">A</option>
-                    <option value="AAAA">AAAA</option>
-                    <option value="CNAME">CNAME</option>
-                    <option value="TXT">TXT</option>
-                    <option value="PeerId">PeerId</option>
-                    <option value="KID">KID</option>
-                  </select>
-                </div>
-                <div className={styles.recordValue}>
-                  <input
-                    type="text"
-                    className="input input-mono"
-                    value={rec.value}
-                    onChange={e => updateRecordValue(idx, e.target.value)}
-                    placeholder="Value..."
-                  />
-                </div>
-                <button className="btn-icon" onClick={() => deleteRecord(idx)}>
-                  <IconTrash />
-                </button>
-              </div>
+              <DnsRecordRow 
+                key={idx}
+                record={rec}
+                onTypeChange={(type) => updateRecordType(idx, type)}
+                onValueChange={(value) => updateRecordValue(idx, value)}
+                onDelete={() => deleteRecord(idx)}
+              />
             ))}
           </div>
 

@@ -50,9 +50,17 @@ export interface KineticTime {
 }
 
 export interface AtlasNetwork {
+  version?: string;
+  network_id?: string;
+  tld: string;
   name?: string;
-  tld?: string;
-  [key: string]: unknown;
+  desc?: string;
+  seed_domain?: string;
+  local_bind_ip?: string;
+  bootstrap_nodes?: string[];
+  binary_download?: string;
+  logo?: string;
+  ipfs_gateway?: string;
 }
 
 // ── API calls (all go through Tauri invoke) ──────────────────────────────────
@@ -116,4 +124,7 @@ export const daemon = {
   // Private — atlas
   syncAtlas: (): Promise<unknown> =>
     invoke("sync_atlas"),
+
+  installForkDaemon: (tld: string, daemonName: string, binaryDownloadUrl: string): Promise<string> =>
+    invoke("install_fork_daemon", { tld, daemonName, binaryDownloadUrl }),
 };

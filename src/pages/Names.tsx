@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { daemon } from '../api/daemon';
 import StatusBadge from '../components/StatusBadge';
 import { IconArrow } from '../components/Icons';
+import SlidePanel from '../components/SlidePanel';
+import VdfProgress from '../components/VdfProgress';
 import styles from './Names.module.css';
 
 export default function Names() {
@@ -91,6 +93,9 @@ export default function Names() {
                 <span className={styles.name}>{name}</span>
                 <StatusBadge status="published" />
               </div>
+              <div className={styles.timestamp} style={{ color: 'var(--ink-muted)', fontSize: 'var(--text-sm)', flex: 1, textAlign: 'center' }}>
+                {new Date().toLocaleDateString()}
+              </div>
               <div className={styles.actions}>
                 <button
                   className="btn-arrow"
@@ -105,16 +110,12 @@ export default function Names() {
         )}
       </div>
 
-      <div className={`${styles.overlay} ${panelOpen ? styles.open : ''}`} onClick={() => !taskId && setPanelOpen(false)} />
-      
-      <div className={`${styles.panel} ${panelOpen ? styles.open : ''}`}>
-        <div className={styles.panelHeader}>
-          <h2 className={styles.panelTitle}>Register Name</h2>
-          {!taskId && (
-            <button className={styles.closeBtn} onClick={() => setPanelOpen(false)}>&times;</button>
-          )}
-        </div>
-        
+      <SlidePanel
+        open={panelOpen}
+        onClose={() => setPanelOpen(false)}
+        title="Register Name"
+        disableClose={!!taskId}
+      >
         <input
           type="text"
           className="input input-mono"
@@ -125,18 +126,13 @@ export default function Names() {
         />
         
         {taskId ? (
-          <div className={styles.progressContainer}>
-            <span>Calculating VDF proof... {Math.round(progress)}%</span>
-            <div className={styles.progressBar}>
-              <div className={styles.progressFill} style={{ width: `${progress}%` }} />
-            </div>
-          </div>
+          <VdfProgress progress={progress} />
         ) : (
           <button className="btn-primary" onClick={startRegistration} disabled={!registerName}>
             Start Registration
           </button>
         )}
-      </div>
+      </SlidePanel>
     </div>
   );
 }

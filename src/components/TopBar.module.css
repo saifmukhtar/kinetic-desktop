@@ -73,7 +73,7 @@
   flex-shrink: 0;
 }
 
-.daemonDot[data-online="true"]  { background: var(--status-ok); }
+.daemonDot[data-online="true"]  { background: var(--amber); }
 .daemonDot[data-offline="true"] { background: var(--status-err); }
 
 .daemonLabel {

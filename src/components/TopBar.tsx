@@ -11,7 +11,7 @@ const NAV_ITEMS = [
   { path: "/dns",      label: "DNS",       Icon: IconDns       },
   { path: "/network",  label: "Network",   Icon: IconNetwork   },
   { path: "/kid",      label: "KID",       Icon: IconKid       },
-  { path: "/forge",    label: "Forge",     Icon: IconForge     },
+  { path: "/atlas",    label: "Atlas",     Icon: IconForge     },
   { path: "/settings", label: "Settings",  Icon: IconSettings  },
 ];
 

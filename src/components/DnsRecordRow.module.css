@@ -1,0 +1,23 @@
+.recordRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-2) 0;
+}
+
+.recordType {
+  flex-shrink: 0;
+  width: 120px;
+}
+
+.recordTypeSelect {
+  width: 100%;
+}
+
+.recordValue {
+  flex: 1;
+}
+
+.recordValue input {
+  width: 100%;
+}

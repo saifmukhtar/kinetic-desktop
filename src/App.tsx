@@ -5,7 +5,7 @@ import Names from './pages/Names'
 import Dns from './pages/Dns'
 import Network from './pages/Network'
 import Kid from './pages/Kid'
-import Forge from './pages/Forge'
+import Atlas from './pages/Atlas'
 import Settings from './pages/Settings'
 import './styles/global.css'
 
@@ -20,7 +20,7 @@ export default function App() {
           <Route path="/dns"      element={<Dns />} />
           <Route path="/network"  element={<Network />} />
           <Route path="/kid"      element={<Kid />} />
-          <Route path="/forge"    element={<Forge />} />
+          <Route path="/atlas"    element={<Atlas />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
       </main>

@@ -239,3 +239,163 @@ fn install_windows(bins: Vec<&str>, install_dns: bool, clean: bool, username: &s
 
     Ok("Installation complete on Windows".into())
 }
+
+/// One-click installer for any Atlas-registered fork network.
+///
+/// # Arguments
+/// * `tld`                — The fork's TLD (e.g. "uni"), used to name the install dir and service.
+/// * `daemon_name`        — The binary base name (e.g. "uni-daemon"). Will have OS suffix appended.
+/// * `binary_download_url`— Base GitHub releases URL (e.g. "https://github.com/uni-network/uni/releases/latest/download").
+///
+/// The function detects the current OS and, on Linux, whether glibc or musl is available,
+/// then downloads `{daemon_name}-{os_suffix}` from `{binary_download_url}/{daemon_name}-{os_suffix}`.
+/// The binary is installed to `~/.local/share/{tld}/{daemon_name}` (no root required on Linux).
+/// A user-level systemd service named `{tld}-daemon` is created and enabled.
+#[command]
+pub async fn install_fork_daemon(
+    tld: String,
+    daemon_name: String,
+    binary_download_url: String,
+) -> Result<String, String> {
+    let os = env::consts::OS;
+
+    // Determine install dir: ~/.local/share/{tld}/
+    let home = env::var("HOME")
+        .or_else(|_| env::var("USERPROFILE"))
+        .unwrap_or_else(|_| ".".into());
+    let install_dir = format!("{}/.local/share/{}", home, tld);
+
+    match os {
+        "linux" => install_fork_linux(&tld, &daemon_name, &binary_download_url, &install_dir, &home),
+        "macos" => install_fork_macos(&tld, &daemon_name, &binary_download_url, &install_dir),
+        "windows" => install_fork_windows(&tld, &daemon_name, &binary_download_url),
+        _ => Err(format!("Unsupported OS: {}", os)),
+    }
+}
+
+/// Detect whether the current Linux system uses musl or glibc.
+/// Falls back to gnu if detection fails.
+fn detect_linux_libc() -> &'static str {
+    // ldd --version output contains "musl" on Alpine/musl systems
+    if let Ok(out) = Command::new("ldd").arg("--version").output() {
+        let text = String::from_utf8_lossy(&out.stdout).to_lowercase()
+            + &String::from_utf8_lossy(&out.stderr).to_lowercase();
+        if text.contains("musl") {
+            return "linux-musl";
+        }
+    }
+    "linux-gnu"
+}
+
+fn install_fork_linux(
+    tld: &str,
+    daemon_name: &str,
+    base_url: &str,
+    install_dir: &str,
+    home: &str,
+) -> Result<String, String> {
+    let libc = detect_linux_libc();
+    let suffix = libc; // "linux-gnu" or "linux-musl"
+    let remote_name = format!("{}-{}", daemon_name, suffix);
+    let url = format!("{}/{}", base_url.trim_end_matches('/'), remote_name);
+    let bin_path = format!("{}/{}", install_dir, daemon_name);
+
+    let mut script = String::from("set -e\n");
+    script.push_str(&format!("mkdir -p '{}'\n", install_dir));
+    script.push_str(&format!(
+        "echo 'Downloading {} from {}...'\ncurl -fsSL '{}' -o '{}'\nchmod +x '{}'\n",
+        daemon_name, url, url, bin_path, bin_path
+    ));
+
+    // Create a user-level systemd service (no root needed)
+    let service_dir = format!("{}/.config/systemd/user", home);
+    let service_name = format!("{}-daemon.service", tld);
+    let service_path = format!("{}/{}", service_dir, service_name);
+    let service_content = format!(
+        "[Unit]\nDescription={} network daemon\nAfter=network.target\n\n\
+         [Service]\nExecStart={}\nRestart=on-failure\nRestartSec=5\n\n\
+         [Install]\nWantedBy=default.target\n",
+        tld, bin_path
+    );
+
+    script.push_str(&format!("mkdir -p '{}'\n", service_dir));
+    script.push_str(&format!("cat > '{}' << 'SVCEOF'\n{}\nSVCEOF\n", service_path, service_content));
+    script.push_str("systemctl --user daemon-reload\n");
+    script.push_str(&format!("systemctl --user enable '{}'\n", service_name));
+    script.push_str(&format!("systemctl --user start '{}' || true\n", service_name));
+
+    let output = Command::new("bash")
+        .arg("-c")
+        .arg(&script)
+        .output()
+        .map_err(|e| format!("Failed to run install script: {}", e))?;
+
+    if !output.status.success() {
+        return Err(format!(
+            "Install failed:\n{}",
+            String::from_utf8_lossy(&output.stderr)
+        ));
+    }
+
+    Ok(format!(
+        "Installed {} to {}. Service {}-daemon started.",
+        daemon_name, install_dir, tld
+    ))
+}
+
+fn install_fork_macos(
+    tld: &str,
+    daemon_name: &str,
+    base_url: &str,
+    install_dir: &str,
+) -> Result<String, String> {
+    let remote_name = format!("{}-macos", daemon_name);
+    let url = format!("{}/{}", base_url.trim_end_matches('/'), remote_name);
+    let bin_path = format!("{}/{}", install_dir, daemon_name);
+
+    let script = format!(
+        "set -e\nmkdir -p '{}'\ncurl -fsSL '{}' -o '{}'\nchmod +x '{}'",
+        install_dir, url, bin_path, bin_path
+    );
+
+    let output = Command::new("bash")
+        .arg("-c")
+        .arg(&script)
+        .output()
+        .map_err(|e| format!("Failed to run install script: {}", e))?;
+
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).to_string());
+    }
+
+    Ok(format!("Installed {} to {}.", daemon_name, install_dir))
+}
+
+fn install_fork_windows(
+    tld: &str,
+    daemon_name: &str,
+    base_url: &str,
+) -> Result<String, String> {
+    let remote_name = format!("{}-windows.exe", daemon_name);
+    let url = format!("{}/{}", base_url.trim_end_matches('/'), remote_name);
+    let install_dir = format!("$env:LOCALAPPDATA\\Kinetic\\{}", tld);
+    let bin_path = format!("{}\\{}.exe", install_dir, daemon_name);
+
+    let script = format!(
+        "if (!(Test-Path '{0}')) {{ New-Item -ItemType Directory -Path '{0}' | Out-Null }}; \
+         Invoke-WebRequest -Uri '{1}' -OutFile '{2}'",
+        install_dir, url, bin_path
+    );
+
+    let output = Command::new("powershell")
+        .args(["-NoProfile", "-Command", &script])
+        .output()
+        .map_err(|e| format!("Failed to run powershell: {}", e))?;
+
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).to_string());
+    }
+
+    Ok(format!("Installed {} for {} network.", daemon_name, tld))
+}
+

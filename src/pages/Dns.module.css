@@ -34,30 +34,6 @@
   gap: var(--sp-4);
 }
 
-.recordRow {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-4);
-  padding: var(--sp-4);
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  box-shadow: var(--shadow-offset);
-}
-
-.recordType {
-  flex-shrink: 0;
-  width: 100px;
-}
-
-.recordTypeSelect {
-  width: 100%;
-}
-
-.recordValue {
-  flex-grow: 1;
-}
-
 .footer {
   display: flex;
   justify-content: flex-end;

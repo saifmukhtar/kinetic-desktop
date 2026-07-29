@@ -39,7 +39,12 @@ export default function Settings() {
       </div>
 
       <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>Daemon Connection</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h2 className={styles.sectionTitle}>Daemon Connection</h2>
+          <button className="btn-ghost" onClick={() => daemon.getHealth().then(setHealth).catch(console.error)}>
+            Test Connection
+          </button>
+        </div>
         <div className={styles.infoRow}>
           <span className={styles.infoLabel}>API URL</span>
           <span className={styles.infoValue}>http://127.0.0.1:16002</span>
