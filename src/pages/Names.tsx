@@ -126,9 +126,9 @@ export default function Names() {
         
         {taskId ? (
           <div className={styles.progressContainer}>
-            <span>Calculating VDF proof... {Math.round(progress * 100)}%</span>
+            <span>Calculating VDF proof... {Math.round(progress)}%</span>
             <div className={styles.progressBar}>
-              <div className={styles.progressFill} style={{ width: `${progress * 100}%` }} />
+              <div className={styles.progressFill} style={{ width: `${progress}%` }} />
             </div>
           </div>
         ) : (
