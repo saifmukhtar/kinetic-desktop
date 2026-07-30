@@ -74,12 +74,22 @@ function ReadmeModal({ net, onClose }: { net: AtlasNetwork; onClose: () => void 
       })
       .then((text) => {
         const clean = text
-          .replace(/!\[.*?\]\(.*?\)/g, '')   // strip images
-          .replace(/^\s*#{1,6}\s+/gm, '')     // strip headings
-          .replace(/`{3}[\s\S]*?`{3}/gm, '')  // strip code blocks
-          .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // strip links, keep text
-          .replace(/\*{1,2}([^*]+)\*{1,2}/g, '$1') // strip bold/italic
-          .replace(/\n{3,}/g, '\n\n')         // collapse whitespace
+          .replace(/<[^>]+>/g, '')              // strip all HTML tags
+          .replace(/!\[.*?\]\(.*?\)/g, '')      // strip markdown images
+          .replace(/^\s*#{1,6}\s+.*/gm, '')     // strip headings entirely
+          .replace(/`{3}[\s\S]*?`{3}/gm, '')    // strip fenced code blocks
+          .replace(/`[^`]+`/g, '')              // strip inline code
+          .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // links → just text
+          .replace(/\*{1,2}([^*\n]+)\*{1,2}/g, '$1') // bold/italic → text
+          .replace(/^[-*_]{3,}\s*$/gm, '')      // strip horizontal rules
+          .replace(/^\s*[-*+]\s+/gm, '')        // strip list bullets
+          .replace(/^\s*\d+\.\s+/gm, '')        // strip numbered lists
+          .replace(/^>\s+/gm, '')               // strip blockquotes
+          .replace(/\n{3,}/g, '\n\n')           // collapse blank lines
+          .split('\n')
+          .map(l => l.trim())
+          .filter(l => l.length > 0)            // drop empty lines
+          .join('\n')
           .trim();
         if (!clean) {
           setFetchError(true);
