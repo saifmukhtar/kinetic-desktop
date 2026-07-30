@@ -2,9 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { daemon, AtlasNetwork } from '../api/daemon';
 import styles from './Atlas.module.css';
 
-function NetworkCard({ net }: { net: AtlasNetwork }) {
+function NetworkCard({ net, onClick }: { net: AtlasNetwork, onClick: () => void }) {
   return (
-    <div className={styles.networkCard}>
+    <div className={styles.networkCard} onClick={onClick} role="button" tabIndex={0}>
       <div className={styles.cardHeader}>
         <span className={styles.networkName}>{net.network_id ?? net.name ?? net.tld}</span>
         <span className={styles.tldChip}>.{net.tld}</span>
@@ -32,6 +32,7 @@ export default function Atlas() {
   const [loading, setLoading]   = useState(true);
   const [syncing, setSyncing]   = useState(false);
   const [atlasError, setAtlasError] = useState<string | null>(null);
+  const [selectedNetwork, setSelectedNetwork] = useState<AtlasNetwork | null>(null);
 
   const loadNetworks = useCallback(async () => {
     setLoading(true);
@@ -59,6 +60,8 @@ export default function Atlas() {
       setSyncing(false);
     }
   };
+
+  const closeModal = () => setSelectedNetwork(null);
 
   return (
     <div className={styles.container}>
@@ -93,11 +96,51 @@ export default function Atlas() {
         {!loading && !atlasError && networks.length > 0 && (
           <div className={styles.networkGrid}>
             {networks.map((net) => (
-              <NetworkCard key={net.tld} net={net} />
+              <NetworkCard key={net.tld} net={net} onClick={() => setSelectedNetwork(net)} />
             ))}
           </div>
         )}
       </section>
+
+      {selectedNetwork && (
+        <div className={styles.modalOverlay} onClick={closeModal}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>{selectedNetwork.name || selectedNetwork.network_id} (.{selectedNetwork.tld})</h2>
+              <button className="btn-icon" onClick={closeModal}>✕</button>
+            </div>
+            <div className={styles.modalBody}>
+              <p className={styles.modalDesc}>{selectedNetwork.desc || "No description provided."}</p>
+              
+              <div className={styles.modalActions}>
+                <button className="btn-primary">
+                  Install Network
+                </button>
+                {selectedNetwork.repo ? (
+                  <button
+                    className="btn-ghost"
+                    onClick={async () => {
+                      try {
+                        const { openUrl } = await import('@tauri-apps/plugin-opener');
+                        await openUrl(selectedNetwork.repo!);
+                      } catch (err) {
+                        console.error('Failed to open URL:', err);
+                        window.open(selectedNetwork.repo!, '_blank'); // Fallback for browser testing
+                      }
+                    }}
+                  >
+                    View Repository
+                  </button>
+                ) : (
+                  <button className="btn-ghost" disabled>
+                    No Repository
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
