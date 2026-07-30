@@ -33,12 +33,11 @@ function NetworkCard({ net, onSelect }: { net: AtlasNetwork; onSelect: (net: Atl
         )}
       </div>
 
-      {/* ── Lower Footer: Description, Meta & Install Button ── */}
+      {/* ── Lower Footer: Description & IP/Port ── */}
       <div className={styles.cardFooter}>
         {net.desc && (
           <p className={styles.networkDesc}>{net.desc}</p>
         )}
-
         <div className={styles.metaRow}>
           {net.local_bind_ip && (
             <span className={styles.metaTag}>{net.local_bind_ip}</span>
@@ -47,18 +46,58 @@ function NetworkCard({ net, onSelect }: { net: AtlasNetwork; onSelect: (net: Atl
             <span className={styles.metaTag}>:{net.api_port}</span>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
 
-        <button
-          className="btn-primary"
-          style={{ width: '100%', marginTop: '4px', fontSize: '11px', padding: '6px 10px' }}
-          onClick={(e) => {
-            e.stopPropagation();
-            const targetUrl = net.binary_download || net.repo || 'https://github.com/saifmukhtar/kinetic-atlas';
-            window.open(targetUrl, '_blank');
-          }}
-        >
-          Install Network
-        </button>
+function ReadmeModal({ net, onClose }: { net: AtlasNetwork; onClose: () => void }) {
+  const [readmeText, setReadmeText] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const rawUrl = getRawReadmeUrl(net.repo);
+    if (!rawUrl) {
+      setReadmeText(net.desc ?? 'No repository README available.');
+      return;
+    }
+    setLoading(true);
+    fetch(rawUrl)
+      .then((res) => (res.ok ? res.text() : Promise.reject()))
+      .then((text) => {
+        const clean = text
+          .replace(/!\[.*?\]\(.*?\)/g, '')  // strip images
+          .replace(/^\s*#+\s+/gm, '')        // strip headings
+          .replace(/`{3}[\s\S]*?`{3}/gm, '') // strip code blocks
+          .trim();
+        setReadmeText(clean.slice(0, 600) + (clean.length > 600 ? '…' : ''));
+      })
+      .catch(() => {
+        setReadmeText(net.desc ?? 'Could not load README.');
+      })
+      .finally(() => setLoading(false));
+  }, [net]);
+
+  return (
+    <div className={styles.modalOverlay} onClick={onClose}>
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalHeader}>
+          <div>
+            <span className="eyebrow">.{net.tld} · README</span>
+            <h2 className={styles.modalTitle}>{net.network_id ?? net.name ?? net.tld}</h2>
+          </div>
+          <button className="btn-ghost" onClick={onClose}>✕</button>
+        </div>
+        <div className={styles.modalBody}>
+          {loading ? (
+            <div className={styles.modalLoading}>
+              <div className={styles.spinner} />
+              <span>Fetching README…</span>
+            </div>
+          ) : (
+            <p className={styles.readmeContent}>{readmeText}</p>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -66,12 +105,10 @@ function NetworkCard({ net, onSelect }: { net: AtlasNetwork; onSelect: (net: Atl
 
 export default function Atlas() {
   const [networks, setNetworks] = useState<AtlasNetwork[]>([]);
-  const [loading, setLoading]  = useState(true);
-  const [syncing, setSyncing]  = useState(false);
+  const [loading, setLoading]   = useState(true);
+  const [syncing, setSyncing]   = useState(false);
   const [atlasError, setAtlasError] = useState<string | null>(null);
   const [selectedNet, setSelectedNet] = useState<AtlasNetwork | null>(null);
-  const [readmeText, setReadmeText] = useState<string | null>(null);
-  const [readmeLoading, setReadmeLoading] = useState(false);
 
   const loadNetworks = useCallback(async () => {
     setLoading(true);
@@ -86,35 +123,7 @@ export default function Atlas() {
     }
   }, []);
 
-  useEffect(() => {
-    loadNetworks();
-  }, [loadNetworks]);
-
-  useEffect(() => {
-    if (!selectedNet) {
-      setReadmeText(null);
-      return;
-    }
-    const rawUrl = getRawReadmeUrl(selectedNet.repo);
-    if (!rawUrl) {
-      setReadmeText(selectedNet.desc ?? "No repository README available.");
-      return;
-    }
-    setReadmeLoading(true);
-    fetch(rawUrl)
-      .then((res) => (res.ok ? res.text() : Promise.reject('Failed to fetch README')))
-      .then((text) => {
-        const cleanText = text
-          .replace(/^#+\s+/gm, '')
-          .replace(/!\[.*?\]\(.*?\)/g, '')
-          .trim();
-        setReadmeText(cleanText.slice(0, 450) + (cleanText.length > 450 ? '…' : ''));
-      })
-      .catch(() => {
-        setReadmeText(selectedNet.desc ?? "Could not fetch README from repository.");
-      })
-      .finally(() => setReadmeLoading(false));
-  }, [selectedNet]);
+  useEffect(() => { loadNetworks(); }, [loadNetworks]);
 
   const handleSync = async () => {
     setSyncing(true);
@@ -130,21 +139,14 @@ export default function Atlas() {
 
   return (
     <div className={styles.container}>
-
       {/* ── Page header ── */}
       <div className={styles.header}>
         <div className={styles.headerLeft}>
           <span className="eyebrow">NETWORK MARKETPLACE</span>
           <h1 className={styles.title}>Atlas</h1>
-          <p className={styles.subtitle}>
-            Discover Kinetic fork networks and Top-Level Domains.
-          </p>
+          <p className={styles.subtitle}>Discover Kinetic fork networks and Top-Level Domains.</p>
         </div>
-        <button
-          className="btn-ghost"
-          onClick={handleSync}
-          disabled={syncing || loading}
-        >
+        <button className="btn-ghost" onClick={handleSync} disabled={syncing || loading}>
           {syncing ? 'Syncing…' : 'Refresh Atlas'}
         </button>
       </div>
@@ -157,23 +159,16 @@ export default function Atlas() {
             <span>Fetching networks from Atlas…</span>
           </div>
         )}
-
         {!loading && atlasError && (
           <div className={styles.stateMsg} data-err>
             <span>Could not load Atlas registry.</span>
             <span className={styles.errorDetail}>{atlasError}</span>
-            <button className="btn-ghost" onClick={loadNetworks} style={{ marginTop: '8px' }}>
-              Retry
-            </button>
+            <button className="btn-ghost" onClick={loadNetworks} style={{ marginTop: '8px' }}>Retry</button>
           </div>
         )}
-
         {!loading && !atlasError && networks.length === 0 && (
-          <div className={styles.stateMsg}>
-            <span>No networks registered yet.</span>
-          </div>
+          <div className={styles.stateMsg}><span>No networks registered yet.</span></div>
         )}
-
         {!loading && !atlasError && networks.length > 0 && (
           <div className={styles.networkGrid}>
             {networks.map((net) => (
@@ -183,60 +178,10 @@ export default function Atlas() {
         )}
       </section>
 
-      {/* ── Slide-in Drawer for Selected Network ── */}
+      {/* ── Small centered overlay on card click ── */}
       {selectedNet && (
-        <div className={styles.overlay} onClick={() => setSelectedNet(null)}>
-          <div className={styles.drawer} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.drawerHeader}>
-              <div>
-                <span className="eyebrow">.{selectedNet.tld} NETWORK</span>
-                <h2 className={styles.drawerTitle}>{selectedNet.network_id ?? selectedNet.name}</h2>
-              </div>
-              <button className="btn-ghost" onClick={() => setSelectedNet(null)}>✕</button>
-            </div>
-
-            <div className={styles.drawerBody}>
-              <div className={styles.drawerMeta}>
-                <span className={styles.metaTag}>IP: {selectedNet.local_bind_ip ?? '127.0.0.1'}</span>
-                <span className={styles.metaTag}>Port: {selectedNet.api_port ?? '16002'}</span>
-              </div>
-
-              <div className={styles.readmeBox}>
-                <span className="eyebrow">REPOSITORY README PREVIEW</span>
-                {readmeLoading ? (
-                  <div className={styles.spinnerRow}>
-                    <div className={styles.spinner} />
-                    <span>Fetching live README from repository…</span>
-                  </div>
-                ) : (
-                  <p className={styles.readmeContent}>{readmeText}</p>
-                )}
-              </div>
-            </div>
-
-            <div className={styles.drawerFooter}>
-              {selectedNet.repo && (
-                <button
-                  className="btn-ghost"
-                  onClick={() => window.open(selectedNet.repo, '_blank')}
-                >
-                  View Repository
-                </button>
-              )}
-              <button
-                className="btn-primary"
-                onClick={() => {
-                  const targetUrl = selectedNet.binary_download || selectedNet.repo || 'https://github.com/saifmukhtar/kinetic-atlas';
-                  window.open(targetUrl, '_blank');
-                }}
-              >
-                Install Network
-              </button>
-            </div>
-          </div>
-        </div>
+        <ReadmeModal net={selectedNet} onClose={() => setSelectedNet(null)} />
       )}
-
     </div>
   );
 }

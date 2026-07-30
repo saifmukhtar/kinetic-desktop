@@ -339,99 +339,73 @@
   color: var(--ink-muted);
 }
 
-/* ── Slide-in Drawer & Overlay ───────────────────────────────────────────── */
+/* ── README Modal Overlay ────────────────────────────────────────────────── */
 
-.overlay {
+.modalOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(2px);
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(3px);
   z-index: 1000;
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
 }
 
-.drawer {
-  width: 440px;
-  max-width: 90vw;
-  height: 100dvh;
+.modal {
   background: var(--bg-elevated);
-  border-left: 1px solid var(--border);
-  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-offset);
+  border-radius: 10px;
+  width: 480px;
+  max-width: 100%;
+  max-height: 70vh;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  padding: 28px 24px;
-  animation: slideIn 200ms var(--ease-smooth);
+  animation: modalIn 160ms ease-out;
 }
 
-@keyframes slideIn {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
-.drawerHeader {
+.modalHeader {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  padding-bottom: 16px;
+  padding: 20px 20px 16px;
   border-bottom: 1px solid var(--border);
 }
 
-.drawerTitle {
+.modalTitle {
   font-family: var(--font-sans);
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 600;
   color: var(--ink);
   margin: 4px 0 0;
 }
 
-.drawerBody {
+.modalBody {
   flex: 1;
   overflow-y: auto;
-  padding: 20px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.drawerMeta {
-  display: flex;
-  gap: 8px;
-}
-
-.readmeBox {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  background: var(--bg-subtle);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 16px;
+  padding: 18px 20px 20px;
 }
 
 .readmeContent {
-  font-size: 12px;
-  line-height: 1.6;
+  font-size: 12.5px;
+  line-height: 1.7;
   color: var(--ink-secondary);
   margin: 0;
   white-space: pre-wrap;
 }
 
-.spinnerRow {
+.modalLoading {
   display: flex;
   align-items: center;
   gap: 10px;
   font-size: 12px;
   color: var(--ink-muted);
-}
-
-.drawerFooter {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border);
 }
