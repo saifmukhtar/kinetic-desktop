@@ -9,35 +9,33 @@ interface NetworkCardProps {
 function NetworkCard({ net }: NetworkCardProps) {
   return (
     <div className={styles.networkCard}>
-      {/* Logo */}
-      <div className={styles.cardLogo}>
+      {/* ── Upper Header: network_id & tld badge ── */}
+      <div className={styles.cardHeader}>
+        <span className={styles.networkName}>{net.network_id ?? net.name ?? net.tld}</span>
+        <span className={styles.tldChip}>.{net.tld}</span>
+      </div>
+
+      {/* ── Upper-Middle: Logo ── */}
+      <div className={styles.cardLogoSection}>
         {net.logo ? (
-          <img src={net.logo} alt={`${net.name ?? net.network_id ?? net.tld} logo`} className={styles.logoImg} />
+          <img src={net.logo} alt={`${net.network_id ?? net.tld} logo`} className={styles.logoImg} />
         ) : (
           <div className={styles.logoFallback}>{(net.tld ?? '?').slice(0, 2).toUpperCase()}</div>
         )}
       </div>
 
-      {/* Info */}
-      <div className={styles.cardInfo}>
-        <div className={styles.cardHeader}>
-          <span className={styles.networkName}>{net.name ?? net.network_id ?? net.tld}</span>
-          <span className={styles.tldChip}>.{net.tld}</span>
-        </div>
-
+      {/* ── Lower Footer: Description & IP/Port ── */}
+      <div className={styles.cardFooter}>
         {net.desc && (
           <p className={styles.networkDesc}>{net.desc}</p>
         )}
 
         <div className={styles.metaRow}>
-          {net.network_id && (
-            <span className={styles.metaTag}>ID: {net.network_id}</span>
-          )}
           {net.local_bind_ip && (
-            <span className={styles.metaTag}>IP: {net.local_bind_ip}</span>
+            <span className={styles.metaTag}>{net.local_bind_ip}</span>
           )}
           {net.api_port && (
-            <span className={styles.metaTag}>Port: {net.api_port}</span>
+            <span className={styles.metaTag}>:{net.api_port}</span>
           )}
         </div>
       </div>

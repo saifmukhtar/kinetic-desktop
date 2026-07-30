@@ -52,21 +52,24 @@
 
 .networkGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
 }
 
-/* ── Single network card ─────────────────────────────────────────────────── */
+/* ── Single network card (Vertical achievement style) ─────────────────────── */
 
 .networkCard {
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-offset);
-  border-radius: 6px;
-  padding: 20px;
+  border-radius: var(--r-lg);
+  padding: 18px 16px;
   display: flex;
-  gap: 16px;
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  text-align: center;
+  min-height: 250px;
   transition: box-shadow 150ms var(--ease-smooth), transform 150ms var(--ease-smooth);
   position: relative;
   overflow: hidden;
@@ -79,7 +82,7 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 2px;
+  height: 3px;
   background: linear-gradient(90deg, var(--amber), transparent);
 }
 
@@ -88,57 +91,19 @@
   transform: translate(-1px, -1px);
 }
 
-/* ── Logo ──────────────────────────────────────────────────────────────── */
-
-.cardLogo {
-  flex-shrink: 0;
-  width: 48px;
-  height: 48px;
-}
-
-.logoImg {
-  width: 48px;
-  height: 48px;
-  object-fit: contain;
-  border-radius: 4px;
-}
-
-.logoFallback {
-  width: 48px;
-  height: 48px;
-  background: var(--amber-soft);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-mono);
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--amber);
-  letter-spacing: 0.02em;
-}
-
-/* ── Card info ───────────────────────────────────────────────────────────── */
-
-.cardInfo {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
+/* ── Upper Header: network_id & tld badge ───────────────────────────────── */
 
 .cardHeader {
+  width: 100%;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
-  flex-wrap: wrap;
 }
 
 .networkName {
   font-family: var(--font-sans);
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--ink);
   white-space: nowrap;
@@ -157,11 +122,53 @@
   white-space: nowrap;
 }
 
+/* ── Upper-Middle Logo ─────────────────────────────────────────────────── */
+
+.cardLogoSection {
+  margin: 14px 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logoImg {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  border-radius: 12px;
+}
+
+.logoFallback {
+  width: 72px;
+  height: 72px;
+  background: var(--amber-soft);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--amber);
+  letter-spacing: 0.02em;
+}
+
+/* ── Lower Footer: Description & IP/Port ────────────────────────────────── */
+
+.cardFooter {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
 .networkDesc {
   font-size: 12px;
   color: var(--ink-secondary);
   margin: 0;
-  line-height: 1.5;
+  line-height: 1.45;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -170,9 +177,9 @@
 
 .metaRow {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
   gap: 6px;
-  margin-top: 2px;
 }
 
 .metaTag {
@@ -182,11 +189,8 @@
   background: var(--bg-subtle);
   border: 1px solid var(--border);
   border-radius: 3px;
-  padding: 1px 5px;
+  padding: 1px 6px;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 180px;
 }
 
 /* ── Card action ─────────────────────────────────────────────────────────── */
