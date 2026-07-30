@@ -67,6 +67,9 @@ export interface AtlasNetwork {
 
 export const daemon = {
   // Public
+  getApiUrl: (): Promise<string> =>
+    invoke("get_api_url"),
+
   getHealth: (): Promise<HealthStatus> =>
     invoke("get_health"),
 

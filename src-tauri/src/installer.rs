@@ -344,7 +344,7 @@ fn install_fork_linux(
 }
 
 fn install_fork_macos(
-    tld: &str,
+    _tld: &str,
     daemon_name: &str,
     base_url: &str,
     install_dir: &str,

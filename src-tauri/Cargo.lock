@@ -1944,9 +1944,9 @@ dependencies = [
 
 [[package]]
 name = "kinetic-sdk"
-version = "0.1.2"
+version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "83bdb01a4426247d847c4c41909ca897d88b7062d75cddfd9dc7bb3a8e4ee7ca"
+checksum = "80cceac2970216f4071f56549044815715463532565a69dcaccfc49023743c7e"
 dependencies = [
  "reqwest 0.13.4",
  "serde",

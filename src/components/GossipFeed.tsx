@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { daemon } from '../api/daemon';
 import styles from './GossipFeed.module.css';
 
 interface GossipEvent {
@@ -12,25 +13,34 @@ export default function GossipFeed() {
   const feedRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const sse = new EventSource('http://127.0.0.1:16002/api/gossip/subscribe/names');
-    
-    sse.onmessage = (e) => {
-      const now = new Date();
-      const timeStr = now.toTimeString().split(' ')[0]; // HH:MM:SS
-      const newEvent: GossipEvent = {
-        id: Math.random().toString(36).slice(2),
-        time: timeStr,
-        payload: e.data
-      };
-      
-      setEvents(prev => {
-        const next = [...prev, newEvent];
-        if (next.length > 200) next.shift();
-        return next;
-      });
-    };
+    let sse: EventSource | null = null;
 
-    return () => sse.close();
+    daemon.getApiUrl().then((baseUrl) => {
+      const url = `${baseUrl}/gossip/subscribe/names`;
+      sse = new EventSource(url);
+
+      sse.onmessage = (e) => {
+        const now = new Date();
+        const timeStr = now.toTimeString().split(' ')[0]; // HH:MM:SS
+        const newEvent: GossipEvent = {
+          id: Math.random().toString(36).slice(2),
+          time: timeStr,
+          payload: e.data,
+        };
+
+        setEvents((prev) => {
+          const next = [...prev, newEvent];
+          if (next.length > 200) next.shift();
+          return next;
+        });
+      };
+    }).catch(err => {
+      console.error('Failed to resolve API URL for GossipFeed:', err);
+    });
+
+    return () => {
+      if (sse) sse.close();
+    };
   }, []);
 
   useEffect(() => {

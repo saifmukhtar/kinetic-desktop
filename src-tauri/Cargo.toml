@@ -24,7 +24,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 getrandom = "0.2.10"
 dirs = "6.0.0"
-kinetic-sdk = "0.1.2"
+kinetic-sdk = "0.1.4"
 tokio = { version = "1.0", features = ["full"] }
 toml = "0.8"
 reqwest = { version = "0.12", features = ["json"] }

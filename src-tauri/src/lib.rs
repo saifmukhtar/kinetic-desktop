@@ -66,6 +66,7 @@ pub fn run() {
             greet,
             installer::install_profile,
             installer::install_fork_daemon,
+            api_commands::get_api_url,
             api_commands::get_network_status,
             api_commands::resolve_name,
             api_commands::get_config_info,

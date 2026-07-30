@@ -5,11 +5,13 @@ import styles from './Settings.module.css';
 
 export default function Settings() {
   const [health, setHealth] = useState<HealthStatus | null>(null);
+  const [apiUrl, setApiUrl] = useState<string>('Loading...');
   const [currentMode, setCurrentMode] = useState<string>('full');
   const [selectedMode, setSelectedMode] = useState<string>('full');
   const [applying, setApplying] = useState(false);
 
   useEffect(() => {
+    daemon.getApiUrl().then(setApiUrl).catch(() => setApiUrl('Unavailable'));
     daemon.getHealth().then(setHealth).catch(console.error);
     daemon.getConfigInfo().then((info: any) => {
       if (info && info.mode) {
@@ -47,7 +49,7 @@ export default function Settings() {
         </div>
         <div className={styles.infoRow}>
           <span className={styles.infoLabel}>API URL</span>
-          <span className={styles.infoValue}>http://127.0.0.1:16002</span>
+          <span className={styles.infoValue}>{apiUrl}</span>
         </div>
         <div className={styles.infoRow}>
           <span className={styles.infoLabel}>Status</span>
