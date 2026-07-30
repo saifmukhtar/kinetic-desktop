@@ -1,0 +1,9 @@
+{
+  "version": "1.0",
+  "network_id": "sol-fork",
+  "tld": "sol",
+  "name": "Solana Naming Network",
+  "desc": "Community fork bringing Solana TLD resolution to Kinetic.",
+  "local_bind_ip": "127.0.0.2",
+  "api_port": 17002
+}
