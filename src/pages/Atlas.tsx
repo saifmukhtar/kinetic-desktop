@@ -54,29 +54,46 @@ function NetworkCard({ net, onSelect }: { net: AtlasNetwork; onSelect: (net: Atl
 function ReadmeModal({ net, onClose }: { net: AtlasNetwork; onClose: () => void }) {
   const [readmeText, setReadmeText] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
 
   useEffect(() => {
+    setReadmeText(null);
+    setFetchError(false);
+
     const rawUrl = getRawReadmeUrl(net.repo);
     if (!rawUrl) {
-      setReadmeText(net.desc ?? 'No repository README available.');
+      // No repo at all — nothing to fetch
       return;
     }
+
     setLoading(true);
     fetch(rawUrl)
-      .then((res) => (res.ok ? res.text() : Promise.reject()))
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.text();
+      })
       .then((text) => {
         const clean = text
-          .replace(/!\[.*?\]\(.*?\)/g, '')  // strip images
-          .replace(/^\s*#+\s+/gm, '')        // strip headings
-          .replace(/`{3}[\s\S]*?`{3}/gm, '') // strip code blocks
+          .replace(/!\[.*?\]\(.*?\)/g, '')   // strip images
+          .replace(/^\s*#{1,6}\s+/gm, '')     // strip headings
+          .replace(/`{3}[\s\S]*?`{3}/gm, '')  // strip code blocks
+          .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // strip links, keep text
+          .replace(/\*{1,2}([^*]+)\*{1,2}/g, '$1') // strip bold/italic
+          .replace(/\n{3,}/g, '\n\n')         // collapse whitespace
           .trim();
-        setReadmeText(clean.slice(0, 600) + (clean.length > 600 ? '…' : ''));
+        if (!clean) {
+          setFetchError(true);
+        } else {
+          setReadmeText(clean.slice(0, 700) + (clean.length > 700 ? '…' : ''));
+        }
       })
       .catch(() => {
-        setReadmeText(net.desc ?? 'Could not load README.');
+        setFetchError(true);
       })
       .finally(() => setLoading(false));
   }, [net]);
+
+  const hasRepo = !!net.repo;
 
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
@@ -89,13 +106,36 @@ function ReadmeModal({ net, onClose }: { net: AtlasNetwork; onClose: () => void 
           <button className="btn-ghost" onClick={onClose}>✕</button>
         </div>
         <div className={styles.modalBody}>
-          {loading ? (
+          {!hasRepo && (
+            <p className={styles.noRepo}>No repository linked for this network.</p>
+          )}
+          {hasRepo && loading && (
             <div className={styles.modalLoading}>
               <div className={styles.spinner} />
               <span>Fetching README…</span>
             </div>
-          ) : (
+          )}
+          {hasRepo && !loading && fetchError && (
+            <div className={styles.fetchError}>
+              <p>Could not fetch README — CORS restriction in browser preview.</p>
+              <p style={{ marginTop: '6px', fontSize: '11px', color: 'var(--ink-muted)' }}>
+                This will work correctly inside the Tauri desktop app.
+              </p>
+            </div>
+          )}
+          {hasRepo && !loading && !fetchError && readmeText && (
             <p className={styles.readmeContent}>{readmeText}</p>
+          )}
+          {hasRepo && net.repo && (
+            <a
+              className={styles.repoLink}
+              href={net.repo}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => e.stopPropagation()}
+            >
+              View full repository →
+            </a>
           )}
         </div>
       </div>

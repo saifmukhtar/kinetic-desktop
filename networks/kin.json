@@ -6,5 +6,6 @@
   "desc": "Primary decentralized naming network for Kinetic protocol.",
   "local_bind_ip": "127.0.0.1",
   "api_port": 16002,
-  "logo": "https://raw.githubusercontent.com/saifmukhtar/kinetic-atlas/main/logos/kin.png"
+  "logo": "https://raw.githubusercontent.com/saifmukhtar/kinetic-atlas/main/logos/kin.png",
+  "repo": "https://github.com/saifmukhtar/kinetic"
 }

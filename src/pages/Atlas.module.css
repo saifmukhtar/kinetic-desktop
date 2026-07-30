@@ -402,6 +402,31 @@
   white-space: pre-wrap;
 }
 
+.noRepo {
+  font-size: 12px;
+  color: var(--ink-muted);
+  margin: 0;
+}
+
+.fetchError {
+  font-size: 12px;
+  color: var(--ink-secondary);
+}
+
+.repoLink {
+  display: inline-block;
+  margin-top: 14px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--amber);
+  text-decoration: none;
+  letter-spacing: 0.02em;
+}
+
+.repoLink:hover {
+  text-decoration: underline;
+}
+
 .modalLoading {
   display: flex;
   align-items: center;
