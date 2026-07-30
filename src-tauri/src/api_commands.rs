@@ -274,40 +274,16 @@ pub async fn delete_vdf_task(task_id: String) -> Result<serde_json::Value, Strin
 
 #[command]
 pub async fn get_atlas_networks() -> Result<serde_json::Value, String> {
-    // 1. Check local networks/index.json file first
-    let local_index = std::path::Path::new("networks/index.json");
-    if local_index.exists() {
-        if let Ok(content) = std::fs::read_to_string(local_index) {
-            if let Ok(json) = serde_json::from_str::<serde_json::Value>(&content) {
-                return Ok(json);
-            }
-        }
+    // 1. Local test file: networks/tlds.json (relative to the project root / Tauri CWD)
+    let local_tlds = std::path::Path::new("networks/tlds.json");
+    if local_tlds.exists() {
+        let content = std::fs::read_to_string(local_tlds)
+            .map_err(|e| format!("Failed to read networks/tlds.json: {e}"))?;
+        return serde_json::from_str::<serde_json::Value>(&content)
+            .map_err(|e| format!("Failed to parse networks/tlds.json: {e}"));
     }
 
-    // 2. Aggregate any *.json files inside local networks/ directory
-    let local_dir = std::path::Path::new("networks");
-    if local_dir.is_dir() {
-        if let Ok(entries) = std::fs::read_dir(local_dir) {
-            let mut list = Vec::new();
-            for entry in entries.flatten() {
-                let path = entry.path();
-                if path.extension().and_then(|s| s.to_str()) == Some("json")
-                    && path.file_name().and_then(|s| s.to_str()) != Some("index.json")
-                {
-                    if let Ok(content) = std::fs::read_to_string(&path) {
-                        if let Ok(val) = serde_json::from_str::<serde_json::Value>(&content) {
-                            list.push(val);
-                        }
-                    }
-                }
-            }
-            if !list.is_empty() {
-                return Ok(serde_json::Value::Array(list));
-            }
-        }
-    }
-
-    // 3. Fallback to fetching remote GitHub index.json
+    // 2. Fallback: fetch index.json from kinetic-atlas GitHub root
     let url = "https://raw.githubusercontent.com/saifmukhtar/kinetic-atlas/main/index.json";
     match reqwest::get(url).await {
         Ok(resp) => match resp.json::<serde_json::Value>().await {
@@ -317,3 +293,4 @@ pub async fn get_atlas_networks() -> Result<serde_json::Value, String> {
         Err(e) => Err(format!("Failed to fetch Atlas networks: {:?}", e)),
     }
 }
+
