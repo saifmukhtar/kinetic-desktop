@@ -55,12 +55,9 @@ export interface AtlasNetwork {
   tld: string;
   name?: string;
   desc?: string;
-  seed_domain?: string;
-  local_bind_ip?: string;
-  bootstrap_nodes?: string[];
-  binary_download?: string;
   logo?: string;
-  ipfs_gateway?: string;
+  local_bind_ip?: string;
+  api_port?: number;
 }
 
 // ── API calls (all go through Tauri invoke) ──────────────────────────────────
@@ -127,7 +124,4 @@ export const daemon = {
   // Private — atlas
   syncAtlas: (): Promise<unknown> =>
     invoke("sync_atlas"),
-
-  installForkDaemon: (tld: string, daemonName: string, binaryDownloadUrl: string): Promise<string> =>
-    invoke("install_fork_daemon", { tld, daemonName, binaryDownloadUrl }),
 };

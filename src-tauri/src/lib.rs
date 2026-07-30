@@ -1,4 +1,3 @@
-mod installer;
 mod api_commands;
 
 use tauri::{
@@ -64,8 +63,6 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             greet,
-            installer::install_profile,
-            installer::install_fork_daemon,
             api_commands::get_api_url,
             api_commands::get_network_status,
             api_commands::resolve_name,
