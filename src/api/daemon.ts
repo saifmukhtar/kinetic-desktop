@@ -60,68 +60,106 @@ export interface AtlasNetwork {
   api_port?: number;
 }
 
-// ── API calls (all go through Tauri invoke) ──────────────────────────────────
+async function safeInvoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
+  const isTauri = typeof window !== 'undefined' && ('__TAURI_INTERNALS__' in window || '__TAURI__' in window);
+  if (isTauri) {
+    return await invoke<T>(cmd, args);
+  }
+
+  // Fallback for browser preview mode
+  if (cmd === 'get_atlas_networks') {
+    return [
+      {
+        version: "1.0",
+        network_id: "kinetic-mainnet",
+        tld: "kin",
+        name: "Kinetic Mainnet",
+        desc: "Primary decentralized naming network for Kinetic protocol.",
+        local_bind_ip: "127.0.0.1",
+        api_port: 16002,
+        logo: "https://raw.githubusercontent.com/saifmukhtar/kinetic-atlas/main/logos/kin.png"
+      },
+      {
+        version: "1.0",
+        network_id: "sol-fork",
+        tld: "sol",
+        name: "Solana Naming Network",
+        desc: "Community fork bringing Solana TLD resolution to Kinetic.",
+        local_bind_ip: "127.0.0.2",
+        api_port: 17002
+      }
+    ] as unknown as T;
+  }
+
+  if (cmd === 'sync_atlas') {
+    return { status: "ok" } as unknown as T;
+  }
+
+  throw new Error(`Tauri environment required for ${cmd} (running in standard browser)`);
+}
+
+// ── API calls (all go through safeInvoke wrapper) ─────────────────────────────
 
 export const daemon = {
   // Public
   getApiUrl: (): Promise<string> =>
-    invoke("get_api_url"),
+    safeInvoke("get_api_url"),
 
   getHealth: (): Promise<HealthStatus> =>
-    invoke("get_health"),
+    safeInvoke("get_health"),
 
   getPeerId: (): Promise<string> =>
-    invoke("get_peer_id"),
+    safeInvoke("get_peer_id"),
 
   getNetworkStatus: (): Promise<NetworkStatus> =>
-    invoke("get_network_status"),
+    safeInvoke("get_network_status"),
 
   getTime: (): Promise<KineticTime> =>
-    invoke("get_time"),
+    safeInvoke("get_time"),
 
   resolveName: (name: string): Promise<unknown> =>
-    invoke("resolve_name", { name }),
+    safeInvoke("resolve_name", { name }),
 
   resolveKid: (did: string): Promise<unknown> =>
-    invoke("resolve_kid", { did }),
+    safeInvoke("resolve_kid", { did }),
 
   getZone: (name: string): Promise<DnsZone> =>
-    invoke("get_zone", { name }),
+    safeInvoke("get_zone", { name }),
 
   getAtlasNetworks: (): Promise<AtlasNetwork[]> =>
-    invoke("get_atlas_networks"),
+    safeInvoke("get_atlas_networks"),
 
   // Private — owned names & DNS
   getOwnedNames: (): Promise<string[]> =>
-    invoke("get_owned_names"),
+    safeInvoke("get_owned_names"),
 
   publishZone: (name: string, zoneData: DnsZone): Promise<void> =>
-    invoke("publish_zone", { name, zoneData }),
+    safeInvoke("publish_zone", { name, zoneData }),
 
   signAndPublishZone: (name: string): Promise<void> =>
-    invoke("sign_and_publish_zone", { name }),
+    safeInvoke("sign_and_publish_zone", { name }),
 
   // Private — VDF
   registerVdf: (request: VdfRegisterRequest): Promise<{ task_id: string; message: string }> =>
-    invoke("register_vdf", { request }),
+    safeInvoke("register_vdf", { request }),
 
   renewVdf: (request: NameRenewRequest): Promise<{ task_id: string; message: string }> =>
-    invoke("renew_vdf", { request }),
+    safeInvoke("renew_vdf", { request }),
 
   getVdfStatus: (taskId: string): Promise<VdfTaskStatus> =>
-    invoke("get_vdf_status", { taskId }),
+    safeInvoke("get_vdf_status", { taskId }),
 
   deleteVdfTask: (taskId: string): Promise<unknown> =>
-    invoke("delete_vdf_task", { taskId }),
+    safeInvoke("delete_vdf_task", { taskId }),
 
   // Private — config
   getConfigInfo: (): Promise<unknown> =>
-    invoke("get_config_info"),
+    safeInvoke("get_config_info"),
 
   updateConfig: (mode: string): Promise<void> =>
-    invoke("update_config", { configPostRequest: { mode } }),
+    safeInvoke("update_config", { configPostRequest: { mode } }),
 
   // Private — atlas
   syncAtlas: (): Promise<unknown> =>
-    invoke("sync_atlas"),
+    safeInvoke("sync_atlas"),
 };
