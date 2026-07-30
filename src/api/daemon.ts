@@ -58,6 +58,8 @@ export interface AtlasNetwork {
   logo?: string;
   local_bind_ip?: string;
   api_port?: number;
+  repo?: string;
+  binary_download?: string;
 }
 
 async function safeInvoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
