@@ -127,6 +127,8 @@ pub fn run() {
             api_commands::generate_kid,
             api_commands::rotate_kid,
             api_commands::revoke_kid,
+            api_commands::get_kid_manifest,
+            api_commands::update_kid_manifest,
             installer::check_installed,
             installer::download_binaries,
             installer::install_binaries

@@ -105,6 +105,34 @@ export interface KidRevokeResponse {
   kid_doc: KidDocument;
 }
 
+export interface ServiceEntry {
+  id: string;
+  type: string;
+  protocol: string;
+  endpoint: string;
+}
+
+export interface CapabilityManifest {
+  type?: string;
+  kid: string;
+  version: number;
+  valid_from: number;
+  expires_at?: number;
+  services: ServiceEntry[];
+  signature?: string;
+}
+
+export interface KidManifestResponse {
+  name: string;
+  manifest: CapabilityManifest | null;
+}
+
+export interface KidUpdateManifestResponse {
+  success: boolean;
+  name: string;
+  manifest: CapabilityManifest;
+}
+
 export interface AtlasNetwork {
   version?: string;
   network_id?: string;
@@ -206,6 +234,12 @@ export const daemon = {
 
   revokeKid: (name: string): Promise<KidRevokeResponse> =>
     safeInvoke("revoke_kid", { name }),
+
+  getKidManifest: (name: string): Promise<KidManifestResponse> =>
+    safeInvoke("get_kid_manifest", { name }),
+
+  updateKidManifest: (name: string, services: ServiceEntry[]): Promise<KidUpdateManifestResponse> =>
+    safeInvoke("update_kid_manifest", { name, services }),
 
   // Private — VDF
   registerVdf: (request: VdfRegisterRequest): Promise<{ task_id: string; message: string }> =>
