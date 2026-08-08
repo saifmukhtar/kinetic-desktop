@@ -1,4 +1,5 @@
 mod api_commands;
+mod installer;
 
 use tauri::{
     menu::{Menu, MenuItem, PredefinedMenuItem},
@@ -6,15 +7,45 @@ use tauri::{
     Manager,
 };
 
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
+// ---------------------------------------------------------------------------
+// Window identifiers
+// ---------------------------------------------------------------------------
+const WINDOW_MAIN: &str = "main";
+
+// ---------------------------------------------------------------------------
+// System tray
+// ---------------------------------------------------------------------------
+const TRAY_ID: &str = "kinetic";
+const TRAY_TOOLTIP: &str = "Kinetic";
+
+// ---------------------------------------------------------------------------
+// Tray menu item IDs
+// ---------------------------------------------------------------------------
+const MENU_ID_SHOW: &str = "show";
+const MENU_ID_HIDE: &str = "hide";
+const MENU_ID_QUIT: &str = "quit";
+
+// ---------------------------------------------------------------------------
+// Tray menu item labels
+// ---------------------------------------------------------------------------
+const MENU_LABEL_SHOW: &str = "Show Kinetic";
+const MENU_LABEL_HIDE: &str = "Hide Window";
+const MENU_LABEL_QUIT: &str = "Quit Kinetic";
+
+// ---------------------------------------------------------------------------
+// Misc
+// ---------------------------------------------------------------------------
+const ERR_MISSING_APP_ICON: &str = "missing app icon";
+const ERR_TAURI_RUN: &str = "error while running tauri application";
+
+// ---------------------------------------------------------------------------
 
 fn show_main_window(app: &tauri::AppHandle) {
-    if let Some(window) = app.get_webview_window("main") {
-        let _ = window.show();
+    if let Some(window) = app.get_webview_window(WINDOW_MAIN) {
+        // On Linux/KDE, a minimized window must be unminimized first.
+        // Calling show() on a minimized window does nothing on most WMs.
         let _ = window.unminimize();
+        let _ = window.show();
         let _ = window.set_focus();
     }
 }
@@ -22,27 +53,31 @@ fn show_main_window(app: &tauri::AppHandle) {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .manage(api_commands::EndpointState {
+            url: std::sync::Arc::new(std::sync::Mutex::new(String::new())),
+            network_id: std::sync::Arc::new(std::sync::Mutex::new(String::new())),
+        })
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
-            let show = MenuItem::with_id(app, "show", "Show Kinetic", true, None::<&str>)?;
-            let hide = MenuItem::with_id(app, "hide", "Hide Window", true, None::<&str>)?;
-            let quit = MenuItem::with_id(app, "quit", "Quit Kinetic", true, None::<&str>)?;
+            let show = MenuItem::with_id(app, MENU_ID_SHOW, MENU_LABEL_SHOW, true, None::<&str>)?;
+            let hide = MenuItem::with_id(app, MENU_ID_HIDE, MENU_LABEL_HIDE, true, None::<&str>)?;
+            let quit = MenuItem::with_id(app, MENU_ID_QUIT, MENU_LABEL_QUIT, true, None::<&str>)?;
             let separator = PredefinedMenuItem::separator(app)?;
             let menu = Menu::with_items(app, &[&show, &hide, &separator, &quit])?;
 
-            TrayIconBuilder::with_id("kinetic")
-                .tooltip("Kinetic")
-                .icon(app.default_window_icon().cloned().expect("missing app icon"))
+            TrayIconBuilder::with_id(TRAY_ID)
+                .tooltip(TRAY_TOOLTIP)
+                .icon(app.default_window_icon().cloned().expect(ERR_MISSING_APP_ICON))
                 .menu(&menu)
                 .show_menu_on_left_click(false)
                 .on_menu_event(|app, event| match event.id().as_ref() {
-                    "show" => show_main_window(app),
-                    "hide" => {
-                        if let Some(window) = app.get_webview_window("main") {
+                    MENU_ID_SHOW => show_main_window(app),
+                    MENU_ID_HIDE => {
+                        if let Some(window) = app.get_webview_window(WINDOW_MAIN) {
                             let _ = window.hide();
                         }
                     }
-                    "quit" => app.exit(0),
+                    MENU_ID_QUIT => app.exit(0),
                     _ => {}
                 })
                 .on_tray_icon_event(|tray, event| match event {
@@ -62,7 +97,8 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            greet,
+            api_commands::set_active_endpoint,
+            api_commands::get_active_endpoint,
             api_commands::get_api_url,
             api_commands::get_network_status,
             api_commands::resolve_name,
@@ -85,8 +121,16 @@ pub fn run() {
             api_commands::renew_vdf,
             api_commands::get_vdf_status,
             api_commands::delete_vdf_task,
-            api_commands::get_atlas_networks
+            api_commands::get_atlas_networks,
+            api_commands::get_local_kids,
+            api_commands::get_local_kid,
+            api_commands::generate_kid,
+            api_commands::rotate_kid,
+            api_commands::revoke_kid,
+            installer::check_installed,
+            installer::download_binaries,
+            installer::install_binaries
         ])
         .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .expect(ERR_TAURI_RUN);
 }

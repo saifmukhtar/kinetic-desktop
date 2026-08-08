@@ -49,6 +49,62 @@ export interface KineticTime {
   [key: string]: unknown;
 }
 
+export interface LocalKidSummary {
+  name: string;
+  did: string;
+  created_at: number;
+  doc_path?: string;
+  has_key?: boolean;
+  deactivated?: boolean;
+}
+
+export interface ControllerKey {
+  id: string;
+  key_type: string;
+  public_key: string;
+  created_at?: number;
+  revoked?: boolean;
+}
+
+export interface KidDocument {
+  kid: string;
+  controller_keys: ControllerKey[];
+  created_at: number;
+  network_id?: string;
+  version?: number;
+  name?: string;
+  [key: string]: unknown;
+}
+
+export interface KidDetailResponse {
+  name: string;
+  kid_doc: KidDocument;
+  path?: string;
+}
+
+export interface KidGenerateResponse {
+  success: boolean;
+  name: string;
+  did: string;
+  is_inherited?: boolean;
+  kid_doc: KidDocument;
+}
+
+export interface KidRotateResponse {
+  success: boolean;
+  name: string;
+  did: string;
+  kid_doc: KidDocument;
+}
+
+export interface KidRevokeResponse {
+  success: boolean;
+  name: string;
+  did: string;
+  deactivated: boolean;
+  kid_doc: KidDocument;
+}
+
 export interface AtlasNetwork {
   version?: string;
   network_id?: string;
@@ -68,35 +124,7 @@ async function safeInvoke<T>(cmd: string, args?: Record<string, unknown>): Promi
     return await invoke<T>(cmd, args);
   }
 
-  // Fallback for browser preview mode
-  if (cmd === 'get_atlas_networks') {
-    return [
-      {
-        version: "1.0",
-        network_id: "kinetic-mainnet",
-        tld: "kin",
-        name: "Kinetic Mainnet",
-        desc: "Primary decentralized naming network for Kinetic protocol.",
-        local_bind_ip: "127.0.0.1",
-        api_port: 16002,
-        logo: "https://raw.githubusercontent.com/saifmukhtar/kinetic-atlas/main/logos/kin.png"
-      },
-      {
-        version: "1.0",
-        network_id: "sol-fork",
-        tld: "sol",
-        name: "Solana Naming Network",
-        desc: "Community fork bringing Solana TLD resolution to Kinetic.",
-        local_bind_ip: "127.0.0.2",
-        api_port: 17002
-      }
-    ] as unknown as T;
-  }
-
-  if (cmd === 'sync_atlas') {
-    return { status: "ok" } as unknown as T;
-  }
-
+  // Fallback removed per user request: strictly enforce Tauri environment
   throw new Error(`Tauri environment required for ${cmd} (running in standard browser)`);
 }
 
@@ -106,6 +134,12 @@ export const daemon = {
   // Public
   getApiUrl: (): Promise<string> =>
     safeInvoke("get_api_url"),
+
+  setActiveEndpoint: (ip: string, port: number, networkId: string): Promise<void> =>
+    safeInvoke("set_active_endpoint", { ip, port, networkId }),
+
+  getActiveEndpoint: (): Promise<{ url: string; network_id: string }> =>
+    safeInvoke("get_active_endpoint"),
 
   getHealth: (): Promise<HealthStatus> =>
     safeInvoke("get_health"),
@@ -141,6 +175,38 @@ export const daemon = {
   signAndPublishZone: (name: string): Promise<void> =>
     safeInvoke("sign_and_publish_zone", { name }),
 
+  publishKid: (authorizedKid: unknown): Promise<unknown> =>
+    safeInvoke("publish_kid", { authorizedKid }),
+
+  publishManifest: (authorizedManifest: unknown): Promise<unknown> =>
+    safeInvoke("publish_manifest", { authorizedManifest }),
+
+  // Private — Local KID management
+  getKids: (): Promise<{ kids: LocalKidSummary[] }> =>
+    safeInvoke("get_local_kids"),
+
+  getKid: (name: string): Promise<KidDetailResponse> =>
+    safeInvoke("get_local_kid", { name }),
+
+  generateSubnameKid: (
+    baseName: string,
+    subName?: string,
+    inheritSubname: boolean = true,
+    force: boolean = false
+  ): Promise<KidGenerateResponse> =>
+    safeInvoke("generate_kid", {
+      baseName,
+      subName: subName || null,
+      inheritSubname,
+      force,
+    }),
+
+  rotateKid: (name: string): Promise<KidRotateResponse> =>
+    safeInvoke("rotate_kid", { name }),
+
+  revokeKid: (name: string): Promise<KidRevokeResponse> =>
+    safeInvoke("revoke_kid", { name }),
+
   // Private — VDF
   registerVdf: (request: VdfRegisterRequest): Promise<{ task_id: string; message: string }> =>
     safeInvoke("register_vdf", { request }),
@@ -151,8 +217,18 @@ export const daemon = {
   getVdfStatus: (taskId: string): Promise<VdfTaskStatus> =>
     safeInvoke("get_vdf_status", { taskId }),
 
-  deleteVdfTask: (taskId: string): Promise<unknown> =>
+  deleteVdfTask: (taskId: string): Promise<void> =>
     safeInvoke("delete_vdf_task", { taskId }),
+
+  // Private — Installer
+  checkInstalled: (networkId: string): Promise<{ is_installed: boolean; install_type: string | null }> =>
+    safeInvoke("check_installed", { networkId }),
+
+  downloadBinaries: (networkId: string, installType: string, baseUrl: string): Promise<string> =>
+    safeInvoke("download_binaries", { networkId, installType, baseUrl }),
+
+  installBinaries: (networkId: string, installType: string): Promise<void> =>
+    safeInvoke("install_binaries", { networkId, installType }),
 
   // Private — config
   getConfigInfo: (): Promise<unknown> =>
