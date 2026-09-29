@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { daemon, DnsRecord } from '../api/daemon';
 import DnsRecordRow from '../components/DnsRecordRow';
+import LocalZonesView from '../components/LocalZonesView';
 import styles from './Dns.module.css';
 
 export default function Dns() {
@@ -13,6 +14,9 @@ export default function Dns() {
   const [records, setRecords] = useState<DnsRecord[]>([]);
   const [isModified, setIsModified] = useState(false);
 
+  // Tabs: 'global' | 'local'
+  const [activeTab, setActiveTab] = useState<'global' | 'local'>('global');
+
   useEffect(() => {
     daemon.getOwnedNames().then(res => {
       setNames(res);
@@ -23,7 +27,7 @@ export default function Dns() {
   }, [selectedName]);
 
   useEffect(() => {
-    if (!selectedName) return;
+    if (!selectedName || activeTab !== 'global') return;
     daemon.getZone(selectedName).then(res => {
       // Flatten zone records
       const flat: DnsRecord[] = [];
@@ -33,7 +37,7 @@ export default function Dns() {
       setRecords(flat);
       setIsModified(false);
     }).catch(console.error);
-  }, [selectedName]);
+  }, [selectedName, activeTab]);
 
   const updateRecordType = (idx: number, type: DnsRecord['type']) => {
     const newRecords = [...records];
@@ -63,8 +67,7 @@ export default function Dns() {
 
   const handleSave = async () => {
     if (!selectedName) return;
-    // Group records back into expected format
-    const zoneData = { records: { '@': records } }; // Simplified for UI, typically root '@' or subdomains
+    const zoneData = { records: { '@': records } }; // Simplified for UI
     try {
       await daemon.publishZone(selectedName, zoneData);
       setIsModified(false);
@@ -90,46 +93,72 @@ export default function Dns() {
           <h1 className={styles.title}>Zone Editor</h1>
         </div>
         
-        <select 
-          className={`input ${styles.selector}`}
-          value={selectedName} 
-          onChange={e => setSelectedName(e.target.value)}
-        >
-          <option value="">Select a name...</option>
-          {names.map(n => <option key={n} value={n}>{n}</option>)}
-        </select>
+        <div style={{ display: 'flex', gap: '8px', background: 'var(--bg-muted)', padding: '4px', borderRadius: 'var(--r-sm)' }}>
+          <button 
+            className={`btn-ghost ${activeTab === 'global' ? styles.tabActive : ''}`} 
+            onClick={() => setActiveTab('global')}
+            style={activeTab === 'global' ? { background: 'var(--bg-surface)', boxShadow: '0 1px 2px rgba(0,0,0,0.1)' } : {}}
+          >
+            Global Network
+          </button>
+          <button 
+            className={`btn-ghost ${activeTab === 'local' ? styles.tabActive : ''}`} 
+            onClick={() => setActiveTab('local')}
+            style={activeTab === 'local' ? { background: 'var(--bg-surface)', boxShadow: '0 1px 2px rgba(0,0,0,0.1)' } : {}}
+          >
+            Local Overrides
+          </button>
+        </div>
       </div>
 
-      {selectedName && (
+      {activeTab === 'local' ? (
+        <LocalZonesView />
+      ) : (
         <>
-          <div className={styles.records}>
-            {records.length === 0 && <p className={styles.empty}>No records found.</p>}
-            
-            {records.map((rec, idx) => (
-              <DnsRecordRow 
-                key={idx}
-                record={rec}
-                onTypeChange={(type) => updateRecordType(idx, type)}
-                onValueChange={(value) => updateRecordValue(idx, value)}
-                onDelete={() => deleteRecord(idx)}
-              />
-            ))}
+          <div style={{ marginBottom: '24px' }}>
+            <select 
+              className={`input ${styles.selector}`}
+              value={selectedName} 
+              onChange={e => setSelectedName(e.target.value)}
+              style={{ maxWidth: '300px' }}
+            >
+              <option value="">Select a name...</option>
+              {names.map(n => <option key={n} value={n}>{n}</option>)}
+            </select>
           </div>
 
-          <div>
-            <button className="btn-ghost" onClick={addRecord}>
-              Add Record
-            </button>
-          </div>
+          {selectedName && (
+            <>
+              <div className={styles.records}>
+                {records.length === 0 && <p className={styles.empty}>No records found.</p>}
+                
+                {records.map((rec, idx) => (
+                  <DnsRecordRow 
+                    key={idx}
+                    record={rec}
+                    onTypeChange={(type) => updateRecordType(idx, type)}
+                    onValueChange={(value) => updateRecordValue(idx, value)}
+                    onDelete={() => deleteRecord(idx)}
+                  />
+                ))}
+              </div>
 
-          <div className={styles.footer}>
-            <button className="btn-ghost" onClick={handleSave} disabled={!isModified}>
-              Save Zone
-            </button>
-            <button className="btn-primary" onClick={handlePublish} disabled={isModified}>
-              Publish to Network
-            </button>
-          </div>
+              <div>
+                <button className="btn-ghost" onClick={addRecord}>
+                  Add Record
+                </button>
+              </div>
+
+              <div className={styles.footer}>
+                <button className="btn-ghost" onClick={handleSave} disabled={!isModified}>
+                  Save Zone
+                </button>
+                <button className="btn-primary" onClick={handlePublish} disabled={isModified}>
+                  Publish to Network
+                </button>
+              </div>
+            </>
+          )}
         </>
       )}
     </div>

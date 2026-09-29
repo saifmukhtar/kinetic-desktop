@@ -1,37 +1,20 @@
 import { useState, useEffect } from 'react';
 import { daemon, HealthStatus } from '../api/daemon';
 import StatusBadge from '../components/StatusBadge';
+import ProxyModal from '../components/ProxyModal';
+import AdvancedSettingsModal from '../components/AdvancedSettingsModal';
 import styles from './Settings.module.css';
 
 export default function Settings() {
   const [health, setHealth] = useState<HealthStatus | null>(null);
   const [apiUrl, setApiUrl] = useState<string>('Loading...');
-  const [currentMode, setCurrentMode] = useState<string>('full');
-  const [selectedMode, setSelectedMode] = useState<string>('full');
-  const [applying, setApplying] = useState(false);
+  const [showProxyModal, setShowProxyModal] = useState(false);
+  const [showAdvancedModal, setShowAdvancedModal] = useState(false);
 
   useEffect(() => {
     daemon.getApiUrl().then(setApiUrl).catch(() => setApiUrl('Unavailable'));
     daemon.getHealth().then(setHealth).catch(console.error);
-    daemon.getConfigInfo().then((info: any) => {
-      if (info && info.mode) {
-        setCurrentMode(info.mode);
-        setSelectedMode(info.mode);
-      }
-    }).catch(console.error);
   }, []);
-
-  const handleApply = async () => {
-    setApplying(true);
-    try {
-      await daemon.updateConfig(selectedMode);
-      setCurrentMode(selectedMode);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setApplying(false);
-    }
-  };
 
   return (
     <div className={styles.container}>
@@ -64,34 +47,27 @@ export default function Settings() {
       <div className="rule"></div>
 
       <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>Node Mode</h2>
-        <div className={styles.radioGroup}>
-          <label className={styles.radioLabel}>
-            <input
-              type="radio"
-              value="full"
-              checked={selectedMode === 'full'}
-              onChange={e => setSelectedMode(e.target.value)}
-            />
-            Full Node (participate in network and gossip)
-          </label>
-          <label className={styles.radioLabel}>
-            <input
-              type="radio"
-              value="light"
-              checked={selectedMode === 'light'}
-              onChange={e => setSelectedMode(e.target.value)}
-            />
-            Light Client (only sync block headers)
-          </label>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h2 className={styles.sectionTitle}>Advanced Daemon Configuration</h2>
+            <p className={styles.infoLabel} style={{ marginBottom: 0 }}>Configure network ports, protocols, and low-level daemon settings.</p>
+          </div>
+          <button className="btn-secondary" onClick={() => setShowAdvancedModal(true)}>
+            Advanced Settings
+          </button>
         </div>
-        <div className={styles.applyRow}>
-          <button 
-            className="btn-primary" 
-            onClick={handleApply} 
-            disabled={applying || selectedMode === currentMode}
-          >
-            {applying ? 'Applying...' : 'Apply'}
+      </div>
+
+      <div className="rule"></div>
+
+      <div className={styles.section}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h2 className={styles.sectionTitle}>OS Proxy & Routing</h2>
+            <p className={styles.infoLabel} style={{ marginBottom: 0 }}>Configure universal PAC routing for Kinetic and custom namespaces.</p>
+          </div>
+          <button className="btn-secondary" onClick={() => setShowProxyModal(true)}>
+            Manage Routing
           </button>
         </div>
       </div>
@@ -109,6 +85,9 @@ export default function Settings() {
           <span className={styles.infoValue}>{health?.version || 'Unknown'}</span>
         </div>
       </div>
+
+      {showProxyModal && <ProxyModal onClose={() => setShowProxyModal(false)} />}
+      {showAdvancedModal && <AdvancedSettingsModal onClose={() => setShowAdvancedModal(false)} />}
     </div>
   );
 }

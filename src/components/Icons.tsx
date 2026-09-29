@@ -91,6 +91,17 @@ export function IconKid({ size = defaults.size, color = defaults.color, classNam
   );
 }
 
+
+
+// ── Identity — a shield shape ────────────────────────────────────────────────
+export function IconIdentity({ size = defaults.size, color = defaults.color, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" className={className}>
+      <path d="M8 2L3 4V8C3 11 5.5 13.5 8 15C10.5 13.5 13 11 13 8V4L8 2Z" stroke={color} strokeWidth="1.4" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 // ── Forge — an anvil-like shape (creation / minting) ─────────────────────────
 export function IconForge({ size = defaults.size, color = defaults.color, className }: IconProps) {
   return (
@@ -173,6 +184,17 @@ export function IconRefresh({ size = defaults.size, color = defaults.color, clas
     <svg width={size} height={size} viewBox="0 0 16 16" fill="none" className={className}>
       <path d="M13.5 2.5V6.5H9.5" stroke={color} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M13.3 6.5C12.4 3.9 9.7 2.3 6.9 2.9C4.1 3.5 2.3 6.1 2.5 8.9C2.7 11.8 5 14 7.8 14C10.2 14 12.3 12.3 13 10" stroke={color} strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+// ── Help / Info ──────────────────────────────────────────────────────────────
+export function IconHelp({ size = defaults.size, color = defaults.color, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" className={className}>
+      <circle cx="8" cy="8" r="6" stroke={color} strokeWidth="1.4" />
+      <path d="M6.5 6.5C6.5 5.5 7.2 4.8 8 4.8C8.8 4.8 9.5 5.5 9.5 6.2C9.5 7.2 8 7.5 8 8.5" stroke={color} strokeWidth="1.4" strokeLinecap="round" />
+      <circle cx="8" cy="11.2" r="0.8" fill={color} />
     </svg>
   );
 }

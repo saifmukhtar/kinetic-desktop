@@ -131,7 +131,19 @@ pub fn run() {
             api_commands::update_kid_manifest,
             installer::check_installed,
             installer::download_binaries,
-            installer::install_binaries
+            installer::install_binaries,
+            api_commands::check_identity_status,
+            api_commands::generate_seed_phrase,
+            api_commands::save_seed_phrase,
+            api_commands::list_proxy_rules,
+            api_commands::add_custom_proxy,
+            api_commands::remove_custom_proxy,
+            api_commands::get_reserved_names,
+            api_commands::get_local_reserved_zone,
+            api_commands::save_local_reserved_zone,
+            api_commands::delete_local_reserved_zone,
+            api_commands::get_daemon_config,
+            api_commands::set_daemon_config,
         ])
         .run(tauri::generate_context!())
         .expect(ERR_TAURI_RUN);

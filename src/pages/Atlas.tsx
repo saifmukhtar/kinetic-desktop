@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { daemon, AtlasNetwork } from '../api/daemon';
+import { IconHelp } from '../components/Icons';
 import styles from './Atlas.module.css';
 
 function NetworkCard({ net, onClick }: { net: AtlasNetwork, onClick: () => void }) {
@@ -27,12 +28,177 @@ function NetworkCard({ net, onClick }: { net: AtlasNetwork, onClick: () => void 
   );
 }
 
+
+function NetworkModal({ net, onClose }: { net: AtlasNetwork, onClose: () => void }) {
+  const [installMode, setInstallMode] = useState<'minimal' | 'full'>('full');
+  const [installStep, setInstallStep] = useState<'initial' | 'downloading' | 'downloaded' | 'installing' | 'success'>('initial');
+  
+  // Update state to handle full InstallStatus
+  const [installStatus, setInstallStatus] = useState<{ is_installed: boolean; install_type: string | null } | null>(null);
+  const [installError, setInstallError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Check if installed on mount
+    const check = async () => {
+      try {
+        const status = await daemon.checkInstalled(net.network_id || net.tld);
+        setInstallStatus(status);
+        if (status.is_installed && status.install_type) {
+          setInstallMode(status.install_type as 'minimal' | 'full');
+        }
+      } catch (e) {
+        console.error("Failed to check installation status", e);
+      }
+    };
+    check();
+  }, [net]);
+
+  const handleDownload = async () => {
+    setInstallStep('downloading');
+    setInstallError(null);
+    try {
+      if (!net.binary_download) throw new Error("No binary download URL provided for this network.");
+      const baseUrl = net.binary_download;
+      await daemon.downloadBinaries(net.network_id || net.tld, installMode, baseUrl);
+      setInstallStep('downloaded');
+    } catch (e) {
+      setInstallError(String(e));
+      setInstallStep('initial');
+    }
+  };
+
+  const handleInstall = async () => {
+    setInstallStep('installing');
+    setInstallError(null);
+    try {
+      await daemon.installBinaries(net.network_id || net.tld, installMode);
+      setInstallStep('success');
+    } catch (e) {
+      setInstallError(String(e));
+      setInstallStep('downloaded');
+    }
+  };
+
+  const isUpdate = installStatus?.is_installed === true;
+
+  return (
+    <div className={styles.modalOverlay} onClick={onClose}>
+      <div className={styles.modal} onClick={e => e.stopPropagation()}>
+        <div className={styles.modalHeader}>
+          <h2 className={styles.modalTitle}>{net.name || net.network_id} (.{net.tld})</h2>
+          <button className="btn-icon" onClick={onClose}>✕</button>
+        </div>
+        <div className={styles.modalBody}>
+          {net.desc && <p className={styles.modalDesc}>{net.desc}</p>}
+
+          <div className={styles.installSection}>
+            {installStatus !== null ? (
+              <>
+                {installStep === 'initial' && (
+                  <div className={styles.installFlow}>
+                    {isUpdate ? (
+                      <>
+                        <h3 className={styles.installTitle}>Update Available</h3>
+                        <p className={styles.installHint}>
+                          This network is currently installed with a <strong>{installMode}</strong> profile. 
+                          Clicking Update will safely stop the running services, download the latest version, and restart them.
+                        </p>
+                        {installError && <div className={styles.errorMsg}>{installError}</div>}
+                        <button className="btn-primary" onClick={handleDownload}>Update Network</button>
+                      </>
+                    ) : (
+                      <>
+                        <h3 className={styles.installTitle}>Installation Profile</h3>
+                        <div className={styles.radioGroup}>
+                          <label className={styles.radioLabel}>
+                            <input type="radio" checked={installMode === 'full'} onChange={() => setInstallMode('full')} />
+                            <div className={styles.radioText}>
+                              <strong>Normal User (Full Install)</strong>
+                              <span>Installs Daemon, CLI, DNS Proxy, and PAC Router.</span>
+                            </div>
+                            <div className={styles.helpIconWrapper}>
+                              <IconHelp size={14} />
+                              <div className={styles.tooltip}>
+                                Recommended for standard users. Runs the PAC proxy to seamlessly resolve decentralized names natively inside your browser.
+                              </div>
+                            </div>
+                          </label>
+                          <label className={styles.radioLabel}>
+                            <input type="radio" checked={installMode === 'minimal'} onChange={() => setInstallMode('minimal')} />
+                            <div className={styles.radioText}>
+                              <strong>Restricted User (Minimal Install)</strong>
+                              <span>Installs only Daemon and CLI. (For restricted use cases)</span>
+                            </div>
+                            <div className={styles.helpIconWrapper}>
+                              <IconHelp size={14} />
+                              <div className={styles.tooltip}>
+                                Ideal for corporate laptops or servers where system-level proxy configurations are locked down or prohibited.
+                              </div>
+                            </div>
+                          </label>
+                        </div>
+                        {installError && <div className={styles.errorMsg}>{installError}</div>}
+                        <button className="btn-primary" onClick={handleDownload}>Download Package</button>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {installStep === 'downloading' && (
+                  <div className={styles.stateMsg}>
+                    <div className={styles.spinner} />
+                    <span>Downloading {installMode} package...</span>
+                  </div>
+                )}
+
+                {installStep === 'downloaded' && (
+                  <div className={styles.installFlow}>
+                    <div className={styles.successMsg}>✓ Package downloaded successfully.</div>
+                    <p className={styles.installHint}>
+                      {isUpdate 
+                        ? "Click below to overwrite existing binaries. You will be prompted for Administrator privileges."
+                        : "Click Install to copy binaries to your system and register background services. You will be prompted for Administrator privileges."}
+                    </p>
+                    {installError && <div className={styles.errorMsg}>{installError}</div>}
+                    <button className="btn-primary" onClick={handleInstall}>{isUpdate ? "Install Update" : "Install Now"}</button>
+                  </div>
+                )}
+
+                {installStep === 'installing' && (
+                  <div className={styles.stateMsg}>
+                    <div className={styles.spinner} />
+                    <span>{isUpdate ? "Stopping services and overwriting..." : "Installing and starting services..."} (Waiting for permissions)</span>
+                  </div>
+                )}
+
+                {installStep === 'success' && (
+                  <div className={styles.stateMsg} style={{ color: 'var(--color-success)' }}>
+                    <h2>✓ {isUpdate ? "Update Complete" : "Installation Complete"}</h2>
+                    <p>The Kinetic {installMode} node is now running in the background!</p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className={styles.stateMsg}>
+                <div className={styles.spinner} />
+                <span>Checking system...</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Atlas() {
   const [networks, setNetworks] = useState<AtlasNetwork[]>([]);
   const [loading, setLoading]   = useState(true);
   const [syncing, setSyncing]   = useState(false);
   const [atlasError, setAtlasError] = useState<string | null>(null);
   const [selectedNetwork, setSelectedNetwork] = useState<AtlasNetwork | null>(null);
+
+
 
   const loadNetworks = useCallback(async () => {
     setLoading(true);
@@ -103,43 +269,7 @@ export default function Atlas() {
       </section>
 
       {selectedNetwork && (
-        <div className={styles.modalOverlay} onClick={closeModal}>
-          <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h2 className={styles.modalTitle}>{selectedNetwork.name || selectedNetwork.network_id} (.{selectedNetwork.tld})</h2>
-              <button className="btn-icon" onClick={closeModal}>✕</button>
-            </div>
-            <div className={styles.modalBody}>
-              <p className={styles.modalDesc}>{selectedNetwork.desc || "No description provided."}</p>
-              
-              <div className={styles.modalActions}>
-                <button className="btn-primary">
-                  Install Network
-                </button>
-                {selectedNetwork.repo ? (
-                  <button
-                    className="btn-ghost"
-                    onClick={async () => {
-                      try {
-                        const { openUrl } = await import('@tauri-apps/plugin-opener');
-                        await openUrl(selectedNetwork.repo!);
-                      } catch (err) {
-                        console.error('Failed to open URL:', err);
-                        window.open(selectedNetwork.repo!, '_blank'); // Fallback for browser testing
-                      }
-                    }}
-                  >
-                    View Repository
-                  </button>
-                ) : (
-                  <button className="btn-ghost" disabled>
-                    No Repository
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+        <NetworkModal net={selectedNetwork} onClose={closeModal} />
       )}
     </div>
   );

@@ -1,0 +1,83 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.description {
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+  max-width: 600px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 16px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 100px;
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  border-color: var(--ink-muted);
+}
+
+.cardActive {
+  border-color: var(--brand-primary);
+  background: var(--bg-base);
+}
+
+.cardInactive {
+  opacity: 0.7;
+}
+
+.status {
+  font-size: var(--text-xs);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statusActive {
+  color: var(--status-ok);
+}
+
+.statusInactive {
+  color: var(--ink-muted);
+}
+
+.name {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: var(--text-md);
+  color: var(--ink);
+  margin-top: auto;
+}
+
+/* Modal specific overrides */
+.modalRecords {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.empty {
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+  text-align: center;
+  padding: 24px;
+  background: var(--bg-muted);
+  border-radius: var(--r-sm);
+}

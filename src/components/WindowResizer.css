@@ -1,0 +1,38 @@
+.resizer {
+  position: fixed;
+  z-index: 9999;
+  background: transparent;
+}
+
+.resizer-n {
+  top: 0; left: 0; right: 0; height: 4px;
+  cursor: n-resize;
+}
+.resizer-s {
+  bottom: 0; left: 0; right: 0; height: 4px;
+  cursor: s-resize;
+}
+.resizer-e {
+  top: 0; bottom: 0; right: 0; width: 4px;
+  cursor: e-resize;
+}
+.resizer-w {
+  top: 0; bottom: 0; left: 0; width: 4px;
+  cursor: w-resize;
+}
+.resizer-ne {
+  top: 0; right: 0; width: 8px; height: 8px;
+  cursor: ne-resize;
+}
+.resizer-nw {
+  top: 0; left: 0; width: 8px; height: 8px;
+  cursor: nw-resize;
+}
+.resizer-se {
+  bottom: 0; right: 0; width: 8px; height: 8px;
+  cursor: se-resize;
+}
+.resizer-sw {
+  bottom: 0; left: 0; width: 8px; height: 8px;
+  cursor: sw-resize;
+}

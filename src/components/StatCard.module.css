@@ -15,9 +15,9 @@
 }
 
 .accentBar {
-  height: 2px;
-  background: linear-gradient(90deg, var(--amber), transparent 80%);
-  opacity: 0.6;
+  height: 3px;
+  background: linear-gradient(90deg, var(--amber), transparent 70%);
+  opacity: 0.5;
 }
 
 .body {
@@ -40,10 +40,12 @@
 
 .label {
   font-size: var(--text-xs);
-  color: var(--ink-muted);
+  color: var(--ink-secondary);
   font-family: var(--font-sans);
+  font-weight: 500;
 }
 
 .accent .accentBar {
   opacity: 1;
+  height: 3px;
 }

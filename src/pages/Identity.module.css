@@ -1,0 +1,145 @@
+.container {
+  padding: 24px 32px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: 32px;
+}
+
+.titleGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title {
+  font-size: var(--text-2xl);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin: 0;
+}
+
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.cardTitle {
+  font-size: var(--text-lg);
+  font-weight: 500;
+  margin: 0 0 8px 0;
+}
+
+.cardDesc {
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+  margin: 0 0 24px 0;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+/* Phrase Display */
+.phraseGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  background: var(--bg-muted);
+  padding: 20px;
+  border-radius: var(--r-md);
+  margin-bottom: 24px;
+}
+
+.phraseWord {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  border-radius: var(--r-sm);
+}
+
+.wordIndex {
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+  user-select: none;
+}
+
+/* Verification Step */
+.verifyRow {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.verifyInputGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.verifyLabel {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+  width: 80px;
+}
+
+.verifyInput {
+  flex: 1;
+  max-width: 200px;
+}
+
+/* Restore Box */
+.restoreBox {
+  width: 100%;
+  height: 120px;
+  resize: vertical;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  padding: 12px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--ink);
+}
+
+.restoreBox:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* Error Text */
+.errorText {
+  color: var(--status-err);
+  font-size: var(--text-sm);
+  margin-top: 12px;
+}
+
+.statusRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: var(--bg-muted);
+  border-radius: var(--r-sm);
+  margin-top: 16px;
+}
+
+.statusLabel {
+  font-weight: 500;
+}

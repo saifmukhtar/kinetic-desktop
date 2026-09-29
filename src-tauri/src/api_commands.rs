@@ -1,8 +1,12 @@
 use std::path::PathBuf;
 use tauri::command;
 use kinetic_sdk::apis::configuration::Configuration;
-use kinetic_sdk::apis::public_api;
-use kinetic_sdk::apis::private_api;
+use kinetic_sdk::apis::system_api;
+use kinetic_sdk::apis::network_api;
+use kinetic_sdk::apis::nrs_api;
+use kinetic_sdk::apis::kid_api;
+use kinetic_sdk::apis::vdf_api;
+use kinetic_sdk::apis::auth_api;
 use kinetic_sdk::models;
 
 // ---------------------------------------------------------------------------
@@ -127,7 +131,7 @@ pub async fn get_api_url(state: tauri::State<'_, EndpointState>) -> Result<Strin
 #[command]
 pub async fn get_network_status(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
-    match public_api::get_network_status(&config).await {
+    match network_api::get_network_status(&config).await {
         Ok(status) => Ok(serde_json::to_value(status).map_err(|e| e.to_string())?),
         Err(e) => Err(format!("Failed to get network status: {:?}", e)),
     }
@@ -136,7 +140,7 @@ pub async fn get_network_status(state: tauri::State<'_, EndpointState>) -> Resul
 #[command]
 pub async fn resolve_name(name: String, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
-    match public_api::resolve_name(&config, &name).await {
+    match nrs_api::resolve_name(&config, &name).await {
         Ok(zone) => Ok(serde_json::to_value(zone).map_err(|e| e.to_string())?),
         Err(e) => Err(format!("Failed to resolve name {}: {:?}", name, e)),
     }
@@ -145,7 +149,7 @@ pub async fn resolve_name(name: String, state: tauri::State<'_, EndpointState>) 
 #[command]
 pub async fn get_config_info(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_ADMIN, &state);
-    match private_api::get_config(&config).await {
+    match system_api::get_config(&config).await {
         Ok(info) => Ok(serde_json::to_value(info).map_err(|e| e.to_string())?),
         Err(e) => Err(format!("Failed to get config: {:?}", e)),
     }
@@ -154,7 +158,7 @@ pub async fn get_config_info(state: tauri::State<'_, EndpointState>) -> Result<s
 #[command]
 pub async fn sync_atlas(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_ATLAS, &state);
-    match private_api::sync_atlas(&config).await {
+    match system_api::sync_atlas(&config).await {
         Ok(resp) => Ok(serde_json::to_value(resp).map_err(|e| e.to_string())?),
         Err(e) => Err(format!("Failed to sync atlas: {:?}", e)),
     }
@@ -163,7 +167,7 @@ pub async fn sync_atlas(state: tauri::State<'_, EndpointState>) -> Result<serde_
 #[command]
 pub async fn get_health(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
-    match public_api::get_health(&config).await {
+    match system_api::get_health(&config).await {
         Ok(status) => Ok(serde_json::to_value(status).map_err(|e| e.to_string())?),
         Err(e) => Err(format!("Failed to get health: {:?}", e)),
     }
@@ -172,7 +176,7 @@ pub async fn get_health(state: tauri::State<'_, EndpointState>) -> Result<serde_
 #[command]
 pub async fn get_peer_id(state: tauri::State<'_, EndpointState>) -> Result<String, String> {
     let config = get_config(&state);
-    match public_api::get_peer_id(&config).await {
+    match network_api::get_peer_id(&config).await {
         Ok(peer_id) => Ok(peer_id),
         Err(e) => Err(format!("Failed to get peer ID: {:?}", e)),
     }
@@ -181,7 +185,7 @@ pub async fn get_peer_id(state: tauri::State<'_, EndpointState>) -> Result<Strin
 #[command]
 pub async fn get_time(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
-    match public_api::get_time(&config).await {
+    match system_api::get_time(&config).await {
         Ok(time) => Ok(serde_json::to_value(time).map_err(|e| e.to_string())?),
         Err(e) => Err(format!("Failed to get time: {:?}", e)),
     }
@@ -190,7 +194,7 @@ pub async fn get_time(state: tauri::State<'_, EndpointState>) -> Result<serde_js
 #[command]
 pub async fn resolve_kid(did: String, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
-    match public_api::resolve_kid(&config, &did).await {
+    match kid_api::resolve_kid(&config, &did).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
         Err(e) => Err(format!("Failed to resolve KID: {:?}", e)),
     }
@@ -199,7 +203,7 @@ pub async fn resolve_kid(did: String, state: tauri::State<'_, EndpointState>) ->
 #[command]
 pub async fn get_zone(name: String, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
-    match public_api::get_zone(&config, &name).await {
+    match nrs_api::get_zone(&config, &name).await {
         Ok(zone) => Ok(serde_json::to_value(zone).map_err(|e| e.to_string())?),
         Err(e) => Err(format!("Failed to get zone {}: {:?}", name, e)),
     }
@@ -212,16 +216,16 @@ pub async fn get_zone(name: String, state: tauri::State<'_, EndpointState>) -> R
 #[command]
 pub async fn get_owned_names(state: tauri::State<'_, EndpointState>) -> Result<Vec<String>, String> {
     let config = get_private_config(ROLE_PUBLISH, &state);
-    match private_api::get_owned_names(&config).await {
+    match nrs_api::get_owned_names(&config).await {
         Ok(names) => Ok(names),
         Err(e) => Err(format!("Failed to get owned names: {:?}", e)),
     }
 }
 
 #[command]
-pub async fn publish_zone(name: String, zone_data: models::DnsZone, state: tauri::State<'_, EndpointState>) -> Result<(), String> {
+pub async fn publish_zone(name: String, zone_data: models::NrsZone, state: tauri::State<'_, EndpointState>) -> Result<(), String> {
     let config = get_private_config(ROLE_PUBLISH, &state);
-    match private_api::save_zone(&config, &name, zone_data).await {
+    match nrs_api::save_zone(&config, &name, zone_data).await {
         Ok(_) => Ok(()),
         Err(e) => Err(format!("Failed to save zone: {:?}", e)),
     }
@@ -230,7 +234,7 @@ pub async fn publish_zone(name: String, zone_data: models::DnsZone, state: tauri
 #[command]
 pub async fn sign_and_publish_zone(name: String, state: tauri::State<'_, EndpointState>) -> Result<(), String> {
     let config = get_private_config(ROLE_PUBLISH, &state);
-    match private_api::publish_zone(&config, &name).await {
+    match nrs_api::publish_zone(&config, &name).await {
         Ok(_) => Ok(()),
         Err(e) => Err(format!("Failed to sign and publish zone: {:?}", e)),
     }
@@ -239,7 +243,7 @@ pub async fn sign_and_publish_zone(name: String, state: tauri::State<'_, Endpoin
 #[command]
 pub async fn commit_name(commit_request: models::CommitRequest, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_PUBLISH, &state);
-    match private_api::commit_name(&config, commit_request).await {
+    match nrs_api::commit_name(&config, commit_request).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
         Err(e) => Err(format!("Failed to commit name: {:?}", e)),
     }
@@ -248,7 +252,7 @@ pub async fn commit_name(commit_request: models::CommitRequest, state: tauri::St
 #[command]
 pub async fn publish_name(publish_request: models::PublishRequest, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_PUBLISH, &state);
-    match private_api::publish_name(&config, publish_request).await {
+    match nrs_api::publish_name(&config, publish_request).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
         Err(e) => Err(format!("Failed to publish name: {:?}", e)),
     }
@@ -257,7 +261,7 @@ pub async fn publish_name(publish_request: models::PublishRequest, state: tauri:
 #[command]
 pub async fn publish_kid(authorized_kid: models::AuthorizedKid, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_PUBLISH, &state);
-    match private_api::publish_kid(&config, authorized_kid).await {
+    match kid_api::publish_kid(&config, authorized_kid).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
         Err(e) => Err(format!("Failed to publish KID: {:?}", e)),
     }
@@ -266,7 +270,7 @@ pub async fn publish_kid(authorized_kid: models::AuthorizedKid, state: tauri::St
 #[command]
 pub async fn publish_manifest(authorized_manifest: models::AuthorizedManifest, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_PUBLISH, &state);
-    match private_api::publish_manifest(&config, authorized_manifest).await {
+    match kid_api::publish_manifest(&config, authorized_manifest).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
         Err(e) => Err(format!("Failed to publish manifest: {:?}", e)),
     }
@@ -279,7 +283,7 @@ pub async fn publish_manifest(authorized_manifest: models::AuthorizedManifest, s
 #[command]
 pub async fn update_config(update_config_request: models::UpdateConfigRequest, state: tauri::State<'_, EndpointState>) -> Result<(), String> {
     let config = get_private_config(ROLE_ADMIN, &state);
-    match private_api::update_config(&config, update_config_request).await {
+    match system_api::update_config(&config, update_config_request).await {
         Ok(_) => Ok(()),
         Err(e) => Err(format!("Failed to update config: {:?}", e)),
     }
@@ -292,7 +296,7 @@ pub async fn update_config(update_config_request: models::UpdateConfigRequest, s
 #[command]
 pub async fn register_vdf(request: models::VdfRegisterRequest, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_VDF, &state);
-    match private_api::vdf_register(&config, request).await {
+    match vdf_api::vdf_register(&config, request).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
         Err(e) => Err(format!("Failed to register VDF: {:?}", e)),
     }
@@ -301,7 +305,7 @@ pub async fn register_vdf(request: models::VdfRegisterRequest, state: tauri::Sta
 #[command]
 pub async fn renew_vdf(request: models::NameRenewRequest, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_VDF, &state);
-    match private_api::vdf_renew(&config, request).await {
+    match vdf_api::vdf_renew(&config, request).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
         Err(e) => Err(format!("Failed to renew VDF: {:?}", e)),
     }
@@ -310,7 +314,7 @@ pub async fn renew_vdf(request: models::NameRenewRequest, state: tauri::State<'_
 #[command]
 pub async fn get_vdf_status(task_id: String, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_VDF, &state);
-    match private_api::get_vdf_status(&config, &task_id).await {
+    match vdf_api::get_vdf_status(&config, &task_id).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
         Err(e) => Err(format!("Failed to get VDF status: {:?}", e)),
     }
@@ -319,7 +323,7 @@ pub async fn get_vdf_status(task_id: String, state: tauri::State<'_, EndpointSta
 #[command]
 pub async fn delete_vdf_task(task_id: String, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_VDF, &state);
-    match private_api::delete_vdf_task(&config, &task_id).await {
+    match vdf_api::delete_vdf_task(&config, &task_id).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
         Err(e) => Err(format!("Failed to delete VDF task: {:?}", e)),
     }
@@ -443,6 +447,138 @@ pub async fn revoke_kid(name: String, state: tauri::State<'_, EndpointState>) ->
     }
 }
 
+
+
+// ---------------------------------------------------------------------------
+// Daemon Config
+// ---------------------------------------------------------------------------
+
+#[command]
+pub async fn get_daemon_config(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+    let config = get_private_config(ROLE_ADMIN, &state);
+    let client = reqwest::Client::new();
+    let url = format!("{}/config", config.base_path);
+    let mut req = client.get(&url);
+    if let Some(token) = &config.bearer_access_token {
+        req = req.bearer_auth(token);
+    }
+    match req.send().await {
+        Ok(resp) => {
+            if resp.status().is_success() {
+                resp.json::<serde_json::Value>().await.map_err(|e| e.to_string())
+            } else {
+                let err_text = resp.text().await.unwrap_or_default();
+                Err(format!("Daemon error: {}", err_text))
+            }
+        }
+        Err(e) => Err(format!("Failed to get daemon config: {:?}", e)),
+    }
+}
+
+#[command]
+pub async fn set_daemon_config(config_data: serde_json::Value, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+    let config = get_private_config(ROLE_ADMIN, &state);
+    let client = reqwest::Client::new();
+    let url = format!("{}/config", config.base_path);
+    
+    // We send { "config": config_data } as expected by the daemon
+    let mut req = client.post(&url).json(&serde_json::json!({ "config": config_data }));
+    if let Some(token) = &config.bearer_access_token {
+        req = req.bearer_auth(token);
+    }
+    match req.send().await {
+        Ok(resp) => {
+            if resp.status().is_success() {
+                resp.json::<serde_json::Value>().await.map_err(|e| e.to_string())
+            } else {
+                let err_text = resp.text().await.unwrap_or_default();
+                Err(format!("Daemon error: {}", err_text))
+            }
+        }
+        Err(e) => Err(format!("Failed to set daemon config: {:?}", e)),
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Local Zones (Private Overrides)
+// ---------------------------------------------------------------------------
+
+#[command]
+pub async fn get_reserved_names(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+    let config = get_config(&state);
+    let client = reqwest::Client::new();
+    let url = format!("{}/names/reserved", config.base_path);
+    match client.get(&url).send().await {
+        Ok(resp) => resp.json::<serde_json::Value>().await.map_err(|e| e.to_string()),
+        Err(e) => Err(format!("Failed to get reserved names: {:?}", e)),
+    }
+}
+
+#[command]
+pub async fn get_local_reserved_zone(name: String, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+    let config = get_config(&state);
+    let client = reqwest::Client::new();
+    let url = format!("{}/zone/local/{}", config.base_path, name);
+    match client.get(&url).send().await {
+        Ok(resp) => {
+            if resp.status().is_success() {
+                resp.json::<serde_json::Value>().await.map_err(|e| e.to_string())
+            } else if resp.status() == 404 {
+                // Return explicit Null so the UI knows it's a completely fresh config
+                Ok(serde_json::Value::Null)
+            } else {
+                let err_text = resp.text().await.unwrap_or_default();
+                Err(format!("Daemon error: {}", err_text))
+            }
+        },
+        Err(e) => Err(format!("Failed to get local zone {}: {:?}", name, e)),
+    }
+}
+
+#[command]
+pub async fn save_local_reserved_zone(name: String, records: serde_json::Value, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+    let config = get_private_config(ROLE_PUBLISH, &state);
+    let client = reqwest::Client::new();
+    let url = format!("{}/zone/local/{}", config.base_path, name);
+    let mut req = client.post(&url).json(&serde_json::json!({ "records": records }));
+    if let Some(token) = &config.bearer_access_token {
+        req = req.bearer_auth(token);
+    }
+    match req.send().await {
+        Ok(resp) => {
+            if resp.status().is_success() {
+                resp.json::<serde_json::Value>().await.map_err(|e| e.to_string())
+            } else {
+                let err_text = resp.text().await.unwrap_or_default();
+                Err(format!("Daemon error: {}", err_text))
+            }
+        },
+        Err(e) => Err(format!("Failed to save local zone {}: {:?}", name, e)),
+    }
+}
+
+#[command]
+pub async fn delete_local_reserved_zone(name: String, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+    let config = get_private_config(ROLE_PUBLISH, &state);
+    let client = reqwest::Client::new();
+    let url = format!("{}/zone/local/{}", config.base_path, name);
+    let mut req = client.delete(&url);
+    if let Some(token) = &config.bearer_access_token {
+        req = req.bearer_auth(token);
+    }
+    match req.send().await {
+        Ok(resp) => {
+            if resp.status().is_success() {
+                Ok(serde_json::json!({"success": true}))
+            } else {
+                let err_text = resp.text().await.unwrap_or_default();
+                Err(format!("Daemon error: {}", err_text))
+            }
+        },
+        Err(e) => Err(format!("Failed to delete local zone {}: {:?}", name, e)),
+    }
+}
+
 #[command]
 pub async fn get_kid_manifest(name: String, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
@@ -483,5 +619,245 @@ pub async fn update_kid_manifest(name: String, services: serde_json::Value, stat
     }
 }
 
+// ---------------------------------------------------------------------------
+// Identity — Node Master Seed Commands
+// ---------------------------------------------------------------------------
 
+/// Path to the node identity key file within the kinetic data directory.
+const IDENTITY_KEY_FILE: &str = "identity.key";
+
+fn get_identity_key_path() -> PathBuf {
+    dirs::data_local_dir()
+        .unwrap_or_else(|| PathBuf::from("."))
+        .join("kinetic")
+        .join(IDENTITY_KEY_FILE)
+}
+
+/// Returns the status of the node's master identity key on disk.
+///
+/// Possible statuses: `"found"` (32-byte key present), `"not_found"` (no file),
+/// `"corrupted"` (file exists but wrong size).
+#[command]
+pub async fn check_identity_status() -> Result<serde_json::Value, String> {
+    let path = get_identity_key_path();
+    if !path.exists() {
+        return Ok(serde_json::json!({ "status": "not_found" }));
+    }
+    match std::fs::read(&path) {
+        Ok(bytes) if bytes.len() == 32 => Ok(serde_json::json!({ "status": "found" })),
+        Ok(bytes) => Ok(serde_json::json!({
+            "status": "corrupted",
+            "detail": format!("Expected 32 bytes, found {}", bytes.len())
+        })),
+        Err(e) => Ok(serde_json::json!({
+            "status": "corrupted",
+            "detail": format!("Read error: {}", e)
+        })),
+    }
+}
+
+/// Generates a fresh 24-word BIP-39 mnemonic from cryptographically secure entropy.
+///
+/// Returns the phrase and the indices of two random words the user must verify
+/// before calling `save_seed_phrase`. The key is NOT saved at this stage.
+#[command]
+pub async fn generate_seed_phrase() -> Result<serde_json::Value, String> {
+    use bip39::{Language, Mnemonic};
+
+    let mut entropy = [0u8; 32];
+    getrandom::getrandom(&mut entropy).map_err(|e| format!("Failed to generate entropy: {}", e))?;
+
+    let mnemonic = Mnemonic::from_entropy_in(Language::English, &entropy)
+        .map_err(|e| format!("Failed to create mnemonic: {}", e))?;
+
+    let phrase = mnemonic.to_string();
+
+    // Pick two distinct verification word indices from the entropy itself (mirrors CLI)
+    let idx1 = (entropy[0] % 24) as usize;
+    let mut idx2 = (entropy[1] % 24) as usize;
+    if idx1 == idx2 {
+        idx2 = (idx2 + 1) % 24;
+    }
+
+    Ok(serde_json::json!({
+        "phrase": phrase,
+        "verify_index_1": idx1,  // 0-based
+        "verify_index_2": idx2,  // 0-based
+    }))
+}
+
+/// Validates and saves a BIP-39 seed phrase to `identity.key`.
+///
+/// Derives the ML-DSA-65 seed using PBKDF2-HMAC-SHA512 with the network salt,
+/// then atomically writes the 32-byte seed to disk with `0o600` permissions.
+/// Used both for new identity init (after verification) and for restore.
+#[command]
+pub async fn save_seed_phrase(phrase: String) -> Result<serde_json::Value, String> {
+    use bip39::{Language, Mnemonic};
+    use pbkdf2::pbkdf2_hmac;
+    use sha2::Sha512;
+    use std::fs;
+    use std::io::Write;
+    #[cfg(unix)]
+    use std::os::unix::fs::OpenOptionsExt;
+
+    let path = get_identity_key_path();
+
+    // Ensure parent directory exists
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)
+            .map_err(|e| format!("Failed to create identity directory: {}", e))?;
+    }
+
+    // 1. Parse BIP-39 mnemonic
+    let mnemonic = Mnemonic::parse_in(Language::English, &phrase)
+        .map_err(|e| format!("Invalid seed phrase: {}", e))?;
+    let seed = mnemonic.to_seed(""); // No passphrase
+
+    // 2. Parse NETWORK_SALT from build.rs environment
+    let env_salt_str = env!("KINETIC_NETWORK_SALT");
+    let mut network_salt = [0u8; 32];
+    for (i, byte_str) in env_salt_str.split(',').enumerate() {
+        if i >= 32 { break; }
+        network_salt[i] = byte_str.parse::<u8>().map_err(|e| format!("Invalid compiled salt byte: {}", e))?;
+    }
+
+    // 3. Compute domain-separated PBKDF2 salt
+    let mut salt = Vec::with_capacity(32 + 12);
+    salt.extend_from_slice(&network_salt);
+    salt.extend_from_slice(b"-seed-key-v1");
+
+    // 4. Derive ML-DSA-65 seed via PBKDF2-HMAC-SHA512 (5 million iterations)
+    let mut derived = [0u8; 32];
+    #[cfg(debug_assertions)]
+    let iterations = 1000;
+    #[cfg(not(debug_assertions))]
+    let iterations = 5_000_000;
+    
+    pbkdf2_hmac::<Sha512>(&seed, &salt, iterations, &mut derived);
+
+    // 5. Write the 32-byte derived seed atomically with 0o600 permissions
+    let mut opts = fs::OpenOptions::new();
+    opts.write(true).create(true).truncate(true);
+    #[cfg(unix)]
+    opts.mode(0o600);
+    
+    let mut file = opts.open(&path).map_err(|e| format!("Failed to open identity key file: {}", e))?;
+    file.write_all(&derived).map_err(|e| format!("Failed to write identity key file: {}", e))?;
+
+    // 6. Zeroize buffers
+    use zeroize::Zeroize;
+    derived.zeroize();
+    
+    Ok(serde_json::json!({ "success": true }))
+}
+
+// ---------------------------------------------------------------------------
+// PAC Proxy Routing Management
+// ---------------------------------------------------------------------------
+
+/// Returns the path to the universal kinetic pac_router proxies directory.
+/// As per the new architecture, this is always under `kinetic/` globally,
+/// not under a specific network_id.
+fn get_pac_proxies_dir() -> std::path::PathBuf {
+    dirs::data_local_dir()
+        .unwrap_or_else(|| std::path::PathBuf::from("."))
+        .join("kinetic")
+        .join("pac_router")
+        .join("proxies")
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct ProxyRuleInfo {
+    pub filename: String,
+    pub nsp: String,
+    pub proxy_ip: String,
+    pub proxy_port: u16,
+    pub is_custom: bool,
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+struct RegisteredProxy {
+    nsp: String,
+    proxy_port: u16,
+    #[serde(default = "default_proxy_ip")]
+    proxy_ip: String,
+}
+
+fn default_proxy_ip() -> String {
+    "127.0.0.1".to_string()
+}
+
+/// Lists all active routing rules currently registered in the PAC proxies folder.
+#[command]
+pub async fn list_proxy_rules() -> Result<Vec<ProxyRuleInfo>, String> {
+    let proxies_dir = get_pac_proxies_dir();
+    let mut rules = Vec::new();
+
+    if !proxies_dir.exists() {
+        return Ok(rules); // Empty list if directory doesn't exist yet
+    }
+
+    let entries = std::fs::read_dir(proxies_dir).map_err(|e| e.to_string())?;
+
+    for entry in entries.flatten() {
+        if let Some(ext) = entry.path().extension() {
+            if ext == "json" {
+                let filename = entry.file_name().to_string_lossy().to_string();
+                if let Ok(contents) = std::fs::read_to_string(entry.path()) {
+                    if let Ok(proxy_info) = serde_json::from_str::<RegisteredProxy>(&contents) {
+                        rules.push(ProxyRuleInfo {
+                            filename: filename.clone(),
+                            nsp: proxy_info.nsp,
+                            proxy_ip: proxy_info.proxy_ip,
+                            proxy_port: proxy_info.proxy_port,
+                            is_custom: filename.starts_with("custom_"),
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    // Sort: custom first, then alphabetical
+    rules.sort_by(|a, b| b.is_custom.cmp(&a.is_custom).then(a.filename.cmp(&b.filename)));
+
+    Ok(rules)
+}
+
+/// Adds a custom proxy routing rule to the PAC server.
+#[command]
+pub async fn add_custom_proxy(nsp: String, ip: String, port: u16) -> Result<(), String> {
+    let proxies_dir = get_pac_proxies_dir();
+    std::fs::create_dir_all(&proxies_dir).map_err(|e| e.to_string())?;
+
+    let filename = format!("custom_{}.json", nsp.replace(|c: char| !c.is_alphanumeric(), "_"));
+    let path = proxies_dir.join(filename);
+
+    let proxy = RegisteredProxy {
+        nsp,
+        proxy_ip: ip,
+        proxy_port: port,
+    };
+
+    let contents = serde_json::to_string_pretty(&proxy).map_err(|e| e.to_string())?;
+    std::fs::write(path, contents).map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+/// Removes a custom proxy routing rule from the PAC server.
+#[command]
+pub async fn remove_custom_proxy(filename: String) -> Result<(), String> {
+    if !filename.starts_with("custom_") || !filename.ends_with(".json") {
+        return Err("Only custom proxy files can be deleted via this API.".into());
+    }
+
+    let path = get_pac_proxies_dir().join(filename);
+    if path.exists() {
+        std::fs::remove_file(path).map_err(|e| e.to_string())?;
+    }
+
+    Ok(())
+}
 

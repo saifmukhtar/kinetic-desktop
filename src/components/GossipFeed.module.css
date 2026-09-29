@@ -2,7 +2,9 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
-  margin-top: var(--sp-8);
+  flex: 1;
+  min-height: 0;
+  margin-top: var(--sp-4);
 }
 
 .title {
@@ -16,8 +18,10 @@
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-offset);
-  height: 400px;
+  flex: 1;
+  min-height: 180px;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: var(--sp-4);
   font-family: var(--font-mono);
   font-size: 13px;
@@ -47,4 +51,7 @@
 
 .payload {
   color: var(--ink-secondary);
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  min-width: 0;
 }

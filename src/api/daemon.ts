@@ -269,9 +269,66 @@ export const daemon = {
     safeInvoke("get_config_info"),
 
   updateConfig: (mode: string): Promise<void> =>
-    safeInvoke("update_config", { configPostRequest: { mode } }),
+    safeInvoke("update_config", { mode }),
+
+  getDaemonConfig: (): Promise<any> =>
+    safeInvoke("get_daemon_config"),
+
+  setDaemonConfig: (config_data: any): Promise<any> =>
+    safeInvoke("set_daemon_config", { configData: config_data }),
 
   // Private — atlas
   syncAtlas: (): Promise<unknown> =>
     safeInvoke("sync_atlas"),
+  // ---------------------------------------------------------------------------
+  // IDENTITY / NODE SEED
+  // ---------------------------------------------------------------------------
+
+  async checkIdentityStatus(): Promise<{ status: 'found' | 'not_found' | 'corrupted', detail?: string }> {
+    return safeInvoke<{ status: 'found' | 'not_found' | 'corrupted', detail?: string }>('check_identity_status');
+  },
+
+  async generateSeedPhrase(): Promise<{ phrase: string; verify_index_1: number; verify_index_2: number }> {
+    return safeInvoke<{ phrase: string; verify_index_1: number; verify_index_2: number }>('generate_seed_phrase');
+  },
+
+  async saveSeedPhrase(phrase: string): Promise<{ success: boolean }> {
+    return safeInvoke<{ success: boolean }>('save_seed_phrase', { phrase });
+  },
+
+  // ---------------------------------------------------------------------------
+  // OS PAC PROXY ROUTING
+  // ---------------------------------------------------------------------------
+
+  async listProxyRules(): Promise<Array<{ filename: string, nsp: string, proxy_ip: string, proxy_port: number, is_custom: boolean }>> {
+    return safeInvoke('list_proxy_rules');
+  },
+
+  async addCustomProxy(nsp: string, ip: string, port: number): Promise<void> {
+    return safeInvoke('add_custom_proxy', { nsp, ip, port });
+  },
+
+  async removeCustomProxy(filename: string): Promise<void> {
+    return safeInvoke('remove_custom_proxy', { filename });
+  },
+
+  // ---------------------------------------------------------------------------
+  // LOCAL ZONES (Private Overrides)
+  // ---------------------------------------------------------------------------
+
+  async getReservedNames(): Promise<Array<{ name: string; active: boolean }>> {
+    return safeInvoke('get_reserved_names');
+  },
+
+  async getLocalReservedZone(name: string): Promise<DnsZone | null> {
+    return safeInvoke('get_local_reserved_zone', { name });
+  },
+
+  async saveLocalReservedZone(name: string, records: Record<string, DnsRecord[]>): Promise<void> {
+    return safeInvoke('save_local_reserved_zone', { name, records });
+  },
+
+  async deleteLocalReservedZone(name: string): Promise<void> {
+    return safeInvoke('delete_local_reserved_zone', { name });
+  }
 };

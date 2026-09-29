@@ -1,6 +1,7 @@
 .page {
   padding: var(--sp-8) var(--sp-8) var(--sp-12);
-  max-width: 1100px;
+  width: 100%;
+  max-width: 1400px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -39,17 +40,17 @@
   color: var(--status-err);
 }
 
-/* Stat cards — 3 columns */
+/* Stat cards — responsive auto-fit */
 .statGrid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: var(--sp-5);
 }
 
-/* Lower panels — 2 columns */
+/* Lower panels — responsive */
 .panels {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: var(--sp-5);
 }
 

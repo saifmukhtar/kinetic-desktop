@@ -6,26 +6,27 @@
 
 :root {
   /* ---- Backgrounds ---- */
-  --bg-base:      #F8F7F2;   /* warm cream */
-  --bg-subtle:    #F0EEE6;   /* slightly richer cream */
-  --bg-muted:     #E5E2D6;   /* warm grey */
+  --bg-base:      #F4F7F6;   /* mint-tinted off-white */
+  --bg-subtle:    #E9EFED;   /* slightly richer mint */
+  --bg-muted:     #DEE5E3;   /* frosted mint gray */
   --bg-elevated:  #FFFFFF;   /* pure white — cards, panels */
 
-  /* ---- Ink (text + borders) ---- */
-  --ink:           #1A1714;
-  --ink-secondary: #4E4A45;
-  --ink-muted:     #96918B;
-  --ink-faint:     rgba(26, 23, 20, 0.35);
+  /* ---- Ink (text) ---- */
+  --ink:           #1A2B2B;  /* dark teal-slate */
+  --ink-secondary: #475569;  /* slate */
+  --ink-muted:     #64748B;  /* cool slate */
+  --ink-faint:     rgba(26, 43, 43, 0.35);
 
   /* ---- Borders ---- */
-  --border:        rgba(26, 23, 20, 0.10);
-  --border-strong: rgba(26, 23, 20, 0.20);
-  --border-focus:  rgba(26, 23, 20, 0.55);
+  --border:        rgba(26, 43, 43, 0.10);
+  --border-strong: rgba(26, 43, 43, 0.20);
+  --border-focus:  rgba(26, 43, 43, 0.55);
 
-  /* ---- Kinetic Amber accent ---- */
-  --amber:         #C4781A;
-  --amber-soft:    #F5E8D0;
-  --amber-dim:     rgba(196, 120, 26, 0.12);
+  /* ---- Primary Accent (Nordic Teal) ---- */
+  /* Variable kept as --amber for backward component compatibility */
+  --amber:         #0D9488;
+  --amber-soft:    #CCFBF1;
+  --amber-dim:     rgba(13, 148, 136, 0.12);
 
   /* ---- Status colours (muted, not saturated) ---- */
   --status-ok:       #4A7C59;
@@ -94,5 +95,6 @@
   --dur-slow:   380ms;
 
   /* ---- Layout ---- */
-  --topbar-height: 60px;
+  --topbar-height: 44px;
+  --pill-offset:   72px;   /* topbar + floating pill clearance */
 }
