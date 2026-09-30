@@ -391,6 +391,15 @@ pub async fn get_vdf_status(task_id: String, state: tauri::State<'_, EndpointSta
 }
 
 #[command]
+pub async fn get_vdf_tasks(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+    let config = get_private_config(ROLE_VDF, &state);
+    match vdf_api::get_vdf_tasks(&config).await {
+        Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
+        Err(e) => Err(format!("Failed to get VDF tasks: {:?}", e)),
+    }
+}
+
+#[command]
 pub async fn delete_vdf_task(task_id: String, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_VDF, &state);
     match vdf_api::delete_vdf_task(&config, &task_id).await {

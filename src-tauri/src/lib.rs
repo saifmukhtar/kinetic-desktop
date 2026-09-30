@@ -125,6 +125,7 @@ pub fn run() {
             api_commands::get_takeover_iterations,
             api_commands::get_vdf_iterations,
             api_commands::get_vdf_status,
+            api_commands::get_vdf_tasks,
             api_commands::delete_vdf_task,
 
             api_commands::get_local_kids,
