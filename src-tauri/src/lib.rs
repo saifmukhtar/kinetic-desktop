@@ -103,7 +103,7 @@ pub fn run() {
             api_commands::get_network_status,
             api_commands::resolve_name,
             api_commands::get_config_info,
-
+            api_commands::create_session,
             api_commands::get_health,
             api_commands::get_peer_id,
             api_commands::get_time,

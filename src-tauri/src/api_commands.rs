@@ -147,6 +147,40 @@ pub async fn get_config_info(state: tauri::State<'_, EndpointState>) -> Result<s
     }
 }
 
+#[command]
+pub async fn create_session(
+    app_name: String, 
+    scopes: Vec<String>, 
+    expiry_kyn: i32, 
+    state: tauri::State<'_, EndpointState>
+) -> Result<serde_json::Value, String> {
+    let config = get_private_config(ROLE_ADMIN, &state);
+
+    let mut enum_scopes = Vec::new();
+    for scope in scopes {
+        let s = match scope.as_str() {
+            "admin" => models::create_session_request::Scopes::Admin,
+            "kid" => models::create_session_request::Scopes::Kid,
+            "nrs" => models::create_session_request::Scopes::Nrs,
+            "vdf" => models::create_session_request::Scopes::Vdf,
+            "action" => models::create_session_request::Scopes::Action,
+            "gossip" => models::create_session_request::Scopes::Gossip,
+            "metric" => models::create_session_request::Scopes::Metric,
+            "system" => models::create_session_request::Scopes::System,
+            "atlas" => models::create_session_request::Scopes::Atlas,
+            "heartbeat" => models::create_session_request::Scopes::Heartbeat,
+            _ => return Err(format!("Invalid scope: {}", scope)),
+        };
+        enum_scopes.push(s);
+    }
+
+    let request = models::CreateSessionRequest::new(app_name, enum_scopes, expiry_kyn);
+    
+    match auth_api::create_session(&config, request).await {
+        Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
+        Err(e) => Err(format!("Failed to create session: {:?}", e)),
+    }
+}
 
 #[command]
 pub async fn get_health(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
