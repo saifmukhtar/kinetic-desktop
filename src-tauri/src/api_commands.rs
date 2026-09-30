@@ -356,21 +356,17 @@ pub async fn delete_vdf_task(task_id: String, state: tauri::State<'_, EndpointSt
 #[command]
 pub async fn get_local_kids(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
-    let client = reqwest::Client::new();
-    let url = format!("{}/kid", config.base_path);
-    match client.get(&url).send().await {
-        Ok(resp) => resp.json::<serde_json::Value>().await.map_err(|e| e.to_string()),
-        Err(e) => Err(format!("Failed to get local KIDs from {}: {:?}", url, e)),
+    match kid_api::list_kids(&config).await {
+        Ok(kids) => Ok(serde_json::to_value(kids).map_err(|e| e.to_string())?),
+        Err(e) => Err(format!("Failed to get local KIDs: {:?}", e)),
     }
 }
 
 #[command]
 pub async fn get_local_kid(name: String, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
-    let client = reqwest::Client::new();
-    let url = format!("{}/kid/{}", config.base_path, name);
-    match client.get(&url).send().await {
-        Ok(resp) => resp.json::<serde_json::Value>().await.map_err(|e| e.to_string()),
+    match kid_api::fetch_kid(&config, &name).await {
+        Ok(kid) => Ok(serde_json::to_value(kid).map_err(|e| e.to_string())?),
         Err(e) => Err(format!("Failed to get local KID for {}: {:?}", name, e)),
     }
 }
@@ -461,21 +457,8 @@ pub async fn revoke_kid(name: String, state: tauri::State<'_, EndpointState>) ->
 #[command]
 pub async fn get_daemon_config(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_ADMIN, &state);
-    let client = reqwest::Client::new();
-    let url = format!("{}/config", config.base_path);
-    let mut req = client.get(&url);
-    if let Some(token) = &config.bearer_access_token {
-        req = req.bearer_auth(token);
-    }
-    match req.send().await {
-        Ok(resp) => {
-            if resp.status().is_success() {
-                resp.json::<serde_json::Value>().await.map_err(|e| e.to_string())
-            } else {
-                let err_text = resp.text().await.unwrap_or_default();
-                Err(format!("Daemon error: {}", err_text))
-            }
-        }
+    match system_api::get_config(&config).await {
+        Ok(cfg) => Ok(serde_json::to_value(cfg).map_err(|e| e.to_string())?),
         Err(e) => Err(format!("Failed to get daemon config: {:?}", e)),
     }
 }
@@ -511,10 +494,8 @@ pub async fn set_daemon_config(config_data: serde_json::Value, state: tauri::Sta
 #[command]
 pub async fn get_reserved_names(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
-    let client = reqwest::Client::new();
-    let url = format!("{}/names/reserved", config.base_path);
-    match client.get(&url).send().await {
-        Ok(resp) => resp.json::<serde_json::Value>().await.map_err(|e| e.to_string()),
+    match nrs_api::get_reserved_names(&config).await {
+        Ok(names) => Ok(serde_json::to_value(names).map_err(|e| e.to_string())?),
         Err(e) => Err(format!("Failed to get reserved names: {:?}", e)),
     }
 }
@@ -522,19 +503,10 @@ pub async fn get_reserved_names(state: tauri::State<'_, EndpointState>) -> Resul
 #[command]
 pub async fn get_local_reserved_zone(name: String, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
-    let client = reqwest::Client::new();
-    let url = format!("{}/zone/local/{}", config.base_path, name);
-    match client.get(&url).send().await {
-        Ok(resp) => {
-            if resp.status().is_success() {
-                resp.json::<serde_json::Value>().await.map_err(|e| e.to_string())
-            } else if resp.status() == 404 {
-                // Return explicit Null so the UI knows it's a completely fresh config
-                Ok(serde_json::Value::Null)
-            } else {
-                let err_text = resp.text().await.unwrap_or_default();
-                Err(format!("Daemon error: {}", err_text))
-            }
+    match nrs_api::get_local_reserved_zone(&config, &name).await {
+        Ok(zone) => Ok(serde_json::to_value(zone).map_err(|e| e.to_string())?),
+        Err(kinetic_sdk::apis::Error::ResponseError(res)) if res.status == reqwest::StatusCode::NOT_FOUND => {
+            Ok(serde_json::Value::Null)
         },
         Err(e) => Err(format!("Failed to get local zone {}: {:?}", name, e)),
     }
@@ -543,21 +515,14 @@ pub async fn get_local_reserved_zone(name: String, state: tauri::State<'_, Endpo
 #[command]
 pub async fn save_local_reserved_zone(name: String, records: serde_json::Value, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_PUBLISH, &state);
-    let client = reqwest::Client::new();
-    let url = format!("{}/zone/local/{}", config.base_path, name);
-    let mut req = client.post(&url).json(&serde_json::json!({ "records": records }));
-    if let Some(token) = &config.bearer_access_token {
-        req = req.bearer_auth(token);
-    }
-    match req.send().await {
-        Ok(resp) => {
-            if resp.status().is_success() {
-                resp.json::<serde_json::Value>().await.map_err(|e| e.to_string())
-            } else {
-                let err_text = resp.text().await.unwrap_or_default();
-                Err(format!("Daemon error: {}", err_text))
-            }
-        },
+    
+    let zone: models::NrsZone = match serde_json::from_value(records) {
+        Ok(z) => z,
+        Err(e) => return Err(format!("Invalid zone data: {}", e)),
+    };
+
+    match nrs_api::save_local_reserved_zone(&config, &name, zone).await {
+        Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
         Err(e) => Err(format!("Failed to save local zone {}: {:?}", name, e)),
     }
 }
@@ -565,21 +530,8 @@ pub async fn save_local_reserved_zone(name: String, records: serde_json::Value, 
 #[command]
 pub async fn delete_local_reserved_zone(name: String, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_PUBLISH, &state);
-    let client = reqwest::Client::new();
-    let url = format!("{}/zone/local/{}", config.base_path, name);
-    let mut req = client.delete(&url);
-    if let Some(token) = &config.bearer_access_token {
-        req = req.bearer_auth(token);
-    }
-    match req.send().await {
-        Ok(resp) => {
-            if resp.status().is_success() {
-                Ok(serde_json::json!({"success": true}))
-            } else {
-                let err_text = resp.text().await.unwrap_or_default();
-                Err(format!("Daemon error: {}", err_text))
-            }
-        },
+    match nrs_api::delete_local_reserved_zone(&config, &name).await {
+        Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
         Err(e) => Err(format!("Failed to delete local zone {}: {:?}", name, e)),
     }
 }
@@ -587,17 +539,8 @@ pub async fn delete_local_reserved_zone(name: String, state: tauri::State<'_, En
 #[command]
 pub async fn get_kid_manifest(name: String, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
-    let client = reqwest::Client::new();
-    let url = format!("{}/kid/{}/manifest", config.base_path, name);
-    match client.get(&url).send().await {
-        Ok(resp) => {
-            if resp.status().is_success() {
-                resp.json::<serde_json::Value>().await.map_err(|e| e.to_string())
-            } else {
-                let err_text = resp.text().await.unwrap_or_default();
-                Err(format!("Daemon error: {}", err_text))
-            }
-        }
+    match kid_api::fetch_kid_manifest(&config, &name).await {
+        Ok(manifest) => Ok(serde_json::to_value(manifest).map_err(|e| e.to_string())?),
         Err(e) => Err(format!("Failed to get manifest for {}: {:?}", name, e)),
     }
 }
