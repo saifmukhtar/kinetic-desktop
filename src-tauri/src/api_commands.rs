@@ -46,6 +46,9 @@ const TOML_KEY_BIND_IP: &str = "bind_ip";
 const ROLE_ADMIN: &str = "admin";
 const ROLE_PUBLISH: &str = "publish";
 const ROLE_VDF: &str = "vdf";
+const ROLE_GOSSIP: &str = "gossip";
+const ROLE_HEARTBEAT: &str = "heartbeat";
+const ROLE_NRS: &str = "nrs";
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -908,5 +911,72 @@ pub async fn get_heartbeats(state: tauri::State<'_, EndpointState>) -> Result<se
     match heartbeat_api::get_heartbeats(&config).await {
         Ok(heartbeats) => Ok(serde_json::to_value(heartbeats).map_err(|e| e.to_string())?),
         Err(e) => Err(format!("Failed to get heartbeats: {:?}", e)),
+    }
+}
+
+// ---------------------------------------------------------------------------
+// New APIs (Gossip, Heartbeat, System, Action, NRS)
+// ---------------------------------------------------------------------------
+
+#[command]
+pub async fn gossip_publish(topic: String, body: serde_json::Value, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+    let config = get_private_config(ROLE_GOSSIP, &state);
+    match gossip_api::gossip_publish(&config, &topic, body).await {
+        Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
+        Err(e) => Err(format!("Failed to publish to gossip: {:?}", e)),
+    }
+}
+
+#[command]
+pub async fn gossip_subscribe(topic: String, state: tauri::State<'_, EndpointState>) -> Result<String, String> {
+    let config = get_config(&state);
+    match gossip_api::gossip_subscribe(&config, &topic).await {
+        Ok(res) => Ok(res),
+        Err(e) => Err(format!("Failed to subscribe to gossip: {:?}", e)),
+    }
+}
+
+#[command]
+pub async fn post_authorized_update(name: String, request: models::PostAuthorizedUpdateRequest, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+    let config = get_private_config(ROLE_HEARTBEAT, &state);
+    match heartbeat_api::post_authorized_update(&config, &name, request).await {
+        Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
+        Err(e) => Err(format!("Failed to post authorized update: {:?}", e)),
+    }
+}
+
+#[command]
+pub async fn post_dns_flush(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+    let config = get_private_config(ROLE_ADMIN, &state);
+    match system_api::post_dns_flush(&config).await {
+        Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
+        Err(e) => Err(format!("Failed to flush DNS: {:?}", e)),
+    }
+}
+
+#[command]
+pub async fn post_heartbeat(name: String, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+    let config = get_private_config(ROLE_HEARTBEAT, &state);
+    match heartbeat_api::post_heartbeat(&config, &name).await {
+        Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
+        Err(e) => Err(format!("Failed to post heartbeat: {:?}", e)),
+    }
+}
+
+#[command]
+pub async fn post_nrs_update(name: String, request: models::PostNrsUpdateRequest, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+    let config = get_private_config(ROLE_NRS, &state);
+    match nrs_api::post_nrs_update(&config, &name, request).await {
+        Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
+        Err(e) => Err(format!("Failed to post NRS update: {:?}", e)),
+    }
+}
+
+#[command]
+pub async fn publish_action(body: serde_json::Value, state: tauri::State<'_, EndpointState>) -> Result<String, String> {
+    let config = get_config(&state);
+    match action_api::publish_action(&config, body).await {
+        Ok(res) => Ok(res),
+        Err(e) => Err(format!("Failed to publish action: {:?}", e)),
     }
 }

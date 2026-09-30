@@ -155,6 +155,13 @@ pub fn run() {
             api_commands::get_auth_sessions,
             api_commands::get_gossip_topics,
             api_commands::get_heartbeats,
+            api_commands::gossip_publish,
+            api_commands::gossip_subscribe,
+            api_commands::post_authorized_update,
+            api_commands::post_dns_flush,
+            api_commands::post_heartbeat,
+            api_commands::post_nrs_update,
+            api_commands::publish_action,
         ])
         .run(tauri::generate_context!())
         .expect(ERR_TAURI_RUN);
