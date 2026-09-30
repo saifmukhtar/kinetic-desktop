@@ -7,6 +7,7 @@ use kinetic_sdk::apis::nrs_api;
 use kinetic_sdk::apis::kid_api;
 use kinetic_sdk::apis::vdf_api;
 use kinetic_sdk::apis::auth_api;
+use kinetic_sdk::apis::action_api;
 use kinetic_sdk::models;
 
 // ---------------------------------------------------------------------------
@@ -800,3 +801,25 @@ pub async fn remove_custom_proxy(filename: String) -> Result<(), String> {
     Ok(())
 }
 
+
+// ---------------------------------------------------------------------------
+// Action & Auth
+// ---------------------------------------------------------------------------
+
+#[command]
+pub async fn get_action_status(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+    let config = get_config(&state);
+    match action_api::get_action_status(&config).await {
+        Ok(status) => Ok(serde_json::to_value(status).map_err(|e| e.to_string())?),
+        Err(e) => Err(format!("Failed to get action status: {:?}", e)),
+    }
+}
+
+#[command]
+pub async fn get_auth_sessions(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+    let config = get_private_config(ROLE_ADMIN, &state);
+    match auth_api::list_sessions(&config).await {
+        Ok(sessions) => Ok(serde_json::to_value(sessions).map_err(|e| e.to_string())?),
+        Err(e) => Err(format!("Failed to get auth sessions: {:?}", e)),
+    }
+}

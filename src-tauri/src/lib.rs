@@ -144,6 +144,8 @@ pub fn run() {
             api_commands::delete_local_reserved_zone,
             api_commands::get_daemon_config,
             api_commands::set_daemon_config,
+            api_commands::get_action_status,
+            api_commands::get_auth_sessions,
         ])
         .run(tauri::generate_context!())
         .expect(ERR_TAURI_RUN);
