@@ -548,21 +548,12 @@ pub async fn get_kid_manifest(name: String, state: tauri::State<'_, EndpointStat
 #[command]
 pub async fn update_kid_manifest(name: String, services: serde_json::Value, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_PUBLISH, &state);
-    let client = reqwest::Client::new();
-    let url = format!("{}/kid/{}/manifest", config.base_path, name);
-    let mut req = client.post(&url).json(&serde_json::json!({ "services": services }));
-    if let Some(token) = &config.bearer_access_token {
-        req = req.bearer_auth(token);
-    }
-    match req.send().await {
-        Ok(resp) => {
-            if resp.status().is_success() {
-                resp.json::<serde_json::Value>().await.map_err(|e| e.to_string())
-            } else {
-                let err_text = resp.text().await.unwrap_or_default();
-                Err(format!("Daemon error: {}", err_text))
-            }
-        }
+    
+    // The SDK expects the raw JSON body
+    let body = serde_json::json!({ "services": services });
+    
+    match kid_api::generate_kid_manifest(&config, &name, body).await {
+        Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
         Err(e) => Err(format!("Failed to update manifest for {}: {:?}", name, e)),
     }
 }
