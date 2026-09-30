@@ -1,43 +1,11 @@
 use std::env;
-use std::fs::{self, File};
-use std::io::copy;
-use std::path::{Path, PathBuf};
+use std::fs;
+use std::path::PathBuf;
 use std::process::Command;
 use tauri::command;
 use serde::Serialize;
 
-#[cfg(target_os = "windows")]
-use zip::ZipArchive;
-
-#[cfg(not(target_os = "windows"))]
-use flate2::read::GzDecoder;
-#[cfg(not(target_os = "windows"))]
-use tar::Archive;
-
 const BIN_DIR_UNIX: &str = "/usr/local/bin";
-
-fn get_platform_triple() -> &'static str {
-    let os = env::consts::OS;
-    let _arch = env::consts::ARCH;
-
-    match os {
-        "windows" => "windows",
-        "macos" => "macos",
-        "linux" => {
-            // For Desktop app, we assume GNU for the prebuilt binaries
-            "linux-gnu"
-        }
-        _ => "unknown",
-    }
-}
-
-fn get_ext() -> &'static str {
-    if env::consts::OS == "windows" {
-        "zip"
-    } else {
-        "tar.gz"
-    }
-}
 
 #[derive(Serialize)]
 pub struct InstallStatus {
@@ -76,24 +44,21 @@ pub async fn check_installed(network_id: String) -> Result<InstallStatus, String
 }
 
 #[command]
-pub async fn download_binaries(
+pub async fn extract_bundled_binaries(
+    app: tauri::AppHandle,
     network_id: String,
-    install_type: String,
-    base_url: String,
 ) -> Result<String, String> {
-    let platform = get_platform_triple();
-    if platform == "unknown" {
-        return Err("Unsupported platform for automatic installation.".into());
+    use tauri::Manager;
+    
+    let resource_path = app
+        .path()
+        .resource_dir()
+        .map_err(|_| "Failed to find resource directory".to_string())?
+        .join("binaries");
+        
+    if !resource_path.exists() {
+        return Err("Binaries resource folder not found in app bundle.".into());
     }
-
-    let ext = get_ext();
-    // E.g. https://github.com/saifmukhtar/kinetic/releases/latest/download/kinetic-mainnet-minimal-linux-gnu.tar.gz
-    let archive_name = format!("{}-{}-{}.{}", network_id, install_type, platform, ext);
-    let mut url = base_url.clone();
-    if !url.ends_with('/') {
-        url.push('/');
-    }
-    url.push_str(&archive_name);
 
     let temp_dir = env::temp_dir().join(format!("kinetic-install-{}", network_id));
     if temp_dir.exists() {
@@ -101,35 +66,16 @@ pub async fn download_binaries(
     }
     fs::create_dir_all(&temp_dir).map_err(|e| e.to_string())?;
 
-    let archive_path = temp_dir.join(&archive_name);
-
-    // Download the file
-    let response = reqwest::get(&url).await.map_err(|e| e.to_string())?;
-    if !response.status().is_success() {
-        return Err(format!(
-            "Failed to download archive from {}. Status: {}",
-            url,
-            response.status()
-        ));
-    }
-
-    let bytes = response.bytes().await.map_err(|e| e.to_string())?;
-    fs::write(&archive_path, bytes).map_err(|e| e.to_string())?;
-
-    // Extract
-    #[cfg(target_os = "windows")]
-    {
-        let file = File::open(&archive_path).map_err(|e| e.to_string())?;
-        let mut archive = ZipArchive::new(file).map_err(|e| e.to_string())?;
-        archive.extract(&temp_dir).map_err(|e| e.to_string())?;
-    }
-
-    #[cfg(not(target_os = "windows"))]
-    {
-        let tar_gz = File::open(&archive_path).map_err(|e| e.to_string())?;
-        let tar = GzDecoder::new(tar_gz);
-        let mut archive = Archive::new(tar);
-        archive.unpack(&temp_dir).map_err(|e| e.to_string())?;
+    // Copy all files from resources/binaries to temp_dir
+    if let Ok(entries) = fs::read_dir(&resource_path) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_file() {
+                let file_name = path.file_name().unwrap();
+                let dest = temp_dir.join(file_name);
+                fs::copy(&path, &dest).map_err(|e| format!("Failed to copy binary: {}", e))?;
+            }
+        }
     }
 
     Ok(temp_dir.to_string_lossy().to_string())

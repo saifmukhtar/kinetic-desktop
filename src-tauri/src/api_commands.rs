@@ -12,33 +12,7 @@ use kinetic_sdk::apis::gossip_api;
 use kinetic_sdk::apis::heartbeat_api;
 use kinetic_sdk::models;
 
-// ---------------------------------------------------------------------------
-// Environment variable names
-// ---------------------------------------------------------------------------
-const ENV_DATA_DIR: &str = "KINETIC_DATA_DIR";
-const ENV_API_URL: &str = "KINETIC_API_URL";
-const ENV_API_HOST: &str = "KINETIC_API_HOST";
-const ENV_API_IP: &str = "KINETIC_API_IP";
-const ENV_API_PORT: &str = "KINETIC_API_PORT";
-const ENV_CONFIG_PATH: &str = "KINETIC_CONFIG_PATH";
 
-// ---------------------------------------------------------------------------
-// Default network values
-// ---------------------------------------------------------------------------
-const API_PATH_PREFIX: &str = "http://";
-const API_PATH_SUFFIX: &str = "/api";
-
-// ---------------------------------------------------------------------------
-// Directory and file names
-// ---------------------------------------------------------------------------
-const CONFIG_FILE_NAME: &str = "config.toml";
-
-// ---------------------------------------------------------------------------
-// config.toml TOML keys
-// ---------------------------------------------------------------------------
-const TOML_SECTION_DAEMON: &str = "daemon";
-const TOML_KEY_API_PORT: &str = "api_port";
-const TOML_KEY_BIND_IP: &str = "bind_ip";
 
 // ---------------------------------------------------------------------------
 // Auth token role names

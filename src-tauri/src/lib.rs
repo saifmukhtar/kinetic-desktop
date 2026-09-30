@@ -136,7 +136,7 @@ pub fn run() {
             api_commands::get_kid_manifest,
             api_commands::update_kid_manifest,
             installer::check_installed,
-            installer::download_binaries,
+            installer::extract_bundled_binaries,
             installer::install_binaries,
             api_commands::check_identity_status,
             api_commands::generate_seed_phrase,
