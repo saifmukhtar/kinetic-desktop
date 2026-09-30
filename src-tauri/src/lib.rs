@@ -153,6 +153,7 @@ pub fn run() {
             api_commands::set_daemon_config,
             api_commands::get_action_status,
             api_commands::get_auth_sessions,
+            api_commands::revoke_auth_session,
             api_commands::get_gossip_topics,
             api_commands::get_heartbeats,
             api_commands::gossip_publish,

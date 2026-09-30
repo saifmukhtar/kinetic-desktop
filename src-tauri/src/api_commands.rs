@@ -897,6 +897,15 @@ pub async fn get_auth_sessions(state: tauri::State<'_, EndpointState>) -> Result
 }
 
 #[command]
+pub async fn revoke_auth_session(id: String, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+    let config = get_private_config(ROLE_ADMIN, &state);
+    match auth_api::revoke_session(&config, &id).await {
+        Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
+        Err(e) => Err(format!("Failed to revoke auth session: {:?}", e)),
+    }
+}
+
+#[command]
 pub async fn get_gossip_topics(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
     match gossip_api::get_gossip_topics(&config).await {
