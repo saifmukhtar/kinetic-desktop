@@ -49,6 +49,7 @@ const ROLE_VDF: &str = "vdf";
 const ROLE_GOSSIP: &str = "gossip";
 const ROLE_HEARTBEAT: &str = "heartbeat";
 const ROLE_NRS: &str = "nrs";
+const ROLE_ATLAS: &str = "atlas";
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -987,5 +988,41 @@ pub async fn publish_action(body: serde_json::Value, state: tauri::State<'_, End
     match action_api::publish_action(&config, body).await {
         Ok(res) => Ok(res),
         Err(e) => Err(format!("Failed to publish action: {:?}", e)),
+    }
+}
+
+#[command]
+pub async fn sync_atlas(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+    let config = get_private_config(ROLE_ATLAS, &state);
+    match system_api::sync_atlas(&config).await {
+        Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
+        Err(e) => Err(format!("Failed to sync atlas: {:?}", e)),
+    }
+}
+
+#[command]
+pub async fn system_restart(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+    let config = get_private_config(ROLE_ADMIN, &state);
+    match system_api::system_restart(&config).await {
+        Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
+        Err(e) => Err(format!("Failed to restart system: {:?}", e)),
+    }
+}
+
+#[command]
+pub async fn system_shutdown(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+    let config = get_private_config(ROLE_ADMIN, &state);
+    match system_api::system_shutdown(&config).await {
+        Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
+        Err(e) => Err(format!("Failed to shutdown system: {:?}", e)),
+    }
+}
+
+#[command]
+pub async fn trigger_network_bootstrap(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+    let config = get_private_config(ROLE_ADMIN, &state);
+    match network_api::trigger_network_bootstrap(&config).await {
+        Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
+        Err(e) => Err(format!("Failed to trigger network bootstrap: {:?}", e)),
     }
 }

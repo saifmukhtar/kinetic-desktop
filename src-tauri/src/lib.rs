@@ -163,6 +163,10 @@ pub fn run() {
             api_commands::post_heartbeat,
             api_commands::post_nrs_update,
             api_commands::publish_action,
+            api_commands::sync_atlas,
+            api_commands::system_restart,
+            api_commands::system_shutdown,
+            api_commands::trigger_network_bootstrap,
         ])
         .run(tauri::generate_context!())
         .expect(ERR_TAURI_RUN);
