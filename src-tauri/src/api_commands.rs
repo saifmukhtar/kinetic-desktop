@@ -1026,3 +1026,21 @@ pub async fn trigger_network_bootstrap(state: tauri::State<'_, EndpointState>) -
         Err(e) => Err(format!("Failed to trigger network bootstrap: {:?}", e)),
     }
 }
+
+#[command]
+pub async fn validate_name(request: models::ValidateNameRequest, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+    let config = get_config(&state);
+    match nrs_api::validate_name(&config, request).await {
+        Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
+        Err(e) => Err(format!("Failed to validate name: {:?}", e)),
+    }
+}
+
+#[command]
+pub async fn verify_quorum(name: String, request: models::NameEnvelope, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+    let config = get_config(&state);
+    match nrs_api::verify_quorum(&config, &name, request).await {
+        Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
+        Err(e) => Err(format!("Failed to verify quorum: {:?}", e)),
+    }
+}

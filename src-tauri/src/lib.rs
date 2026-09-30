@@ -167,6 +167,8 @@ pub fn run() {
             api_commands::system_restart,
             api_commands::system_shutdown,
             api_commands::trigger_network_bootstrap,
+            api_commands::validate_name,
+            api_commands::verify_quorum,
         ])
         .run(tauri::generate_context!())
         .expect(ERR_TAURI_RUN);
