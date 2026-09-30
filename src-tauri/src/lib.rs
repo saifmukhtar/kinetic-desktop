@@ -122,6 +122,8 @@ pub fn run() {
             api_commands::update_config,
             api_commands::register_vdf,
             api_commands::renew_vdf,
+            api_commands::get_takeover_iterations,
+            api_commands::get_vdf_iterations,
             api_commands::get_vdf_status,
             api_commands::delete_vdf_task,
 

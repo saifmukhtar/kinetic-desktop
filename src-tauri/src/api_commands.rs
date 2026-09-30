@@ -338,6 +338,28 @@ pub async fn update_config(update_config_request: models::UpdateConfigRequest, s
 }
 
 // ---------------------------------------------------------------------------
+// Public Tauri commands — vdf info
+// ---------------------------------------------------------------------------
+
+#[command]
+pub async fn get_takeover_iterations(name: String, kyns_idle: i32, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+    let config = get_config(&state);
+    match vdf_api::get_takeover_iterations(&config, &name, kyns_idle).await {
+        Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
+        Err(e) => Err(format!("Failed to get takeover iterations: {:?}", e)),
+    }
+}
+
+#[command]
+pub async fn get_vdf_iterations(name: String, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+    let config = get_config(&state);
+    match vdf_api::get_vdf_iterations(&config, &name).await {
+        Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
+        Err(e) => Err(format!("Failed to get VDF iterations: {:?}", e)),
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Private Tauri commands — vdf role
 // ---------------------------------------------------------------------------
 
