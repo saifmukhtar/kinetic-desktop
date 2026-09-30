@@ -144,6 +144,7 @@ pub fn run() {
             api_commands::save_local_reserved_zone,
             api_commands::delete_local_reserved_zone,
             api_commands::get_daemon_config,
+            api_commands::get_ca_cert,
             api_commands::set_daemon_config,
             api_commands::get_action_status,
             api_commands::get_auth_sessions,

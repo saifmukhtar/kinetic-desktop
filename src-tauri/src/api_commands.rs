@@ -497,6 +497,15 @@ pub async fn set_daemon_config(config_data: serde_json::Value, state: tauri::Sta
     }
 }
 
+#[command]
+pub async fn get_ca_cert(state: tauri::State<'_, EndpointState>) -> Result<String, String> {
+    let config = get_private_config(ROLE_ADMIN, &state);
+    match system_api::get_ca_cert(&config).await {
+        Ok(cert) => Ok(cert),
+        Err(e) => Err(format!("Failed to get CA cert: {:?}", e)),
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Local Zones (Private Overrides)
 // ---------------------------------------------------------------------------
