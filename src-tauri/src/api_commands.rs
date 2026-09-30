@@ -472,21 +472,8 @@ pub async fn generate_kid(
 #[command]
 pub async fn rotate_kid(name: String, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_PUBLISH, &state);
-    let client = reqwest::Client::new();
-    let url = format!("{}/kid/{}/rotate", config.base_path, name);
-    let mut req = client.post(&url);
-    if let Some(token) = &config.bearer_access_token {
-        req = req.bearer_auth(token);
-    }
-    match req.send().await {
-        Ok(resp) => {
-            if resp.status().is_success() {
-                resp.json::<serde_json::Value>().await.map_err(|e| e.to_string())
-            } else {
-                let err_text = resp.text().await.unwrap_or_default();
-                Err(format!("Daemon error: {}", err_text))
-            }
-        }
+    match kid_api::rotate_kid(&config, &name).await {
+        Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
         Err(e) => Err(format!("Failed to rotate KID for {}: {:?}", name, e)),
     }
 }
@@ -494,21 +481,8 @@ pub async fn rotate_kid(name: String, state: tauri::State<'_, EndpointState>) ->
 #[command]
 pub async fn revoke_kid(name: String, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_PUBLISH, &state);
-    let client = reqwest::Client::new();
-    let url = format!("{}/kid/{}/revoke", config.base_path, name);
-    let mut req = client.post(&url);
-    if let Some(token) = &config.bearer_access_token {
-        req = req.bearer_auth(token);
-    }
-    match req.send().await {
-        Ok(resp) => {
-            if resp.status().is_success() {
-                resp.json::<serde_json::Value>().await.map_err(|e| e.to_string())
-            } else {
-                let err_text = resp.text().await.unwrap_or_default();
-                Err(format!("Daemon error: {}", err_text))
-            }
-        }
+    match kid_api::revoke_kid(&config, &name).await {
+        Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
         Err(e) => Err(format!("Failed to revoke KID for {}: {:?}", name, e)),
     }
 }
