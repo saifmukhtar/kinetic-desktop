@@ -333,7 +333,7 @@ pub async fn publish_manifest(authorized_manifest: models::AuthorizedManifest, s
 // ---------------------------------------------------------------------------
 
 #[command]
-pub async fn update_config(update_config_request: models::UpdateConfigRequest, state: tauri::State<'_, EndpointState>) -> Result<(), String> {
+pub async fn update_config(update_config_request: serde_json::Value, state: tauri::State<'_, EndpointState>) -> Result<(), String> {
     let config = get_private_config(ROLE_ADMIN, &state);
     match system_api::update_config(&config, update_config_request).await {
         Ok(_) => Ok(()),
@@ -445,26 +445,14 @@ pub async fn generate_kid(
     state: tauri::State<'_, EndpointState>,
 ) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_PUBLISH, &state);
-    let client = reqwest::Client::new();
-    let url = format!("{}/kid", config.base_path);
-    let mut req = client.post(&url).json(&serde_json::json!({
-        "base_name": base_name,
-        "sub_name": sub_name,
-        "inherit_subname": inherit_subname.unwrap_or(true),
-        "force": force.unwrap_or(false),
-    }));
-    if let Some(token) = &config.bearer_access_token {
-        req = req.bearer_auth(token);
-    }
-    match req.send().await {
-        Ok(resp) => {
-            if resp.status().is_success() {
-                resp.json::<serde_json::Value>().await.map_err(|e| e.to_string())
-            } else {
-                let err_text = resp.text().await.unwrap_or_default();
-                Err(format!("Daemon error: {}", err_text))
-            }
-        }
+    
+    let mut req = models::GenerateKidRequest::new(base_name);
+    req.sub_name = sub_name;
+    req.inherit_subname = Some(inherit_subname.unwrap_or(true));
+    req.force = Some(force.unwrap_or(false));
+    
+    match kid_api::generate_kid(&config, req).await {
+        Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
         Err(e) => Err(format!("Failed to generate KID: {:?}", e)),
     }
 }
@@ -505,23 +493,12 @@ pub async fn get_daemon_config(state: tauri::State<'_, EndpointState>) -> Result
 #[command]
 pub async fn set_daemon_config(config_data: serde_json::Value, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_ADMIN, &state);
-    let client = reqwest::Client::new();
-    let url = format!("{}/config", config.base_path);
     
     // We send { "config": config_data } as expected by the daemon
-    let mut req = client.post(&url).json(&serde_json::json!({ "config": config_data }));
-    if let Some(token) = &config.bearer_access_token {
-        req = req.bearer_auth(token);
-    }
-    match req.send().await {
-        Ok(resp) => {
-            if resp.status().is_success() {
-                resp.json::<serde_json::Value>().await.map_err(|e| e.to_string())
-            } else {
-                let err_text = resp.text().await.unwrap_or_default();
-                Err(format!("Daemon error: {}", err_text))
-            }
-        }
+    let payload = serde_json::json!({ "config": config_data });
+    
+    match system_api::update_config(&config, payload).await {
+        Ok(_) => Ok(serde_json::json!({ "status": "success" })),
         Err(e) => Err(format!("Failed to set daemon config: {:?}", e)),
     }
 }
@@ -1011,7 +988,7 @@ pub async fn validate_name(request: models::ValidateNameRequest, state: tauri::S
 }
 
 #[command]
-pub async fn verify_quorum(name: String, request: models::NameEnvelope, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn verify_quorum(name: String, request: serde_json::Value, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
     match nrs_api::verify_quorum(&config, &name, request).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
