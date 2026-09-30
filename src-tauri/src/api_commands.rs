@@ -8,6 +8,8 @@ use kinetic_sdk::apis::kid_api;
 use kinetic_sdk::apis::vdf_api;
 use kinetic_sdk::apis::auth_api;
 use kinetic_sdk::apis::action_api;
+use kinetic_sdk::apis::gossip_api;
+use kinetic_sdk::apis::heartbeat_api;
 use kinetic_sdk::models;
 
 // ---------------------------------------------------------------------------
@@ -127,6 +129,24 @@ pub async fn get_network_status(state: tauri::State<'_, EndpointState>) -> Resul
     match network_api::get_network_status(&config).await {
         Ok(status) => Ok(serde_json::to_value(status).map_err(|e| e.to_string())?),
         Err(e) => Err(format!("Failed to get network status: {:?}", e)),
+    }
+}
+
+#[command]
+pub async fn get_network_nat(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+    let config = get_config(&state);
+    match network_api::get_network_nat(&config).await {
+        Ok(nat) => Ok(serde_json::to_value(nat).map_err(|e| e.to_string())?),
+        Err(e) => Err(format!("Failed to get network NAT: {:?}", e)),
+    }
+}
+
+#[command]
+pub async fn get_network_peers(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+    let config = get_config(&state);
+    match network_api::get_network_peers(&config).await {
+        Ok(peers) => Ok(serde_json::to_value(peers).map_err(|e| e.to_string())?),
+        Err(e) => Err(format!("Failed to get network peers: {:?}", e)),
     }
 }
 
@@ -839,5 +859,23 @@ pub async fn get_auth_sessions(state: tauri::State<'_, EndpointState>) -> Result
     match auth_api::list_sessions(&config).await {
         Ok(sessions) => Ok(serde_json::to_value(sessions).map_err(|e| e.to_string())?),
         Err(e) => Err(format!("Failed to get auth sessions: {:?}", e)),
+    }
+}
+
+#[command]
+pub async fn get_gossip_topics(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+    let config = get_config(&state);
+    match gossip_api::get_gossip_topics(&config).await {
+        Ok(topics) => Ok(serde_json::to_value(topics).map_err(|e| e.to_string())?),
+        Err(e) => Err(format!("Failed to get gossip topics: {:?}", e)),
+    }
+}
+
+#[command]
+pub async fn get_heartbeats(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+    let config = get_config(&state);
+    match heartbeat_api::get_heartbeats(&config).await {
+        Ok(heartbeats) => Ok(serde_json::to_value(heartbeats).map_err(|e| e.to_string())?),
+        Err(e) => Err(format!("Failed to get heartbeats: {:?}", e)),
     }
 }

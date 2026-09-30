@@ -101,6 +101,8 @@ pub fn run() {
             api_commands::get_active_endpoint,
             api_commands::get_api_url,
             api_commands::get_network_status,
+            api_commands::get_network_nat,
+            api_commands::get_network_peers,
             api_commands::resolve_name,
             api_commands::get_config_info,
             api_commands::create_session,
@@ -148,6 +150,8 @@ pub fn run() {
             api_commands::set_daemon_config,
             api_commands::get_action_status,
             api_commands::get_auth_sessions,
+            api_commands::get_gossip_topics,
+            api_commands::get_heartbeats,
         ])
         .run(tauri::generate_context!())
         .expect(ERR_TAURI_RUN);
