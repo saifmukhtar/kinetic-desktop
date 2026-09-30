@@ -202,6 +202,15 @@ pub async fn get_peer_id(state: tauri::State<'_, EndpointState>) -> Result<Strin
 }
 
 #[command]
+pub async fn get_banned_peers(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+    let config = get_config(&state);
+    match network_api::get_banned_peers(&config).await {
+        Ok(banned) => Ok(serde_json::to_value(banned).map_err(|e| e.to_string())?),
+        Err(e) => Err(format!("Failed to get banned peers: {:?}", e)),
+    }
+}
+
+#[command]
 pub async fn get_time(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
     match system_api::get_time(&config).await {

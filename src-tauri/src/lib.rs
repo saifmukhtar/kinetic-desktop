@@ -106,6 +106,7 @@ pub fn run() {
             api_commands::create_session,
             api_commands::get_health,
             api_commands::get_peer_id,
+            api_commands::get_banned_peers,
             api_commands::get_time,
             api_commands::resolve_kid,
             api_commands::get_zone,
