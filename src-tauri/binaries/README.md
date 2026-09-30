@@ -1,0 +1,1 @@
+# Kinetic Daemon Binaries\n\nPlace pre-compiled binaries in this folder. They will be bundled into the desktop app (the 'Suitcase Installer' pattern) so they can be installed system-wide without needing an internet connection.
