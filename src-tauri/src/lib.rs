@@ -103,7 +103,7 @@ pub fn run() {
             api_commands::get_network_status,
             api_commands::resolve_name,
             api_commands::get_config_info,
-            api_commands::sync_atlas,
+
             api_commands::get_health,
             api_commands::get_peer_id,
             api_commands::get_time,
@@ -121,7 +121,7 @@ pub fn run() {
             api_commands::renew_vdf,
             api_commands::get_vdf_status,
             api_commands::delete_vdf_task,
-            api_commands::get_atlas_networks,
+
             api_commands::get_local_kids,
             api_commands::get_local_kid,
             api_commands::generate_kid,

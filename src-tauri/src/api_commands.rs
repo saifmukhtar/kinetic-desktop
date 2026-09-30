@@ -42,15 +42,7 @@ const TOML_KEY_BIND_IP: &str = "bind_ip";
 // ---------------------------------------------------------------------------
 const ROLE_ADMIN: &str = "admin";
 const ROLE_PUBLISH: &str = "publish";
-const ROLE_ATLAS: &str = "atlas";
 const ROLE_VDF: &str = "vdf";
-
-// ---------------------------------------------------------------------------
-// Atlas network discovery
-// ---------------------------------------------------------------------------
-const LOCAL_NETWORKS_FILE: &str = "networks/tlds.json";
-const ATLAS_NETWORKS_URL: &str =
-    "https://raw.githubusercontent.com/saifmukhtar/kinetic-atlas/main/index.json";
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -155,14 +147,6 @@ pub async fn get_config_info(state: tauri::State<'_, EndpointState>) -> Result<s
     }
 }
 
-#[command]
-pub async fn sync_atlas(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
-    let config = get_private_config(ROLE_ATLAS, &state);
-    match system_api::sync_atlas(&config).await {
-        Ok(resp) => Ok(serde_json::to_value(resp).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to sync atlas: {:?}", e)),
-    }
-}
 
 #[command]
 pub async fn get_health(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
@@ -329,20 +313,7 @@ pub async fn delete_vdf_task(task_id: String, state: tauri::State<'_, EndpointSt
     }
 }
 
-// ---------------------------------------------------------------------------
-// Atlas network discovery
-// ---------------------------------------------------------------------------
 
-#[command]
-pub async fn get_atlas_networks() -> Result<serde_json::Value, String> {
-    match reqwest::get(ATLAS_NETWORKS_URL).await {
-        Ok(resp) => match resp.json::<serde_json::Value>().await {
-            Ok(json) => Ok(json),
-            Err(e) => Err(format!("Failed to parse Atlas networks JSON: {:?}", e)),
-        },
-        Err(e) => Err(format!("Failed to fetch Atlas networks from {}: {:?}", ATLAS_NETWORKS_URL, e)),
-    }
-}
 
 // ---------------------------------------------------------------------------
 // Local KID Management Commands
