@@ -114,14 +114,14 @@ export default function ProxyModal({ onClose }: ProxyModalProps) {
                 </div>
                 <div className={styles.inputGroup}>
                   <label className={styles.inputLabel}>Target IP</label>
-                  <input type="text" className="input" value={ip} onChange={e => setIp(e.target.value)} placeholder="127.0.0.1" required />
+                  <input type="text" className="input" value={ip} onChange={e => setIp(e.target.value)} placeholder="127.0.255.2" required />
                 </div>
                 <div className={styles.inputGroup}>
                   <label className={styles.inputLabel}>Target Port</label>
                   <input type="text" className="input" value={port} onChange={e => setPort(e.target.value)} placeholder="8080" required />
                 </div>
               </div>
-              <button type="submit" className="btn-secondary" disabled={adding}>
+              <button type="submit" className="btn-ghost" disabled={adding}>
                 {adding ? 'Adding...' : 'Add Custom Route'}
               </button>
             </form>

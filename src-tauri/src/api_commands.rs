@@ -695,15 +695,16 @@ pub async fn save_seed_phrase(phrase: String) -> Result<serde_json::Value, Strin
 // PAC Proxy Routing Management
 // ---------------------------------------------------------------------------
 
-/// Returns the path to the universal kinetic pac_router proxies directory.
-/// As per the new architecture, this is always under `kinetic/` globally,
-/// not under a specific network_id.
+/// Returns the path to the kinetic-pac natives directory.
+/// This is the actual directory that kinetic-pac scans for proxy rules.
+/// kinetic-daemon writes its own NSP entry here (e.g. kin.json) on startup.
+/// Custom rules added here (prefixed with custom_) are picked up by kinetic-pac automatically.
 fn get_pac_proxies_dir() -> std::path::PathBuf {
     dirs::data_local_dir()
         .unwrap_or_else(|| std::path::PathBuf::from("."))
         .join("kinetic")
         .join("pac_router")
-        .join("proxies")
+        .join("natives")
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -724,7 +725,7 @@ struct RegisteredProxy {
 }
 
 fn default_proxy_ip() -> String {
-    "127.0.0.1".to_string()
+    "127.0.255.2".to_string()
 }
 
 /// Lists all active routing rules currently registered in the PAC proxies folder.
