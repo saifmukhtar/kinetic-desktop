@@ -113,7 +113,7 @@ export default function LocalZonesView() {
 
       {names.length === 0 ? (
         <div className={styles.empty} style={{ marginTop: '16px' }}>
-          No reserved names found. You must register a namespace before configuring local overrides.
+          Failed to load reserved names. Make sure the Kinetic Daemon is running.
         </div>
       ) : (
         <div className={styles.grid}>
