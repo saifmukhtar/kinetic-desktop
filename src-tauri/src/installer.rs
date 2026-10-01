@@ -104,6 +104,14 @@ pub async fn install_binaries(network_id: String, install_type: String) -> Resul
     };
     let temp_dir_str = temp_dir.to_string_lossy().to_string();
 
+    // Stop PAC gracefully as the user BEFORE elevating
+    let cli_exec = if is_windows {
+        format!("{}\\{}.exe", dest_dir, network_id)
+    } else {
+        format!("{}/{}", dest_dir, network_id)
+    };
+    let _ = std::process::Command::new(&cli_exec).arg("pac").arg("stop").status();
+
     let mut shell_script = String::new();
 
     if is_windows {
@@ -116,8 +124,7 @@ pub async fn install_binaries(network_id: String, install_type: String) -> Resul
         // Stop services first
         shell_script.push_str(&format!("& '{}\\{}.exe' daemon stop -ErrorAction SilentlyContinue; ", dest_dir, network_id));
         shell_script.push_str(&format!("& '{}\\{}.exe' dns stop -ErrorAction SilentlyContinue; ", dest_dir, network_id));
-        shell_script.push_str(&format!("& '{}\\{}.exe' pac stop -ErrorAction SilentlyContinue; ", dest_dir, network_id));
-
+        
         // Copy files
         shell_script.push_str(&format!(
             "Copy-Item -Path '{}*' -Destination $DestDir -Force; ",
@@ -163,7 +170,6 @@ pub async fn install_binaries(network_id: String, install_type: String) -> Resul
         // Stop services first (if they exist)
         shell_script.push_str(&format!("{} daemon stop || true; ", cli_path));
         shell_script.push_str(&format!("{} dns stop || true; ", cli_path));
-        shell_script.push_str(&format!("{} pac stop || true; ", cli_path));
 
         shell_script.push_str(&format!("cp {}/* {}; ", temp_dir_str, dest_dir));
         
@@ -176,8 +182,7 @@ pub async fn install_binaries(network_id: String, install_type: String) -> Resul
         if install_type == "full" {
             shell_script.push_str(&format!("{} dns install; ", cli_path));
             shell_script.push_str(&format!("{} dns start; ", cli_path));
-            shell_script.push_str(&format!("{} pac install; ", cli_path));
-            shell_script.push_str(&format!("{} pac start; ", cli_path));
+
         }
 
         let status = Command::new("osascript")
@@ -200,7 +205,6 @@ pub async fn install_binaries(network_id: String, install_type: String) -> Resul
         // Stop services first (if they exist)
         shell_script.push_str(&format!("{} daemon stop || true; ", cli_path));
         shell_script.push_str(&format!("{} dns stop || true; ", cli_path));
-        shell_script.push_str(&format!("{} pac stop || true; ", cli_path));
 
         shell_script.push_str(&format!("cp -r {}/* {}; ", temp_dir_str, dest_dir));
         
@@ -213,8 +217,7 @@ pub async fn install_binaries(network_id: String, install_type: String) -> Resul
         if install_type == "full" {
             shell_script.push_str(&format!("{} dns install; ", cli_path));
             shell_script.push_str(&format!("{} dns start; ", cli_path));
-            shell_script.push_str(&format!("{} pac install; ", cli_path));
-            shell_script.push_str(&format!("{} pac start; ", cli_path));
+
         }
 
         // Write to temp sh file and pkexec
@@ -236,6 +239,25 @@ pub async fn install_binaries(network_id: String, install_type: String) -> Resul
         .unwrap_or_else(|_| "Error: Failed to read seed phrase from temp file.".to_string())
         .trim()
         .to_string();
+
+    // Now run PAC installation safely as the desktop user, NOT as root
+    if install_type == "full" {
+        let cli_exec = if is_windows {
+            format!("{}\\{}.exe", dest_dir, network_id)
+        } else {
+            format!("{}/{}", dest_dir, network_id)
+        };
+        
+        let _ = Command::new(&cli_exec)
+            .arg("pac")
+            .arg("install")
+            .status();
+            
+        let _ = Command::new(&cli_exec)
+            .arg("pac")
+            .arg("start")
+            .status();
+    }
 
     Ok(seed_phrase)
 }
