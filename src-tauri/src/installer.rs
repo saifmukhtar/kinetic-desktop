@@ -79,7 +79,7 @@ pub async fn extract_bundled_binaries(
 }
 
 #[command]
-pub async fn install_binaries(network_id: String, install_type: String) -> Result<String, String> {
+pub async fn install_binaries(network_id: String, _install_type: String) -> Result<String, String> {
     let temp_dir = env::temp_dir().join(format!("kinetic-install-{}", network_id));
     if !temp_dir.exists() {
         return Err("Installation files not found in temp directory.".into());
@@ -139,8 +139,6 @@ pub async fn install_binaries(network_id: String, install_type: String) -> Resul
         shell_script.push_str(&format!("& '{}\\kinetic.exe' daemon install; ", dest_dir));
         shell_script.push_str(&format!("& '{}\\kinetic.exe' daemon start; ", dest_dir));
 
-        if install_type == "full" {
-        }
 
         let status = Command::new("powershell")
             .args(&[
@@ -170,10 +168,6 @@ pub async fn install_binaries(network_id: String, install_type: String) -> Resul
         shell_script.push_str(&format!("{} seed init --non-interactive > '{}'; ", cli_path, seed_out_str));
         shell_script.push_str(&format!("{} daemon start; ", cli_path));
 
-        if install_type == "full" {
-
-        }
-
         let status = Command::new("osascript")
             .args(&[
                 "-e",
@@ -202,10 +196,6 @@ pub async fn install_binaries(network_id: String, install_type: String) -> Resul
         shell_script.push_str(&format!("{} seed init --non-interactive > '{}'; ", cli_path, seed_out_str));
         shell_script.push_str(&format!("{} daemon start; ", cli_path));
 
-        if install_type == "full" {
-
-        }
-
         // Write to temp sh file and pkexec
         let script_path = temp_dir.join("install.sh");
         fs::write(&script_path, &shell_script).map_err(|e| e.to_string())?;
@@ -227,8 +217,7 @@ pub async fn install_binaries(network_id: String, install_type: String) -> Resul
         .to_string();
 
     // Now run PAC installation safely as the desktop user, NOT as root
-    if install_type == "full" {
-        let cli_exec = if is_windows {
+            let cli_exec = if is_windows {
             format!("{}\\kinetic.exe", dest_dir)
         } else {
             format!("{}/kinetic", dest_dir)
@@ -243,7 +232,5 @@ pub async fn install_binaries(network_id: String, install_type: String) -> Resul
             .arg("pac")
             .arg("start")
             .status();
-    }
-
     Ok(seed_phrase)
 }
