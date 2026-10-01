@@ -2,7 +2,7 @@ import { useRef, useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { KineticMark, IconDashboard, IconNames, IconDns, IconNetwork, IconKid, IconForge, IconSettings, IconIdentity } from "./Icons";
+import { KineticMark, IconDashboard, IconNames, IconDns, IconNetwork, IconKid, IconSettings, IconIdentity } from "./Icons";
 import { daemon } from "../api/daemon";
 import styles from "./TopBar.module.css";
 
@@ -12,7 +12,6 @@ const NAV_ITEMS = [
   { path: "/dns",      label: "DNS",       Icon: IconDns       },
   { path: "/network",  label: "Network",   Icon: IconNetwork   },
   { path: "/kid",      label: "KID",       Icon: IconKid       },
-  { path: "/atlas",    label: "Atlas",     Icon: IconForge     },
   { path: "/identity", label: "Identity",  Icon: IconIdentity  },
   { path: "/settings", label: "Settings",  Icon: IconSettings  },
 ];
