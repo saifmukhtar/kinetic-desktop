@@ -27,7 +27,8 @@ export default function TopBar() {
   const [networks, setNetworks] = useState<any[]>([]);
   const [activeNetworkId, setActiveNetworkId] = useState<string>("kinetic-mainnet");
 
-  const appWindow = getCurrentWindow();
+  const isTauri = typeof window !== "undefined" && ("__TAURI_INTERNALS__" in window || "__TAURI__" in window);
+  const appWindow = isTauri ? getCurrentWindow() : null;
 
   // Which path drives the bubble — hover takes priority over active
   const activePath = NAV_ITEMS.find((n) =>
@@ -179,21 +180,21 @@ export default function TopBar() {
       {/* ── Window Controls ── */}
       <div className={styles.windowControls}>
         <div className={styles.windowBtn} data-action="minimize" onClick={async () => {
-          try { await appWindow.minimize(); } catch(e) { console.error(e); }
+          try { await appWindow?.minimize(); } catch(e) { console.error(e); }
         }}>
           <svg viewBox="0 0 12 2" width="12" height="2" fill="none">
             <path d="M1 1h10" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"/>
           </svg>
         </div>
         <div className={styles.windowBtn} data-action="maximize" onClick={async () => {
-          try { await appWindow.toggleMaximize(); } catch(e) { console.error(e); }
+          try { await appWindow?.toggleMaximize(); } catch(e) { console.error(e); }
         }}>
           <svg viewBox="0 0 12 12" width="12" height="12" fill="none">
             <rect x="1" y="1" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"/>
           </svg>
         </div>
         <div className={`${styles.windowBtn} ${styles.windowBtnClose}`} data-action="close" onClick={async () => {
-          try { await appWindow.close(); } catch(e) { console.error(e); }
+          try { await appWindow?.close(); } catch(e) { console.error(e); }
         }}>
           <svg viewBox="0 0 12 12" width="12" height="12" fill="none">
             <path d="M1.5 1.5l9 9M10.5 1.5l-9 9" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"/>
