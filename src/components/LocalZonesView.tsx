@@ -111,20 +111,26 @@ export default function LocalZonesView() {
         Reserved names can be routed locally. These records are completely private to your machine and are not published to the global DHT.
       </p>
 
-      <div className={styles.grid}>
-        {names.map(item => (
-          <div 
-            key={item.name} 
-            className={`${styles.card} ${item.active ? styles.cardActive : styles.cardInactive}`}
-            onClick={() => openEdit(item.name)}
-          >
-            <span className={`${styles.status} ${item.active ? styles.statusActive : styles.statusInactive}`}>
-              {item.active ? 'Active' : 'Inactive'}
-            </span>
-            <span className={styles.name}>{item.name}.kin</span>
-          </div>
-        ))}
-      </div>
+      {names.length === 0 ? (
+        <div className={styles.empty} style={{ marginTop: '16px' }}>
+          No reserved names found. You must register a namespace before configuring local overrides.
+        </div>
+      ) : (
+        <div className={styles.grid}>
+          {names.map(item => (
+            <div 
+              key={item.name} 
+              className={`${styles.card} ${item.active ? styles.cardActive : styles.cardInactive}`}
+              onClick={() => openEdit(item.name)}
+            >
+              <span className={`${styles.status} ${item.active ? styles.statusActive : styles.statusInactive}`}>
+                {item.active ? 'Active' : 'Inactive'}
+              </span>
+              <span className={styles.name}>{item.name}.kin</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {editingName && (
         <div className={modalStyles.overlay} onClick={() => setEditingName(null)}>
@@ -157,7 +163,23 @@ export default function LocalZonesView() {
 
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
                 {names.find(n => n.name === editingName)?.active ? (
-                  <button className="btn-ghost" onClick={handleDelete} disabled={saving} style={{ color: 'var(--status-err)' }}>
+                  <button
+                    onClick={handleDelete}
+                    disabled={saving}
+                    style={{
+                      background: 'none',
+                      border: '1px solid var(--status-err)',
+                      color: 'var(--status-err)',
+                      cursor: saving ? 'not-allowed' : 'pointer',
+                      fontSize: 'var(--text-sm)',
+                      padding: '8px 16px',
+                      borderRadius: 'var(--r-md)',
+                      fontWeight: 500,
+                      opacity: saving ? 0.5 : 1,
+                    }}
+                    onMouseOver={e => !saving && (e.currentTarget.style.background = 'rgba(220,38,38,0.08)')}
+                    onMouseOut={e => (e.currentTarget.style.background = 'none')}
+                  >
                     Disable Overlay
                   </button>
                 ) : <div />}
