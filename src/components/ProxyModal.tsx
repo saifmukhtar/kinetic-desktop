@@ -9,17 +9,29 @@ interface ProxyModalProps {
 export default function ProxyModal({ onClose }: ProxyModalProps) {
   const [rules, setRules] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  
+  const [pacActive, setPacActive] = useState<boolean | null>(null);
+
   // Add Form State
   const [nsp, setNsp] = useState('');
-  const [ip, setIp] = useState('127.0.0.1');
+  const [ip, setIp] = useState('');
   const [port, setPort] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [adding, setAdding] = useState(false);
 
   useEffect(() => {
     fetchRules();
+    checkPacStatus();
   }, []);
+
+  async function checkPacStatus() {
+    try {
+      // kinetic-pac serves on port 16001 — check if it responds
+      const res = await daemon.checkPacStatus();
+      setPacActive(res);
+    } catch {
+      setPacActive(false);
+    }
+  }
 
   async function fetchRules() {
     try {
@@ -42,11 +54,11 @@ export default function ProxyModal({ onClose }: ProxyModalProps) {
       if (isNaN(p)) throw new Error('Port must be a valid number');
       if (!nsp) throw new Error('Namespace is required');
       
-      await daemon.addCustomProxy(nsp, ip || '127.0.0.1', p);
+      await daemon.addCustomProxy(nsp, ip || '127.0.255.2', p);
       await fetchRules();
       setNsp('');
       setPort('');
-      setIp('127.0.0.1');
+      setIp('');
     } catch (err: any) {
       setErrorMsg(err.toString());
     } finally {
@@ -77,8 +89,16 @@ export default function ProxyModal({ onClose }: ProxyModalProps) {
               <span className={styles.switchTitle}>Universal PAC Server</span>
               <span className={styles.switchDesc}>Automatically route registered namespaces seamlessly across your OS.</span>
             </div>
-            {/* Mocking the status as Active for now since kinetic-pac is a standalone service */}
-            <span style={{ color: 'var(--status-ok)', fontWeight: 500, fontSize: 'var(--text-sm)' }}>Active</span>
+            {/* Real PAC status — checks if kinetic-pac is serving on 16001 */}
+            {pacActive === null && (
+              <span style={{ color: 'var(--ink-muted)', fontWeight: 500, fontSize: 'var(--text-sm)' }}>Checking...</span>
+            )}
+            {pacActive === true && (
+              <span style={{ color: 'var(--status-ok)', fontWeight: 500, fontSize: 'var(--text-sm)' }}>● Active</span>
+            )}
+            {pacActive === false && (
+              <span style={{ color: 'var(--status-err)', fontWeight: 500, fontSize: 'var(--text-sm)' }}>● Offline</span>
+            )}
           </div>
 
           <div>
@@ -96,7 +116,23 @@ export default function ProxyModal({ onClose }: ProxyModalProps) {
                       <span className={styles.ruleTarget}>{rule.proxy_ip}:{rule.proxy_port}</span>
                     </div>
                     {rule.is_custom && (
-                      <button className={styles.deleteBtn} onClick={() => handleDelete(rule.filename)}>Remove</button>
+                      <button
+                        onClick={() => handleDelete(rule.filename)}
+                        style={{
+                          background: 'none',
+                          border: '1px solid var(--status-err)',
+                          color: 'var(--status-err)',
+                          cursor: 'pointer',
+                          fontSize: 'var(--text-xs)',
+                          padding: '3px 10px',
+                          borderRadius: 'var(--r-sm)',
+                          fontWeight: 500,
+                        }}
+                        onMouseOver={e => (e.currentTarget.style.background = 'rgba(220,38,38,0.08)')}
+                        onMouseOut={e => (e.currentTarget.style.background = 'none')}
+                      >
+                        Remove
+                      </button>
                     )}
                   </div>
                 ))}
