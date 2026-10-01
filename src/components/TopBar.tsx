@@ -23,9 +23,6 @@ export default function TopBar() {
   const [hovered, setHovered] = useState<string | null>(null);
   const [bubbleTarget, setBubbleTarget] = useState({ left: 0, width: 0 });
   const [daemonOnline, setDaemonOnline] = useState<boolean | null>(null);
-  const [showNetworkMenu, setShowNetworkMenu] = useState(false);
-  const [networks, setNetworks] = useState<any[]>([]);
-  const [activeNetworkId, setActiveNetworkId] = useState<string>("kinetic-mainnet");
 
   const isTauri = typeof window !== "undefined" && ("__TAURI_INTERNALS__" in window || "__TAURI__" in window);
   const appWindow = isTauri ? getCurrentWindow() : null;
@@ -68,27 +65,9 @@ export default function TopBar() {
   }, []);
 
   // Fetch Atlas networks on mount to populate dropdown
-  useEffect(() => {
-    daemon.getAtlasNetworks().then(setNetworks).catch(console.error);
-    daemon.getActiveEndpoint().then((ep) => setActiveNetworkId(ep.network_id)).catch(console.error);
-  }, []);
 
-  const handleSelectNetwork = async (net: any) => {
-    setShowNetworkMenu(false);
-    try {
-      if (!net.local_bind_ip || !net.api_port) throw new Error("Invalid network: missing IP or Port in Atlas configuration");
-      await daemon.setActiveEndpoint(net.local_bind_ip, net.api_port, net.network_id);
-      setActiveNetworkId(net.network_id);
-      // Hard reload to flush all contexts and immediately reconnect to the new daemon
-      window.location.reload();
-    } catch (e) {
-      console.error("Failed to switch network:", e);
-    }
-  };
 
-  // Find the active network label
-  const activeNet = networks.find((n) => n.network_id === activeNetworkId);
-  const networkLabel = activeNet ? activeNet.name || activeNet.tld : "Connecting…";
+  const networkLabel = daemonOnline ? "Mainnet Connected" : "Connecting...";
 
   return (
     <header 
@@ -103,12 +82,9 @@ export default function TopBar() {
         <span className={styles.logoName}>Kinetic</span>
       </NavLink>
 
-      {/* ── Network Switcher Dropdown ── */}
-      <div className={styles.networkSwitcher}>
-        <div 
-          className={styles.networkToggle}
-          onClick={() => setShowNetworkMenu(!showNetworkMenu)}
-        >
+      {/* ── Network Status Indicator ── */}
+      <div className={styles.networkSwitcher} style={{ cursor: 'default' }}>
+        <div className={styles.networkToggle}>
           <span
             className={styles.daemonDot}
             data-online={daemonOnline === true}
@@ -117,30 +93,7 @@ export default function TopBar() {
           <span className={styles.daemonLabel}>
             {networkLabel}
           </span>
-          <svg width="10" height="6" viewBox="0 0 10 6" fill="none" style={{ opacity: 0.5, marginLeft: 4 }}>
-            <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
         </div>
-
-        {showNetworkMenu && (
-          <div className={styles.networkMenu}>
-            {networks.map((net) => (
-              <div 
-                key={net.network_id}
-                className={styles.networkItem}
-                data-active={net.network_id === activeNetworkId}
-                onClick={() => handleSelectNetwork(net)}
-              >
-                <div style={{ flex: 1 }}>{net.name || net.tld}</div>
-                {net.network_id === activeNetworkId && (
-                  <svg width="14" height="10" viewBox="0 0 14 10" fill="none">
-                    <path d="M1 5L5 9L13 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* ── Drag spacer — the actual blank zone KDE/macOS/Windows drag from ── */}

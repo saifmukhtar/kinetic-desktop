@@ -133,18 +133,6 @@ export interface KidUpdateManifestResponse {
   manifest: CapabilityManifest;
 }
 
-export interface AtlasNetwork {
-  version?: string;
-  network_id?: string;
-  tld: string;
-  name?: string;
-  desc?: string;
-  logo?: string;
-  local_bind_ip?: string;
-  api_port?: number;
-  repo?: string;
-  binary_download?: string;
-}
 
 async function safeInvoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
   const isTauri = typeof window !== 'undefined' && ('__TAURI_INTERNALS__' in window || '__TAURI__' in window);
@@ -189,9 +177,6 @@ export const daemon = {
 
   getZone: (name: string): Promise<NrsZone> =>
     safeInvoke("get_zone", { name }),
-
-  getAtlasNetworks: (): Promise<AtlasNetwork[]> =>
-    safeInvoke("get_atlas_networks"),
 
   // Private — owned names & DNS
   getOwnedNames: (): Promise<string[]> =>
@@ -276,10 +261,6 @@ export const daemon = {
 
   setDaemonConfig: (config_data: any): Promise<any> =>
     safeInvoke("set_daemon_config", { configData: config_data }),
-
-  // Private — atlas
-  syncAtlas: (): Promise<unknown> =>
-    safeInvoke("sync_atlas"),
   // ---------------------------------------------------------------------------
   // IDENTITY / NODE SEED
   // ---------------------------------------------------------------------------
