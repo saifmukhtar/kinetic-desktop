@@ -1,22 +1,22 @@
-import { DnsRecord } from '../api/daemon';
+import { NrsRecord } from '../api/daemon';
 import { IconTrash } from './Icons';
-import styles from './DnsRecordRow.module.css';
+import styles from './NrsRecordRow.module.css';
 
-interface DnsRecordRowProps {
-  record: DnsRecord;
-  onTypeChange: (type: DnsRecord['type']) => void;
+interface NrsRecordRowProps {
+  record: NrsRecord;
+  onTypeChange: (type: NrsRecord['type']) => void;
   onValueChange: (value: string) => void;
   onDelete: () => void;
 }
 
-export default function DnsRecordRow({ record, onTypeChange, onValueChange, onDelete }: DnsRecordRowProps) {
+export default function NrsRecordRow({ record, onTypeChange, onValueChange, onDelete }: NrsRecordRowProps) {
   return (
     <div className={styles.recordRow}>
       <div className={styles.recordType}>
         <select 
           className={`input input-mono ${styles.recordTypeSelect}`}
           value={record.type}
-          onChange={e => onTypeChange(e.target.value as DnsRecord['type'])}
+          onChange={e => onTypeChange(e.target.value as NrsRecord['type'])}
         >
           <option value="A">A</option>
           <option value="AAAA">AAAA</option>

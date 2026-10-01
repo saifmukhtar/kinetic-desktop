@@ -24,13 +24,13 @@ export interface VdfTaskStatus {
   error?: string | null;
 }
 
-export interface DnsRecord {
+export interface NrsRecord {
   type: "A" | "AAAA" | "CNAME" | "TXT" | "PeerId" | "KID";
   value: string;
 }
 
-export interface DnsZone {
-  records: Record<string, DnsRecord[]>;
+export interface NrsZone {
+  records: Record<string, NrsRecord[]>;
 }
 
 export interface VdfRegisterRequest {
@@ -187,7 +187,7 @@ export const daemon = {
   resolveKid: (did: string): Promise<unknown> =>
     safeInvoke("resolve_kid", { did }),
 
-  getZone: (name: string): Promise<DnsZone> =>
+  getZone: (name: string): Promise<NrsZone> =>
     safeInvoke("get_zone", { name }),
 
   getAtlasNetworks: (): Promise<AtlasNetwork[]> =>
@@ -197,7 +197,7 @@ export const daemon = {
   getOwnedNames: (): Promise<string[]> =>
     safeInvoke("get_owned_names"),
 
-  publishZone: (name: string, zoneData: DnsZone): Promise<void> =>
+  publishZone: (name: string, zoneData: NrsZone): Promise<void> =>
     safeInvoke("publish_zone", { name, zoneData }),
 
   signAndPublishZone: (name: string): Promise<void> =>
@@ -320,11 +320,11 @@ export const daemon = {
     return safeInvoke('get_reserved_names');
   },
 
-  async getLocalReservedZone(name: string): Promise<DnsZone | null> {
+  async getLocalReservedZone(name: string): Promise<NrsZone | null> {
     return safeInvoke('get_local_reserved_zone', { name });
   },
 
-  async saveLocalReservedZone(name: string, records: Record<string, DnsRecord[]>): Promise<void> {
+  async saveLocalReservedZone(name: string, records: Record<string, NrsRecord[]>): Promise<void> {
     return safeInvoke('save_local_reserved_zone', { name, records });
   },
 

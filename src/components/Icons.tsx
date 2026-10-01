@@ -54,7 +54,7 @@ export function IconNames({ size = defaults.size, color = defaults.color, classN
 }
 
 // ── DNS — two nodes connected by a line (network record) ─────────────────────
-export function IconDns({ size = defaults.size, color = defaults.color, className }: IconProps) {
+export function IconNrs({ size = defaults.size, color = defaults.color, className }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 16 16" fill="none" className={className}>
       <circle cx="3" cy="8" r="2" stroke={color} strokeWidth="1.4" />

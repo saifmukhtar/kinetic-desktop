@@ -1,17 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { daemon, DnsRecord } from '../api/daemon';
-import DnsRecordRow from '../components/DnsRecordRow';
+import { daemon, NrsRecord } from '../api/daemon';
+import NrsRecordRow from '../components/NrsRecordRow';
 import LocalZonesView from '../components/LocalZonesView';
-import styles from './Dns.module.css';
+import styles from './Nrs.module.css';
 
-export default function Dns() {
+export default function Nrs() {
   const [searchParams] = useSearchParams();
   const initialName = searchParams.get('name') || '';
   
   const [names, setNames] = useState<string[]>([]);
   const [selectedName, setSelectedName] = useState(initialName);
-  const [records, setRecords] = useState<DnsRecord[]>([]);
+  const [records, setRecords] = useState<NrsRecord[]>([]);
   const [isModified, setIsModified] = useState(false);
 
   // Tabs: 'global' | 'local'
@@ -30,7 +30,7 @@ export default function Dns() {
     if (!selectedName || activeTab !== 'global') return;
     daemon.getZone(selectedName).then(res => {
       // Flatten zone records
-      const flat: DnsRecord[] = [];
+      const flat: NrsRecord[] = [];
       for (const [_, recs] of Object.entries(res.records)) {
         flat.push(...recs);
       }
@@ -39,7 +39,7 @@ export default function Dns() {
     }).catch(console.error);
   }, [selectedName, activeTab]);
 
-  const updateRecordType = (idx: number, type: DnsRecord['type']) => {
+  const updateRecordType = (idx: number, type: NrsRecord['type']) => {
     const newRecords = [...records];
     newRecords[idx] = { ...newRecords[idx], type };
     setRecords(newRecords);
@@ -89,7 +89,7 @@ export default function Dns() {
     <div className={styles.container}>
       <div className={styles.header}>
         <div className={styles.titleGroup}>
-          <span className="eyebrow">DNS MANAGEMENT</span>
+          <span className="eyebrow">NRS MANAGEMENT</span>
           <h1 className={styles.title}>Zone Editor</h1>
         </div>
         
@@ -133,7 +133,7 @@ export default function Dns() {
                 {records.length === 0 && <p className={styles.empty}>No records found.</p>}
                 
                 {records.map((rec, idx) => (
-                  <DnsRecordRow 
+                  <NrsRecordRow 
                     key={idx}
                     record={rec}
                     onTypeChange={(type) => updateRecordType(idx, type)}

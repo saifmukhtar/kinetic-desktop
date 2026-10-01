@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { daemon, DnsRecord, DnsZone } from '../api/daemon';
-import DnsRecordRow from './DnsRecordRow';
+import { daemon, NrsRecord, NrsZone } from '../api/daemon';
+import NrsRecordRow from './NrsRecordRow';
 import modalStyles from './ProxyModal.module.css'; // Reuse modal styles
 import styles from './LocalZonesView.module.css';
 
@@ -15,7 +15,7 @@ export default function LocalZonesView() {
   const [editingName, setEditingName] = useState<string | null>(null);
 
   // Edit State
-  const [records, setRecords] = useState<DnsRecord[]>([]);
+  const [records, setRecords] = useState<NrsRecord[]>([]);
   const [saving, setSaving] = useState(false);
 
   const fetchNames = async () => {
@@ -56,7 +56,7 @@ export default function LocalZonesView() {
     setSaving(true);
     try {
       // Package records back into the apex '@' array
-      const zoneData: DnsZone = { records: { '@': records } };
+      const zoneData: NrsZone = { records: { '@': records } };
       await daemon.saveLocalReservedZone(editingName, zoneData.records);
       await fetchNames();
       setEditingName(null);
@@ -81,7 +81,7 @@ export default function LocalZonesView() {
     }
   };
 
-  const updateRecordType = (idx: number, type: DnsRecord['type']) => {
+  const updateRecordType = (idx: number, type: NrsRecord['type']) => {
     const newRecords = [...records];
     newRecords[idx] = { ...newRecords[idx], type };
     setRecords(newRecords);
@@ -139,7 +139,7 @@ export default function LocalZonesView() {
                 {records.length === 0 && <p className={styles.empty}>No records configured. Traffic will return NXDOMAIN.</p>}
                 
                 {records.map((rec, idx) => (
-                  <DnsRecordRow 
+                  <NrsRecordRow 
                     key={idx}
                     record={rec}
                     onTypeChange={(type) => updateRecordType(idx, type)}

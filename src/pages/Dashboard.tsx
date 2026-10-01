@@ -176,7 +176,7 @@ export default function Dashboard() {
                 <li key={name} className={styles.nameRow}>
                   <span className={styles.nameMono}>{name}</span>
                   <NavLink
-                    to={`/dns?name=${encodeURIComponent(name)}`}
+                    to={`/nrs?name=${encodeURIComponent(name)}`}
                     className="btn-arrow"
                   >
                     Manage <IconArrow size={11} />

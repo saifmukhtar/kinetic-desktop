@@ -99,9 +99,9 @@ export default function Names() {
               <div className={styles.actions}>
                 <button
                   className="btn-arrow"
-                  onClick={() => navigate(`/dns?name=${encodeURIComponent(name)}`)}
+                  onClick={() => navigate(`/nrs?name=${encodeURIComponent(name)}`)}
                 >
-                  Edit DNS <IconArrow />
+                  Edit NRS <IconArrow />
                 </button>
                 <button className="btn-ghost">Renew</button>
               </div>

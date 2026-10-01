@@ -3,7 +3,7 @@ import TopBar from './components/TopBar'
 import WindowResizer from './components/WindowResizer'
 import Dashboard from './pages/Dashboard'
 import Names from './pages/Names'
-import Dns from './pages/Dns'
+import Nrs from './pages/Nrs'
 import Network from './pages/Network'
 import Kid from './pages/Kid'
 import Identity from './pages/Identity'
@@ -19,7 +19,7 @@ export default function App() {
         <Routes>
           <Route path="/"         element={<Dashboard />} />
           <Route path="/names"    element={<Names />} />
-          <Route path="/dns"      element={<Dns />} />
+          <Route path="/nrs"      element={<Nrs />} />
           <Route path="/network"  element={<Network />} />
           <Route path="/kid"      element={<Kid />} />
           <Route path="/identity" element={<Identity />} />
