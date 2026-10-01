@@ -1,7 +1,11 @@
-# Tauri + React + Typescript
+# Kinetic Desktop
 
-This template should help get you started developing with Tauri, React and Typescript in Vite.
+The official desktop client for the Kinetic network. Built with Tauri, React, and TypeScript.
 
-## Recommended IDE Setup
+Kinetic Desktop provides a local interface to manage your Kinetic Daemon, handle your Master Identity (KID), configure OS-level Proxy routing, and interface with the decentralized Name Resolution System (NRS).
 
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+## Development
+
+1. Ensure the `kinetic-daemon` is running locally.
+2. Install dependencies: `npm install`
+3. Run the development server: `npm run tauri dev`
