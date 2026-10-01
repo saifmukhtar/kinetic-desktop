@@ -19,9 +19,13 @@ export default function AdvancedSettingsModal({ onClose }: Props) {
           setConfig(res.config);
         } else {
           console.error("Invalid config response", res);
+          setConfig({ daemon: {}, network: {} });
         }
       })
-      .catch(console.error)
+      .catch(err => {
+        console.warn("getDaemonConfig failed (daemon offline?):", err);
+        setConfig({ daemon: {}, network: {} });
+      })
       .finally(() => setLoading(false));
   }, []);
 

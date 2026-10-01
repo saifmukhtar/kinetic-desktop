@@ -10,6 +10,7 @@
   --bg-subtle:    #E9EFED;   /* slightly richer mint */
   --bg-muted:     #DEE5E3;   /* frosted mint gray */
   --bg-elevated:  #FFFFFF;   /* pure white — cards, panels */
+  --bg-surface:   #FFFFFF;   /* alias for modals & overlays */
 
   /* ---- Ink (text) ---- */
   --ink:           #1A2B2B;  /* dark teal-slate */
