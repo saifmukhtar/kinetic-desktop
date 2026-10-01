@@ -54,8 +54,8 @@ fn show_main_window(app: &tauri::AppHandle) {
 pub fn run() {
     tauri::Builder::default()
         .manage(api_commands::EndpointState {
-            bind_ip: "127.0.0.1".to_string(),
-            api_port: 8080,
+            bind_ip: "127.0.0.2".to_string(),
+            api_port: 16002,
             network_id: "kin-1a9a".to_string(),
         })
         .plugin(tauri_plugin_opener::init())
