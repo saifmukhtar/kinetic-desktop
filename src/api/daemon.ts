@@ -261,7 +261,7 @@ export const daemon = {
   downloadBinaries: (networkId: string, installType: string, baseUrl: string): Promise<string> =>
     safeInvoke("download_binaries", { networkId, installType, baseUrl }),
 
-  installBinaries: (networkId: string, installType: string): Promise<void> =>
+  installBinaries: (networkId: string, installType: string): Promise<string> =>
     safeInvoke("install_binaries", { networkId, installType }),
 
   // Private — config
