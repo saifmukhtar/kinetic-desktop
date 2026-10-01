@@ -30,8 +30,15 @@ const ROLE_ATLAS: &str = "atlas";
 // ---------------------------------------------------------------------------
 
 pub struct EndpointState {
-    pub url: std::sync::Arc<std::sync::Mutex<String>>,
-    pub network_id: std::sync::Arc<std::sync::Mutex<String>>,
+    pub bind_ip: String,
+    pub api_port: u16,
+    pub network_id: String,
+}
+
+impl EndpointState {
+    pub fn get_url(&self) -> String {
+        format!("http://{}:{}/api", self.bind_ip, self.api_port)
+    }
 }
 
 fn get_base_dir(network_id: &str) -> PathBuf {
@@ -42,14 +49,13 @@ fn get_base_dir(network_id: &str) -> PathBuf {
 
 fn get_config(state: &tauri::State<EndpointState>) -> Configuration {
     let mut config = Configuration::new();
-    let url = state.url.lock().unwrap().clone();
-    config.base_path = url;
+    config.base_path = state.get_url();
     config
 }
 
 fn get_private_config(role: &str, state: &tauri::State<EndpointState>) -> Configuration {
     let mut config = get_config(state);
-    let net_id = state.network_id.lock().unwrap().clone();
+    let net_id = state.network_id.clone();
     
     let token_path = get_base_dir(&net_id)
         .join("tokens")
@@ -67,27 +73,20 @@ fn get_private_config(role: &str, state: &tauri::State<EndpointState>) -> Config
 
 #[command]
 pub async fn set_active_endpoint(
-    ip: String, 
-    port: u16, 
-    network_id: String, 
-    state: tauri::State<'_, EndpointState>
+    _ip: String, 
+    _port: u16, 
+    _network_id: String, 
+    _state: tauri::State<'_, EndpointState>
 ) -> Result<(), String> {
-    let mut url_lock = state.url.lock().unwrap();
-    *url_lock = format!("http://{}:{}/api", ip, port);
-    
-    let mut net_lock = state.network_id.lock().unwrap();
-    *net_lock = network_id;
-    
+    // No-op for V1. State is statically defined in lib.rs.
     Ok(())
 }
 
 #[command]
 pub async fn get_active_endpoint(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
-    let url = state.url.lock().unwrap().clone();
-    let net_id = state.network_id.lock().unwrap().clone();
     Ok(serde_json::json!({
-        "url": url,
-        "network_id": net_id
+        "url": state.get_url(),
+        "network_id": state.network_id
     }))
 }
 

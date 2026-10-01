@@ -54,8 +54,9 @@ fn show_main_window(app: &tauri::AppHandle) {
 pub fn run() {
     tauri::Builder::default()
         .manage(api_commands::EndpointState {
-            url: std::sync::Arc::new(std::sync::Mutex::new(String::new())),
-            network_id: std::sync::Arc::new(std::sync::Mutex::new(String::new())),
+            bind_ip: "127.0.0.1".to_string(),
+            api_port: 8080,
+            network_id: "kin-mainnet".to_string(),
         })
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
