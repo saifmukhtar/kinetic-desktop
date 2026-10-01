@@ -117,7 +117,7 @@ export default function Identity() {
                 Generate New Seed
               </button>
             )}
-            <button className={status === 'found' ? 'btn-ghost' : 'btn-secondary'} onClick={() => setStep('restore')}>
+            <button className="btn-ghost" onClick={() => setStep('restore')}>
               Restore from Seed Phrase
             </button>
           </div>

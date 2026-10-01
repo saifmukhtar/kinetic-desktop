@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { daemon } from '../api/daemon';
 import StatusBadge from '../components/StatusBadge';
 import { IconArrow } from '../components/Icons';
-import SlidePanel from '../components/SlidePanel';
-import VdfProgress from '../components/VdfProgress';
+import RegisterNameModal from '../components/RegisterNameModal';
 import styles from './Names.module.css';
 
 export default function Names() {
@@ -12,48 +11,15 @@ export default function Names() {
   const [names, setNames] = useState<string[]>([]);
   const [search, setSearch] = useState('');
   const [panelOpen, setPanelOpen] = useState(false);
-  const [registerName, setRegisterName] = useState('');
-  const [taskId, setTaskId] = useState<string | null>(null);
-  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     loadNames();
   }, []);
 
-  useEffect(() => {
-    if (!taskId) return;
-    const interval = setInterval(async () => {
-      try {
-        const status = await daemon.getVdfStatus(taskId);
-        setProgress(status.progress);
-        if (status.status === 'completed' || status.status === 'failed') {
-          clearInterval(interval);
-          setTaskId(null);
-          loadNames();
-          if (status.status === 'completed') setPanelOpen(false);
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    }, 2000);
-    return () => clearInterval(interval);
-  }, [taskId]);
-
   async function loadNames() {
     try {
       const owned = await daemon.getOwnedNames();
       setNames(owned);
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  async function startRegistration() {
-    if (!registerName) return;
-    try {
-      const res = await daemon.registerVdf({ name: registerName });
-      setTaskId(res.task_id);
-      setProgress(0);
     } catch (err) {
       console.error(err);
     }
@@ -110,29 +76,12 @@ export default function Names() {
         )}
       </div>
 
-      <SlidePanel
-        open={panelOpen}
-        onClose={() => setPanelOpen(false)}
-        title="Register Name"
-        disableClose={!!taskId}
-      >
-        <input
-          type="text"
-          className="input input-mono"
-          placeholder="e.g. alice.kin"
-          value={registerName}
-          onChange={e => setRegisterName(e.target.value)}
-          disabled={!!taskId}
+      {panelOpen && (
+        <RegisterNameModal
+          onClose={() => setPanelOpen(false)}
+          onSuccess={loadNames}
         />
-        
-        {taskId ? (
-          <VdfProgress progress={progress} />
-        ) : (
-          <button className="btn-primary" onClick={startRegistration} disabled={!registerName}>
-            Start Registration
-          </button>
-        )}
-      </SlidePanel>
+      )}
     </div>
   );
 }

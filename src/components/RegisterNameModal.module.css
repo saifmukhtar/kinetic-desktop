@@ -1,0 +1,178 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.modal {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title {
+  font-size: var(--text-lg);
+  font-weight: 500;
+  color: var(--ink);
+  margin: 0;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--ink-muted);
+  padding: 4px;
+}
+
+.closeBtn:hover {
+  color: var(--ink);
+}
+
+.content {
+  padding: 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Master Switch Section */
+.switchSection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-muted);
+  padding: 16px;
+  border-radius: var(--r-sm);
+}
+
+.switchInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.switchTitle {
+  font-weight: 500;
+  font-size: var(--text-md);
+}
+
+.switchDesc {
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+}
+
+/* Rule List */
+.sectionTitle {
+  font-size: var(--text-md);
+  font-weight: 500;
+  margin: 0 0 12px 0;
+}
+
+.ruleList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ruleItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+}
+
+.ruleLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ruleNsp {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--text-sm);
+}
+
+.ruleTarget {
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+}
+
+.deleteBtn {
+  background: none;
+  border: none;
+  color: var(--status-err);
+  cursor: pointer;
+  font-size: var(--text-xs);
+  padding: 4px 8px;
+}
+
+.deleteBtn:hover {
+  text-decoration: underline;
+}
+
+/* Add Rule Form */
+.addForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.inputLabel {
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--ink-muted);
+}
+
+.row {
+  display: flex;
+  gap: 12px;
+}
+
+.row > * {
+  flex: 1;
+}
+
+.error {
+  color: var(--status-err);
+  font-size: var(--text-sm);
+}
