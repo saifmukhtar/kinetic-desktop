@@ -14,26 +14,23 @@ pub struct InstallStatus {
 }
 
 #[command]
-pub async fn check_installed(network_id: String) -> Result<InstallStatus, String> {
+pub async fn check_installed(_network_id: String) -> Result<InstallStatus, String> {
     let is_windows = env::consts::OS == "windows";
-    let daemon_name = if is_windows { format!("{}-daemon.exe", network_id) } else { format!("{}-daemon", network_id) };
-    let dns_name = if is_windows { format!("{}-dns.exe", network_id) } else { format!("{}-dns", network_id) };
+    let daemon_name = if is_windows { "kinetic-daemon.exe".to_string() } else { "kinetic-daemon".to_string() };
 
     let bin_dir = if is_windows {
-        let dir = format!("C:\\Program Files\\{}\\bin", network_id);
+        let dir = "C:\\Program Files\\Kinetic\\bin".to_string();
         PathBuf::from(dir)
     } else {
         PathBuf::from(BIN_DIR_UNIX)
     };
 
     let daemon_path = bin_dir.join(&daemon_name);
-    let dns_path = bin_dir.join(&dns_name);
 
     if daemon_path.exists() {
-        let install_type = if dns_path.exists() { "full" } else { "minimal" };
         Ok(InstallStatus {
             is_installed: true,
-            install_type: Some(install_type.to_string()),
+            install_type: Some("desktop".to_string()),
         })
     } else {
         Ok(InstallStatus {
@@ -98,7 +95,7 @@ pub async fn install_binaries(network_id: String, install_type: String) -> Resul
     let seed_out_str = seed_out.to_string_lossy().to_string();
 
     let dest_dir = if is_windows { 
-        format!("C:\\Program Files\\{}\\bin", network_id) 
+        "C:\\Program Files\\Kinetic\\bin".to_string() 
     } else { 
         BIN_DIR_UNIX.to_string() 
     };
@@ -106,9 +103,9 @@ pub async fn install_binaries(network_id: String, install_type: String) -> Resul
 
     // Stop PAC gracefully as the user BEFORE elevating
     let cli_exec = if is_windows {
-        format!("{}\\{}.exe", dest_dir, network_id)
+        format!("{}\\kinetic.exe", dest_dir)
     } else {
-        format!("{}/{}", dest_dir, network_id)
+        format!("{}/kinetic", dest_dir)
     };
     let _ = std::process::Command::new(&cli_exec).arg("pac").arg("stop").status();
 
@@ -122,8 +119,7 @@ pub async fn install_binaries(network_id: String, install_type: String) -> Resul
         ));
         shell_script.push_str("if (!(Test-Path $DestDir)) { New-Item -ItemType Directory -Force -Path $DestDir | Out-Null }; ");
         // Stop services first
-        shell_script.push_str(&format!("& '{}\\{}.exe' daemon stop -ErrorAction SilentlyContinue; ", dest_dir, network_id));
-        shell_script.push_str(&format!("& '{}\\{}.exe' dns stop -ErrorAction SilentlyContinue; ", dest_dir, network_id));
+        shell_script.push_str(&format!("& '{}\\kinetic.exe' daemon stop -ErrorAction SilentlyContinue; ", dest_dir));
         
         // Copy files
         shell_script.push_str(&format!(
@@ -140,14 +136,10 @@ pub async fn install_binaries(network_id: String, install_type: String) -> Resul
         ));
 
         // Install & Start services
-        shell_script.push_str(&format!("& '{}\\{}.exe' daemon install; ", dest_dir, network_id));
-        shell_script.push_str(&format!("& '{}\\{}.exe' daemon start; ", dest_dir, network_id));
+        shell_script.push_str(&format!("& '{}\\kinetic.exe' daemon install; ", dest_dir));
+        shell_script.push_str(&format!("& '{}\\kinetic.exe' daemon start; ", dest_dir));
 
         if install_type == "full" {
-            shell_script.push_str(&format!("& '{}\\{}.exe' dns install; ", dest_dir, network_id));
-            shell_script.push_str(&format!("& '{}\\{}.exe' dns start; ", dest_dir, network_id));
-            shell_script.push_str(&format!("& '{}\\{}.exe' pac install; ", dest_dir, network_id));
-            shell_script.push_str(&format!("& '{}\\{}.exe' pac start; ", dest_dir, network_id));
         }
 
         let status = Command::new("powershell")
@@ -166,10 +158,9 @@ pub async fn install_binaries(network_id: String, install_type: String) -> Resul
         // macOS script
         shell_script.push_str(&format!("mkdir -p {}; ", dest_dir));
         
-        let cli_path = format!("{}/{}", dest_dir, network_id);
+        let cli_path = format!("{}/kinetic", dest_dir);
         // Stop services first (if they exist)
         shell_script.push_str(&format!("{} daemon stop || true; ", cli_path));
-        shell_script.push_str(&format!("{} dns stop || true; ", cli_path));
 
         shell_script.push_str(&format!("cp {}/* {}; ", temp_dir_str, dest_dir));
         
@@ -180,8 +171,6 @@ pub async fn install_binaries(network_id: String, install_type: String) -> Resul
         shell_script.push_str(&format!("{} daemon start; ", cli_path));
 
         if install_type == "full" {
-            shell_script.push_str(&format!("{} dns install; ", cli_path));
-            shell_script.push_str(&format!("{} dns start; ", cli_path));
 
         }
 
@@ -201,10 +190,9 @@ pub async fn install_binaries(network_id: String, install_type: String) -> Resul
         // Linux script
         shell_script.push_str(&format!("mkdir -p {}; ", dest_dir));
         
-        let cli_path = format!("{}/{}", dest_dir, network_id);
+        let cli_path = format!("{}/kinetic", dest_dir);
         // Stop services first (if they exist)
         shell_script.push_str(&format!("{} daemon stop || true; ", cli_path));
-        shell_script.push_str(&format!("{} dns stop || true; ", cli_path));
 
         shell_script.push_str(&format!("cp -r {}/* {}; ", temp_dir_str, dest_dir));
         
@@ -215,8 +203,6 @@ pub async fn install_binaries(network_id: String, install_type: String) -> Resul
         shell_script.push_str(&format!("{} daemon start; ", cli_path));
 
         if install_type == "full" {
-            shell_script.push_str(&format!("{} dns install; ", cli_path));
-            shell_script.push_str(&format!("{} dns start; ", cli_path));
 
         }
 
@@ -243,9 +229,9 @@ pub async fn install_binaries(network_id: String, install_type: String) -> Resul
     // Now run PAC installation safely as the desktop user, NOT as root
     if install_type == "full" {
         let cli_exec = if is_windows {
-            format!("{}\\{}.exe", dest_dir, network_id)
+            format!("{}\\kinetic.exe", dest_dir)
         } else {
-            format!("{}/{}", dest_dir, network_id)
+            format!("{}/kinetic", dest_dir)
         };
         
         let _ = Command::new(&cli_exec)
