@@ -52,7 +52,7 @@ export default function Settings() {
             <h2 className={styles.sectionTitle}>Advanced Daemon Configuration</h2>
             <p className={styles.infoLabel} style={{ marginBottom: 0 }}>Configure network ports, protocols, and low-level daemon settings.</p>
           </div>
-          <button className="btn-secondary" onClick={() => setShowAdvancedModal(true)}>
+          <button className="btn-ghost" onClick={() => setShowAdvancedModal(true)}>
             Advanced Settings
           </button>
         </div>
@@ -66,7 +66,7 @@ export default function Settings() {
             <h2 className={styles.sectionTitle}>OS Proxy & Routing</h2>
             <p className={styles.infoLabel} style={{ marginBottom: 0 }}>Configure universal PAC routing for Kinetic and custom namespaces.</p>
           </div>
-          <button className="btn-secondary" onClick={() => setShowProxyModal(true)}>
+          <button className="btn-ghost" onClick={() => setShowProxyModal(true)}>
             Manage Routing
           </button>
         </div>
