@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { daemon, HealthStatus } from '../api/daemon';
 import StatusBadge from '../components/StatusBadge';
 import ProxyModal from '../components/ProxyModal';
@@ -6,6 +7,7 @@ import AdvancedSettingsModal from '../components/AdvancedSettingsModal';
 import styles from './Settings.module.css';
 
 export default function Settings() {
+  const navigate = useNavigate();
   const [health, setHealth] = useState<HealthStatus | null>(null);
   const [apiUrl, setApiUrl] = useState<string>('Loading...');
   const [showProxyModal, setShowProxyModal] = useState(false);
@@ -72,6 +74,20 @@ export default function Settings() {
         </div>
       </div>
 
+
+      <div className="rule"></div>
+
+      <div className={styles.section}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h2 className={styles.sectionTitle}>Identity & Security</h2>
+            <p className={styles.infoLabel} style={{ marginBottom: 0 }}>View your Master Seed Phrase or restore a new identity.</p>
+          </div>
+          <button className="btn-ghost" onClick={() => navigate('/identity')}>
+            Manage Identity
+          </button>
+        </div>
+      </div>
 
       {showProxyModal && <ProxyModal onClose={() => setShowProxyModal(false)} />}
       {showAdvancedModal && <AdvancedSettingsModal onClose={() => setShowAdvancedModal(false)} />}

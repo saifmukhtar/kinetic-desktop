@@ -2,7 +2,7 @@ import { useRef, useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { KineticMark, IconDashboard, IconNames, IconNrs, IconNetwork, IconKid, IconSettings, IconIdentity } from "./Icons";
+import { KineticMark, IconDashboard, IconNames, IconNrs, IconNetwork, IconKid, IconSettings } from "./Icons";
 import { daemon } from "../api/daemon";
 import styles from "./TopBar.module.css";
 
@@ -12,11 +12,10 @@ const NAV_ITEMS = [
   { path: "/nrs",      label: "NRS",       Icon: IconNrs       },
   { path: "/network",  label: "Network",   Icon: IconNetwork   },
   { path: "/kid",      label: "KID",       Icon: IconKid       },
-  { path: "/identity", label: "Identity",  Icon: IconIdentity  },
   { path: "/settings", label: "Settings",  Icon: IconSettings  },
 ];
 
-export default function TopBar() {
+export default function TopBar({ hideNav }: { hideNav?: boolean }) {
   const location = useLocation();
   const pillRef  = useRef<HTMLDivElement>(null);
   const linkRefs = useRef<Map<string, HTMLAnchorElement | null>>(new Map());
@@ -100,35 +99,37 @@ export default function TopBar() {
       <div className={styles.dragSpacer} data-tauri-drag-region />
 
       {/* ── Pill navigation ── */}
-      <nav
-        className={styles.pill}
-        ref={pillRef}
-        onMouseLeave={() => setHovered(null)}
-      >
-        {/* Sliding Framer Motion bubble */}
-        <motion.div
-          className={styles.bubble}
-          animate={{ left: bubbleTarget.left, width: bubbleTarget.width }}
-          transition={{ type: "spring", stiffness: 500, damping: 35, mass: 0.6 }}
-          style={{ position: "absolute", top: 3, bottom: 3 }}
-        />
+      {!hideNav && (
+        <nav
+          className={styles.pill}
+          ref={pillRef}
+          onMouseLeave={() => setHovered(null)}
+        >
+          {/* Sliding Framer Motion bubble */}
+          <motion.div
+            className={styles.bubble}
+            animate={{ left: bubbleTarget.left, width: bubbleTarget.width }}
+            transition={{ type: "spring", stiffness: 500, damping: 35, mass: 0.6 }}
+            style={{ position: "absolute", top: 3, bottom: 3 }}
+          />
 
-        {NAV_ITEMS.map(({ path, label, Icon }) => (
-          <NavLink
-            key={path}
-            to={path}
-            end={path === "/"}
-            ref={(el) => { linkRefs.current.set(path, el); }}
-            className={({ isActive }) =>
-              `${styles.pillLink} ${isActive ? styles.pillLinkActive : ""}`
-            }
-            onMouseEnter={() => setHovered(path)}
-          >
-            <Icon size={13} />
-            <span>{label}</span>
-          </NavLink>
-        ))}
-      </nav>
+          {NAV_ITEMS.map(({ path, label, Icon }) => (
+            <NavLink
+              key={path}
+              to={path}
+              end={path === "/"}
+              ref={(el) => { linkRefs.current.set(path, el); }}
+              className={({ isActive }) =>
+                `${styles.pillLink} ${isActive ? styles.pillLinkActive : ""}`
+              }
+              onMouseEnter={() => setHovered(path)}
+            >
+              <Icon size={13} />
+              <span>{label}</span>
+            </NavLink>
+          ))}
+        </nav>
+      )}
 
       {/* ── Window Controls ── */}
       <div className={styles.windowControls}>

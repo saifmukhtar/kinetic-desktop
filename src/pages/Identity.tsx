@@ -3,9 +3,12 @@ import { daemon } from '../api/daemon';
 import StatusBadge from '../components/StatusBadge';
 import styles from './Identity.module.css';
 
+import { useNavigate } from 'react-router-dom';
+
 type Step = 'status' | 'init_show' | 'init_verify' | 'restore';
 
 export default function Identity() {
+  const navigate = useNavigate();
   const [step, setStep] = useState<Step>('status');
   const [status, setStatus] = useState<'found' | 'not_found' | 'corrupted' | 'loading'>('loading');
   const [errorMsg, setErrorMsg] = useState('');
@@ -81,6 +84,7 @@ export default function Identity() {
       setStep('status');
       setRestoreInput('');
       setPhrase('');
+      navigate('/');
     } catch (err: any) {
       setErrorMsg(err.toString());
     }
