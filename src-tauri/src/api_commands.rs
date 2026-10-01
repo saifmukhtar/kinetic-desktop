@@ -37,7 +37,7 @@ pub struct EndpointState {
 
 impl EndpointState {
     pub fn get_url(&self) -> String {
-        format!("http://{}:{}/api", self.bind_ip, self.api_port)
+        format!("http://{}:{}", self.bind_ip, self.api_port)
     }
 }
 
