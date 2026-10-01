@@ -66,7 +66,7 @@ export default function TopBar({ hideNav }: { hideNav?: boolean }) {
   // Fetch Atlas networks on mount to populate dropdown
 
 
-  const networkLabel = daemonOnline ? "Mainnet Connected" : "Connecting...";
+  const networkLabel = daemonOnline ? "Connected" : "Connecting...";
 
   return (
     <header 
