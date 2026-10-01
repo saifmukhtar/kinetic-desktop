@@ -50,11 +50,19 @@ export default function ProxyModal({ onClose }: ProxyModalProps) {
     setErrorMsg('');
     setAdding(true);
     try {
+      if (!nsp.trim()) throw new Error('Namespace is required');
+
+      const ipVal = ip.trim();
+      if (!ipVal) throw new Error('Target IP is required');
+      const ipv4Re = /^(\d{1,3}\.){3}\d{1,3}$/;
+      if (!ipv4Re.test(ipVal)) throw new Error('Target IP must be a valid IPv4 address (e.g. 127.0.255.2)');
+      const octets = ipVal.split('.').map(Number);
+      if (octets.some(o => o < 0 || o > 255)) throw new Error('Each IP octet must be between 0 and 255');
+
       const p = parseInt(port, 10);
-      if (isNaN(p)) throw new Error('Port must be a valid number');
-      if (!nsp) throw new Error('Namespace is required');
-      
-      await daemon.addCustomProxy(nsp, ip || '127.0.255.2', p);
+      if (isNaN(p) || p < 1 || p > 65535) throw new Error('Port must be a number between 1 and 65535');
+
+      await daemon.addCustomProxy(nsp.trim(), ipVal, p);
       await fetchRules();
       setNsp('');
       setPort('');
