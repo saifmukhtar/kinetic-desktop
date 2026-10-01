@@ -72,19 +72,6 @@ export default function Settings() {
         </div>
       </div>
 
-      <div className="rule"></div>
-
-      <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>About</h2>
-        <div className={styles.infoRow}>
-          <span className={styles.infoLabel}>App Name</span>
-          <span className={styles.infoValue}>Kinetic Desktop</span>
-        </div>
-        <div className={styles.infoRow}>
-          <span className={styles.infoLabel}>Daemon Version</span>
-          <span className={styles.infoValue}>{health?.version || 'Unknown'}</span>
-        </div>
-      </div>
 
       {showProxyModal && <ProxyModal onClose={() => setShowProxyModal(false)} />}
       {showAdvancedModal && <AdvancedSettingsModal onClose={() => setShowAdvancedModal(false)} />}
