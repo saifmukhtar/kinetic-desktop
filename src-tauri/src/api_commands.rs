@@ -41,10 +41,12 @@ impl EndpointState {
     }
 }
 
-fn get_base_dir(network_id: &str) -> PathBuf {
+fn get_base_dir(network_dir: &str) -> PathBuf {
     dirs::data_local_dir()
         .unwrap_or_else(|| PathBuf::from("."))
-        .join(network_id)
+        .join("kinetic")
+        .join("networks")
+        .join(network_dir)
 }
 
 fn get_config(state: &tauri::State<EndpointState>) -> Configuration {

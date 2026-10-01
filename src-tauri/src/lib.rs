@@ -56,7 +56,7 @@ pub fn run() {
         .manage(api_commands::EndpointState {
             bind_ip: "127.0.0.1".to_string(),
             api_port: 8080,
-            network_id: "kin-mainnet".to_string(),
+            network_id: "kin-1a9a".to_string(),
         })
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
