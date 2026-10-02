@@ -201,6 +201,44 @@ export default function AdvancedSettingsModal({ onClose }: Props) {
               </label>
             </div>
           </div>
+          {/* SYSTEM POWER SECTION */}
+          <div className={styles.section} style={{ borderTop: '1px solid var(--border-muted)', paddingTop: 'var(--sp-4)', marginTop: 'var(--sp-4)' }}>
+            <h3 className={styles.sectionTitle} style={{ color: 'var(--status-err)' }}>System Power</h3>
+            <div style={{ display: 'flex', gap: 'var(--sp-3)', marginTop: 'var(--sp-2)' }}>
+              <button 
+                className="btn-ghost" 
+                style={{ flex: 1, border: '1px solid var(--border-muted)', color: 'var(--ink-base)' }}
+                onClick={async () => {
+                  if (confirm("Are you sure you want to restart the background daemon? This will interrupt active VDF tasks.")) {
+                    try {
+                      await daemon.systemRestart();
+                      onClose();
+                    } catch (e: any) {
+                      alert("Restart failed: " + e.toString());
+                    }
+                  }
+                }}
+              >
+                🔄 Restart Daemon
+              </button>
+              <button 
+                className="btn-ghost" 
+                style={{ flex: 1, border: '1px solid var(--status-err)', color: 'var(--status-err)' }}
+                onClick={async () => {
+                  if (confirm("Are you sure you want to shut down the daemon? The UI will become unresponsive until manually restarted.")) {
+                    try {
+                      await daemon.systemShutdown();
+                      onClose();
+                    } catch (e: any) {
+                      alert("Shutdown failed: " + e.toString());
+                    }
+                  }
+                }}
+              >
+                🛑 Shutdown Daemon
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className={styles.footer}>

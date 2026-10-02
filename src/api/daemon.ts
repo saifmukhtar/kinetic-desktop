@@ -375,6 +375,26 @@ export const daemon = {
 
   async getTakeoverIterations(name: string, kyns_idle: number): Promise<{ iterations: number; estimated_seconds?: number }> {
     return safeInvoke('get_takeover_iterations', { name, kyns_idle });
+  },
+
+  // ---------------------------------------------------------------------------
+  // SYSTEM & DNS
+  // ---------------------------------------------------------------------------
+
+  async getCaCert(): Promise<string> {
+    return safeInvoke('get_ca_cert');
+  },
+
+  async postDnsFlush(): Promise<{ status: string }> {
+    return safeInvoke('post_dns_flush');
+  },
+
+  async systemRestart(): Promise<{ status: string }> {
+    return safeInvoke('system_restart');
+  },
+
+  async systemShutdown(): Promise<{ status: string }> {
+    return safeInvoke('system_shutdown');
   }
 };
 

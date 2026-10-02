@@ -92,7 +92,7 @@ export default function ProxyModal({ onClose }: ProxyModalProps) {
         </div>
 
         <div className={styles.content}>
-          <div className={styles.switchSection}>
+          <div className={styles.switchSection} style={{ borderBottom: 'none' }}>
             <div className={styles.switchInfo}>
               <span className={styles.switchTitle}>Universal PAC Server</span>
               <span className={styles.switchDesc}>Automatically route registered namespaces seamlessly across your OS.</span>
@@ -107,6 +107,32 @@ export default function ProxyModal({ onClose }: ProxyModalProps) {
             {pacActive === false && (
               <span style={{ color: 'var(--status-err)', fontWeight: 500, fontSize: 'var(--text-sm)' }}>● Offline</span>
             )}
+          </div>
+
+          <div className={styles.switchSection}>
+            <div className={styles.switchInfo}>
+              <span className={styles.switchTitle}>Root CA Certificate</span>
+              <span className={styles.switchDesc}>Install this to your OS or Browser trust store to prevent SSL warnings when visiting encrypted local domains.</span>
+            </div>
+            <button 
+              className="btn-ghost" 
+              onClick={async () => {
+                try {
+                  const cert = await daemon.getCaCert();
+                  const blob = new Blob([cert], { type: 'application/x-pem-file' });
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'kinetic_proxy_ca.crt';
+                  a.click();
+                  window.URL.revokeObjectURL(url);
+                } catch (e: any) {
+                  setErrorMsg('Failed to download CA certificate: ' + e.toString());
+                }
+              }}
+            >
+              Download .crt
+            </button>
           </div>
 
           <div>

@@ -49,6 +49,15 @@ export default function Network() {
     }
   };
 
+  const handleDnsFlush = async () => {
+    try {
+      await daemon.postDnsFlush();
+      alert("Local DNS cache flushed successfully.");
+    } catch (err: any) {
+      alert("Failed to flush DNS cache: " + err.toString());
+    }
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.header} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -56,9 +65,14 @@ export default function Network() {
           <span className="eyebrow">NETWORK</span>
           <h1 className={styles.title}>Network Status</h1>
         </div>
-        <button className="btn-ghost" onClick={handleBootstrap} disabled={bootstrapping}>
-          {bootstrapping ? 'Bootstrapping...' : 'Force Sync'}
-        </button>
+        <div style={{ display: 'flex', gap: 'var(--sp-2)' }}>
+          <button className="btn-ghost" onClick={handleDnsFlush} title="Clear internal Kinetic DNS resolver cache">
+            Flush DNS
+          </button>
+          <button className="btn-ghost" onClick={handleBootstrap} disabled={bootstrapping}>
+            {bootstrapping ? 'Bootstrapping...' : 'Force Sync'}
+          </button>
+        </div>
       </div>
 
       <div className={styles.peerCard}>
