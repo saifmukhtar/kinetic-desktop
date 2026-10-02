@@ -415,6 +415,22 @@ export const daemon = {
 
   async postAuthorizedUpdate(name: string, request: any): Promise<{ task_id: string, message: string }> {
     return safeInvoke('post_authorized_update', { name, request });
+  },
+
+  // ---------------------------------------------------------------------------
+  // API SESSIONS / AUTH
+  // ---------------------------------------------------------------------------
+
+  async getAuthSessions(): Promise<any[]> {
+    return safeInvoke('get_auth_sessions');
+  },
+
+  async createSession(appName: string, scopes: string[], expiryKyn: number): Promise<any> {
+    return safeInvoke('create_session', { appName, scopes, expiryKyn });
+  },
+
+  async revokeAuthSession(id: string): Promise<any> {
+    return safeInvoke('revoke_auth_session', { id });
   }
 };
 

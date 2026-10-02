@@ -4,6 +4,7 @@ import { daemon, HealthStatus } from '../api/daemon';
 import StatusBadge from '../components/StatusBadge';
 import ProxyModal from '../components/ProxyModal';
 import AdvancedSettingsModal from '../components/AdvancedSettingsModal';
+import AuthSessionsModal from '../components/AuthSessionsModal';
 import styles from './Settings.module.css';
 
 export default function Settings() {
@@ -12,6 +13,7 @@ export default function Settings() {
   const [apiUrl, setApiUrl] = useState<string>('Loading...');
   const [showProxyModal, setShowProxyModal] = useState(false);
   const [showAdvancedModal, setShowAdvancedModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
     daemon.getApiUrl().then(setApiUrl).catch(() => setApiUrl('Unavailable'));
@@ -92,6 +94,20 @@ export default function Settings() {
       <div className="rule"></div>
 
       <div className={styles.section}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h2 className={styles.sectionTitle}>Authorized Applications</h2>
+            <p className={styles.infoLabel} style={{ marginBottom: 0 }}>Manage 3rd-party API sessions connected to your Daemon.</p>
+          </div>
+          <button className="btn-ghost" onClick={() => setShowAuthModal(true)}>
+            Manage Sessions
+          </button>
+        </div>
+      </div>
+
+      <div className="rule"></div>
+
+      <div className={styles.section}>
         <h2 className={styles.sectionTitle} style={{ color: 'var(--status-err)' }}>System Power</h2>
         <p className={styles.infoLabel} style={{ marginBottom: 'var(--sp-4)' }}>Control the background Kinetic daemon process.</p>
         
@@ -131,6 +147,7 @@ export default function Settings() {
 
       {showProxyModal && <ProxyModal onClose={() => setShowProxyModal(false)} />}
       {showAdvancedModal && <AdvancedSettingsModal onClose={() => setShowAdvancedModal(false)} />}
+      {showAuthModal && <AuthSessionsModal onClose={() => setShowAuthModal(false)} />}
     </div>
   );
 }
