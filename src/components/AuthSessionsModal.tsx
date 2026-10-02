@@ -46,6 +46,7 @@ export default function AuthSessionsModal({ onClose }: Props) {
   const handleCreate = async () => {
     if (!appName) return alert("Please enter an application name.");
     if (selectedScopes.length === 0) return alert("Please select at least one scope.");
+    if (!expiryDays || expiryDays <= 0) return alert("Please enter a valid number of days for expiration.");
     
     try {
       // 1 day = approx 86400 seconds. If a Kyn is 10s, 1 day = 8640 Kyns.
@@ -105,11 +106,18 @@ export default function AuthSessionsModal({ onClose }: Props) {
                 value={appName}
                 onChange={e => setAppName(e.target.value)}
               />
-              <select className={styles.input} style={{ flex: '0 0 120px' }} value={expiryDays} onChange={e => setExpiryDays(parseInt(e.target.value))}>
-                <option value={7}>7 Days</option>
-                <option value={30}>30 Days</option>
-                <option value={90}>90 Days</option>
-              </select>
+              <div style={{ flex: '0 0 120px', display: 'flex', alignItems: 'center', background: 'var(--bg-surface)', border: '1px solid var(--border-muted)', borderRadius: 'var(--r-sm)', padding: '0 var(--sp-2)' }}>
+                <input 
+                  type="number" 
+                  className={styles.input}
+                  style={{ border: 'none', background: 'transparent', padding: 'var(--sp-2) 0', width: '100%', outline: 'none' }}
+                  placeholder="Days" 
+                  min="1"
+                  value={expiryDays || ''}
+                  onChange={e => setExpiryDays(parseInt(e.target.value) || 0)}
+                />
+                <span style={{ color: 'var(--ink-muted)', fontSize: 'var(--text-sm)', paddingLeft: '4px' }}>Days</span>
+              </div>
               <button className="btn-primary" style={{ flex: '0 0 auto' }} onClick={handleCreate}>Generate</button>
             </div>
             
