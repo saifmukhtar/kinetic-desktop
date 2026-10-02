@@ -1,4 +1,8 @@
 import { useState, useEffect } from 'react';
+
+import { confirm } from '@tauri-apps/plugin-dialog';
+
+import { toast } from 'sonner';
 import { useSearchParams } from 'react-router-dom';
 import { daemon, NrsRecord } from '../api/daemon';
 import NrsRecordRow from '../components/NrsRecordRow';
@@ -174,13 +178,14 @@ export default function Nrs() {
                     style={{ border: '1px solid var(--status-err)', color: 'var(--status-err)' }}
                     onClick={async () => {
                       const pk = (document.getElementById('transferPubKey') as HTMLInputElement).value;
-                      if (!pk) return alert("Enter a public key");
-                      if (confirm(`Are you absolutely sure you want to transfer ${selectedName} to ${pk}?`)) {
+                      if (!pk) return toast.error("Enter a public key");
+                      const yes = await confirm(`Are you absolutely sure you want to transfer ${selectedName} to ${pk}?`, { title: "Transfer Name", kind: "warning" });
+                      if (yes) {
                         try {
                           await daemon.postAuthorizedUpdate(selectedName, { new_pubkey: pk });
-                          alert("Transfer initiated.");
+                          toast.success("Transfer initiated.");
                         } catch(e: any) {
-                          alert("Transfer failed: " + e.toString());
+                          toast.error("Transfer failed: " + (e.message || String(e)));
                         }
                       }
                     }}

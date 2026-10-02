@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+
+import { toast } from 'sonner';
 import { createPortal } from 'react-dom';
 import { daemon } from '../api/daemon';
 import styles from './AdvancedSettingsModal.module.css';
@@ -55,11 +57,11 @@ export default function AdvancedSettingsModal({ onClose }: Props) {
       if (res.status === 'ok') {
         setSaveMessage("Configuration saved. Changes will take effect on the next restart.");
       } else {
-        alert(res.message);
+        toast.success(res.message || "Configuration saved.");
       }
     } catch (err) {
       console.error(err);
-      alert("Failed to save configuration.");
+      toast.error("Failed to save configuration.");
     } finally {
       setSaving(false);
     }

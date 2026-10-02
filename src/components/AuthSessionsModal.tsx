@@ -1,4 +1,8 @@
 import { useState, useEffect } from 'react';
+
+import { confirm } from '@tauri-apps/plugin-dialog';
+
+import { toast } from 'sonner';
 import { createPortal } from 'react-dom';
 import { daemon } from '../api/daemon';
 import styles from './AuthSessionsModal.module.css';
@@ -36,7 +40,7 @@ export default function AuthSessionsModal({ onClose }: Props) {
       const data = await daemon.getAuthSessions();
       // Ensure we have an array
       setSessions(Array.isArray((data as any).sessions) ? (data as any).sessions : Array.isArray(data) ? data : []);
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
       setSessions([]);
     } finally {
@@ -45,9 +49,9 @@ export default function AuthSessionsModal({ onClose }: Props) {
   }
 
   const handleCreate = async () => {
-    if (!appName) return alert("Please enter an application name.");
-    if (selectedScopes.length === 0) return alert("Please select at least one scope.");
-    if (!expiryDays || expiryDays <= 0) return alert("Please enter a valid number of days for expiration.");
+    if (!appName) return toast.error("Please enter an application name.");
+    if (selectedScopes.length === 0) return toast.error("Please select at least one scope.");
+    if (!expiryDays || expiryDays <= 0) return toast.error("Please enter a valid number of days for expiration.");
     
     try {
       // 1 day = approx 86400 seconds. If a Kyn is 10s, 1 day = 8640 Kyns.
@@ -62,17 +66,18 @@ export default function AuthSessionsModal({ onClose }: Props) {
       setSelectedScopes(['Metric']);
       loadSessions();
     } catch (e: any) {
-      alert("Failed to create session: " + e.toString());
+      toast.error("Failed to create session: " + (e.message || String(e)));
     }
   };
 
   const handleRevoke = async (id: string) => {
-    if (confirm("Revoke this session immediately?")) {
+    const yes = await confirm("Revoke this session immediately?", { title: "Revoke Session", kind: "warning" });
+    if (yes) {
       try {
         await daemon.revokeAuthSession(id);
         loadSessions();
       } catch (e: any) {
-        alert("Failed to revoke session: " + e.toString());
+        toast.error("Failed to revoke session: " + (e.message || String(e)));
       }
     }
   };

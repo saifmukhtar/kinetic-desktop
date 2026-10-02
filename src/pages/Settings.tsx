@@ -7,6 +7,7 @@ import AuthSessionsModal from '../components/AuthSessionsModal';
 import IdentityModal from '../components/IdentityModal';
 import { IconRefresh, IconPower } from '../components/Icons';
 import { toast } from 'sonner';
+import { confirm } from '@tauri-apps/plugin-dialog';
 import styles from './Settings.module.css';
 
 export default function Settings() {
@@ -118,7 +119,8 @@ export default function Settings() {
             className="btn-ghost" 
             style={{ flex: 1, justifyContent: 'center' }}
             onClick={async () => {
-              if (confirm("Are you sure you want to restart the background daemon? This will interrupt active VDF tasks.")) {
+              const yes = await confirm("Are you sure you want to restart the background daemon? This will interrupt active VDF tasks.", { title: 'Restart Daemon', kind: 'warning' });
+              if (yes) {
                 try {
                   await daemon.systemRestart();
                   toast.success("Daemon is restarting...");
@@ -134,7 +136,8 @@ export default function Settings() {
             className="btn-danger" 
             style={{ flex: 1, justifyContent: 'center' }}
             onClick={async () => {
-              if (confirm("Are you sure you want to shut down the daemon? The UI will become unresponsive until manually restarted.")) {
+              const yes = await confirm("Are you sure you want to shut down the daemon? The UI will become unresponsive until manually restarted.", { title: 'Shutdown Daemon', kind: 'warning' });
+              if (yes) {
                 try {
                   await daemon.systemShutdown();
                   toast.success("Daemon has been shut down.");

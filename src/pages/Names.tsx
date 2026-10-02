@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+
+import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { daemon } from '../api/daemon';
 import StatusBadge from '../components/StatusBadge';
@@ -22,7 +24,7 @@ export default function Names() {
     try {
       const owned = await daemon.getOwnedNames();
       setNames(owned);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
     }
   }
@@ -31,7 +33,7 @@ export default function Names() {
     try {
       const hb = await daemon.getHeartbeats();
       setHeartbeats(hb);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to load heartbeats", err);
     }
   }
@@ -39,10 +41,10 @@ export default function Names() {
   const handleHeartbeat = async (name: string) => {
     try {
       await daemon.postHeartbeat(name);
-      alert(`Keep-alive heartbeat sent for ${name}.`);
+      toast.success(`Keep-alive heartbeat sent for ${name}.`);
       loadHeartbeats();
     } catch (err: any) {
-      alert("Failed to send heartbeat: " + err.toString());
+      toast.error("Failed to send heartbeat: " + (err.message || String(err)));
     }
   };
 

@@ -1,4 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
+
+import { confirm } from '@tauri-apps/plugin-dialog';
+
+import { toast } from 'sonner';
 import { daemon, type LocalKidSummary, type KidDocument, type CapabilityManifest, type ServiceEntry } from '../api/daemon';
 import styles from './Kid.module.css';
 
@@ -41,7 +45,7 @@ export default function Kid() {
         setManifest(null);
         setServices([]);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to load local KIDs:", err);
       setError("Failed to load local identity list.");
     }
@@ -56,7 +60,7 @@ export default function Kid() {
       setDocLoading(true);
       const res = await daemon.getKid(name);
       setSelectedDoc(res.kid_doc || null);
-    } catch (err) {
+    } catch (err: any) {
       console.error(`Failed to load document for ${name}:`, err);
     } finally {
       setDocLoading(false);
@@ -81,7 +85,7 @@ export default function Kid() {
         setManifest(null);
         setServices([]);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(`Failed to load manifest for ${name}:`, err);
       setManifest(null);
       setServices([]);
@@ -106,12 +110,12 @@ export default function Kid() {
     try {
       setLoading(true);
       await daemon.rotateKid(selectedName);
-      alert(`Successfully rotated keys for ${selectedName} and published update.`);
+      toast.success(`Successfully rotated keys for ${selectedName} and published update.`);
       await loadKids();
       await loadSelectedDoc(selectedName);
       await loadManifest(selectedName);
-    } catch (err) {
-      alert("Failed to rotate keys: " + String(err));
+    } catch (err: any) {
+      toast.error("Failed to rotate keys: " + (err.message || String(err)));
     } finally {
       setLoading(false);
     }
@@ -119,19 +123,17 @@ export default function Kid() {
 
   const handleRevoke = async () => {
     if (!selectedName) return;
-    const confirmed = window.confirm(
-      `Are you sure you want to permanently deactivate and revoke the identity for "${selectedName}"?\n\nThis action publishes a cryptographic revocation to the Kinetic network and cannot be undone.`
-    );
+    const confirmed = await confirm(`Are you absolutely sure you want to REVOKE the identity for ${selectedName}? This will permanently disable this identity on the network.`, { title: "Revoke Identity", kind: "warning" });
     if (!confirmed) return;
 
     try {
       setLoading(true);
       await daemon.revokeKid(selectedName);
-      alert(`Successfully revoked identity for ${selectedName}.`);
+      toast.success(`Successfully revoked identity for ${selectedName}.`);
       await loadKids();
       await loadSelectedDoc(selectedName);
-    } catch (err) {
-      alert("Failed to revoke identity: " + String(err));
+    } catch (err: any) {
+      toast.error("Failed to revoke identity: " + (err.message || String(err)));
     } finally {
       setLoading(false);
     }
@@ -143,11 +145,11 @@ export default function Kid() {
       setLoading(true);
       const formattedSubName = subName.trim();
       await daemon.generateSubnameKid(selectedName, formattedSubName);
-      alert(`Successfully generated KID for ${formattedSubName}.${selectedName}`);
+      toast.success(`Successfully generated KID for ${formattedSubName}.${selectedName}`);
       setSubName('');
       await loadKids();
-    } catch (err) {
-      alert("Failed to generate subname KID: " + String(err));
+    } catch (err: any) {
+      toast.error("Failed to generate subname KID: " + (err.message || String(err)));
     } finally {
       setLoading(false);
     }
@@ -159,15 +161,15 @@ export default function Kid() {
     const endpointTrimmed = srvEndpoint.trim();
 
     if (!idTrimmed) {
-      alert("Please provide a service ID (e.g. 'web' or 'api')");
+      toast.error("Please provide a service ID (e.g. 'web' or 'api')");
       return;
     }
     if (!endpointTrimmed) {
-      alert("Please provide an endpoint URL or address (e.g. 'https://saif.kin')");
+      toast.error("Please provide an endpoint URL or address (e.g. 'https://saif.kin')");
       return;
     }
     if (services.some(s => s.id.toLowerCase() === idTrimmed)) {
-      alert(`A service with ID "#${idTrimmed}" already exists.`);
+      toast.error(`A service with ID "#${idTrimmed}" already exists.`);
       return;
     }
 
@@ -199,7 +201,7 @@ export default function Kid() {
         setManifest(res.manifest);
         setManifestSuccess(`Successfully signed & published Capability Manifest (v${res.manifest.version}) to DHT.`);
       }
-    } catch (err) {
+    } catch (err: any) {
       setManifestError(`Failed to save manifest: ${String(err)}`);
     } finally {
       setManifestSaving(false);

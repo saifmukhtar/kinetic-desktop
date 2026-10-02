@@ -53,6 +53,7 @@ fn show_main_window(app: &tauri::AppHandle) {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .manage(api_commands::EndpointState {
             bind_ip: "127.0.255.2".to_string(),
             api_port: 16002,
@@ -68,7 +69,11 @@ pub fn run() {
 
             TrayIconBuilder::with_id(TRAY_ID)
                 .tooltip(TRAY_TOOLTIP)
-                .icon(app.default_window_icon().cloned().expect(ERR_MISSING_APP_ICON))
+                .icon(
+                    app.default_window_icon()
+                        .cloned()
+                        .expect(ERR_MISSING_APP_ICON),
+                )
                 .menu(&menu)
                 .show_menu_on_left_click(false)
                 .on_menu_event(|app, event| match event.id().as_ref() {
@@ -128,7 +133,6 @@ pub fn run() {
             api_commands::get_vdf_status,
             api_commands::get_vdf_tasks,
             api_commands::delete_vdf_task,
-
             api_commands::get_local_kids,
             api_commands::get_local_kid,
             api_commands::generate_kid,
