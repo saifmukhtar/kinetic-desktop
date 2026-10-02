@@ -129,11 +129,11 @@
   padding: var(--sp-2) var(--sp-4);
   font-family: var(--font-sans);
   font-size: var(--text-sm);
-  font-weight: 600;
+  font-weight: 500;
   color: #ef4444;
   background: rgba(239, 68, 68, 0.08);
-  border: 1.5px solid #ef4444;
-  border-radius: var(--r-sm);
+  border: 1px solid #ef4444;
+  border-radius: var(--r-md);
   cursor: pointer;
   transition: all var(--dur-fast) var(--ease-smooth);
 }
@@ -141,6 +141,11 @@
 .btnDanger:hover:not(:disabled) {
   background: #ef4444;
   color: #ffffff;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+}
+
+.btnDanger:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 .btnDanger:disabled {

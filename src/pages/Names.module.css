@@ -45,12 +45,12 @@
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-offset);
-  transition: transform var(--dur-base) var(--ease-spring), box-shadow var(--dur-base) var(--ease-spring);
+  transition: transform var(--dur-fast) var(--ease-smooth), box-shadow var(--dur-fast) var(--ease-smooth);
 }
 
 .row:hover {
   box-shadow: var(--shadow-offset-hover);
-  transform: translate(-1px, -1px);
+  transform: translateY(-2px);
 }
 
 .nameGroup {

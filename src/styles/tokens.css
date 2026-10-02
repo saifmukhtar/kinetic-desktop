@@ -11,6 +11,7 @@
   --bg-muted:     #E2E8F0;   /* slate-200 */
   --bg-elevated:  #FFFFFF;   /* pure white — cards, panels */
   --bg-surface:   #FFFFFF;   /* alias for modals & overlays */
+  --overlay:      rgba(15, 23, 42, 0.4); /* modal backdrop */
 
   /* ---- Ink (text) ---- */
   --ink:           #0f172a;  /* slate-900 */
