@@ -12,6 +12,19 @@ use kinetic_sdk::apis::gossip_api;
 use kinetic_sdk::apis::heartbeat_api;
 use kinetic_sdk::models;
 
+use kinetic_sdk::apis::Error as SdkError;
+
+fn format_api_error<T>(err: SdkError<T>) -> String {
+    match err {
+        SdkError::ResponseError(content) => {
+            content.content.clone()
+        },
+        SdkError::Reqwest(e) => format!("{{\"code\": \"ERR_NETWORK\", \"message\": {}}}", serde_json::to_string(&e.to_string()).unwrap()),
+        SdkError::Serde(e) => format!("{{\"code\": \"ERR_PARSE\", \"message\": {}}}", serde_json::to_string(&e.to_string()).unwrap()),
+        SdkError::Io(e) => format!("{{\"code\": \"ERR_IO\", \"message\": {}}}", serde_json::to_string(&e.to_string()).unwrap()),
+    }
+}
+
 
 
 // ---------------------------------------------------------------------------
@@ -107,7 +120,7 @@ pub async fn get_network_status(state: tauri::State<'_, EndpointState>) -> Resul
     let config = get_config(&state);
     match network_api::get_network_status(&config).await {
         Ok(status) => Ok(serde_json::to_value(status).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to get network status: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -116,7 +129,7 @@ pub async fn get_network_nat(state: tauri::State<'_, EndpointState>) -> Result<s
     let config = get_config(&state);
     match network_api::get_network_nat(&config).await {
         Ok(nat) => Ok(serde_json::to_value(nat).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to get network NAT: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -125,7 +138,7 @@ pub async fn get_network_peers(state: tauri::State<'_, EndpointState>) -> Result
     let config = get_config(&state);
     match network_api::get_network_peers(&config).await {
         Ok(peers) => Ok(serde_json::to_value(peers).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to get network peers: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -134,7 +147,7 @@ pub async fn resolve_name(name: String, state: tauri::State<'_, EndpointState>) 
     let config = get_config(&state);
     match nrs_api::resolve_name(&config, &name).await {
         Ok(zone) => Ok(serde_json::to_value(zone).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to resolve name {}: {:?}", name, e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -143,7 +156,7 @@ pub async fn get_config_info(state: tauri::State<'_, EndpointState>) -> Result<s
     let config = get_private_config(ROLE_ADMIN, &state);
     match system_api::get_config(&config).await {
         Ok(info) => Ok(serde_json::to_value(info).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to get config: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -178,7 +191,7 @@ pub async fn create_session(
     
     match auth_api::create_session(&config, request).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to create session: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -187,7 +200,7 @@ pub async fn get_health(state: tauri::State<'_, EndpointState>) -> Result<serde_
     let config = get_config(&state);
     match system_api::get_health(&config).await {
         Ok(status) => Ok(serde_json::to_value(status).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to get health: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -196,7 +209,7 @@ pub async fn get_peer_id(state: tauri::State<'_, EndpointState>) -> Result<Strin
     let config = get_config(&state);
     match network_api::get_peer_id(&config).await {
         Ok(peer_id) => Ok(peer_id),
-        Err(e) => Err(format!("Failed to get peer ID: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -205,7 +218,7 @@ pub async fn get_banned_peers(state: tauri::State<'_, EndpointState>) -> Result<
     let config = get_config(&state);
     match network_api::get_banned_peers(&config).await {
         Ok(banned) => Ok(serde_json::to_value(banned).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to get banned peers: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -214,7 +227,7 @@ pub async fn get_time(state: tauri::State<'_, EndpointState>) -> Result<serde_js
     let config = get_config(&state);
     match system_api::get_time(&config).await {
         Ok(time) => Ok(serde_json::to_value(time).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to get time: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -223,7 +236,7 @@ pub async fn resolve_kid(did: String, state: tauri::State<'_, EndpointState>) ->
     let config = get_config(&state);
     match kid_api::resolve_kid(&config, &did).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to resolve KID: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -232,7 +245,7 @@ pub async fn get_zone(name: String, state: tauri::State<'_, EndpointState>) -> R
     let config = get_config(&state);
     match nrs_api::get_zone(&config, &name).await {
         Ok(zone) => Ok(serde_json::to_value(zone).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to get zone {}: {:?}", name, e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -245,7 +258,7 @@ pub async fn get_owned_names(state: tauri::State<'_, EndpointState>) -> Result<V
     let config = get_private_config(ROLE_PUBLISH, &state);
     match nrs_api::get_owned_names(&config).await {
         Ok(names) => Ok(names),
-        Err(e) => Err(format!("Failed to get owned names: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -254,7 +267,7 @@ pub async fn publish_zone(name: String, zone_data: models::NrsZone, state: tauri
     let config = get_private_config(ROLE_PUBLISH, &state);
     match nrs_api::save_zone(&config, &name, zone_data).await {
         Ok(_) => Ok(()),
-        Err(e) => Err(format!("Failed to save zone: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -263,7 +276,7 @@ pub async fn sign_and_publish_zone(name: String, state: tauri::State<'_, Endpoin
     let config = get_private_config(ROLE_PUBLISH, &state);
     match nrs_api::publish_zone(&config, &name).await {
         Ok(_) => Ok(()),
-        Err(e) => Err(format!("Failed to sign and publish zone: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -272,7 +285,7 @@ pub async fn commit_name(commit_request: models::CommitRequest, state: tauri::St
     let config = get_private_config(ROLE_PUBLISH, &state);
     match nrs_api::commit_name(&config, commit_request).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to commit name: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -281,7 +294,7 @@ pub async fn publish_name(publish_request: models::PublishRequest, state: tauri:
     let config = get_private_config(ROLE_PUBLISH, &state);
     match nrs_api::publish_name(&config, publish_request).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to publish name: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -290,7 +303,7 @@ pub async fn publish_kid(authorized_kid: models::AuthorizedKid, state: tauri::St
     let config = get_private_config(ROLE_PUBLISH, &state);
     match kid_api::publish_kid(&config, authorized_kid).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to publish KID: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -299,7 +312,7 @@ pub async fn publish_manifest(authorized_manifest: models::AuthorizedManifest, s
     let config = get_private_config(ROLE_PUBLISH, &state);
     match kid_api::publish_manifest(&config, authorized_manifest).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to publish manifest: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -312,7 +325,7 @@ pub async fn update_config(update_config_request: serde_json::Value, state: taur
     let config = get_private_config(ROLE_ADMIN, &state);
     match system_api::update_config(&config, update_config_request).await {
         Ok(_) => Ok(()),
-        Err(e) => Err(format!("Failed to update config: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -325,7 +338,7 @@ pub async fn get_takeover_iterations(name: String, kyns_idle: i32, state: tauri:
     let config = get_config(&state);
     match vdf_api::get_takeover_iterations(&config, &name, kyns_idle).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to get takeover iterations: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -334,7 +347,7 @@ pub async fn get_vdf_iterations(name: String, state: tauri::State<'_, EndpointSt
     let config = get_config(&state);
     match vdf_api::get_vdf_iterations(&config, &name).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to get VDF iterations: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -347,7 +360,7 @@ pub async fn register_vdf(request: models::VdfRegisterRequest, state: tauri::Sta
     let config = get_private_config(ROLE_VDF, &state);
     match vdf_api::vdf_register(&config, request).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to register VDF: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -356,7 +369,7 @@ pub async fn renew_vdf(request: models::NameRenewRequest, state: tauri::State<'_
     let config = get_private_config(ROLE_VDF, &state);
     match vdf_api::vdf_renew(&config, request).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to renew VDF: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -365,7 +378,7 @@ pub async fn get_vdf_status(task_id: String, state: tauri::State<'_, EndpointSta
     let config = get_private_config(ROLE_VDF, &state);
     match vdf_api::get_vdf_status(&config, &task_id).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to get VDF status: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -374,7 +387,7 @@ pub async fn get_vdf_tasks(state: tauri::State<'_, EndpointState>) -> Result<ser
     let config = get_private_config(ROLE_VDF, &state);
     match vdf_api::get_vdf_tasks(&config).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to get VDF tasks: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -383,7 +396,7 @@ pub async fn delete_vdf_task(task_id: String, state: tauri::State<'_, EndpointSt
     let config = get_private_config(ROLE_VDF, &state);
     match vdf_api::delete_vdf_task(&config, &task_id).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to delete VDF task: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -398,7 +411,7 @@ pub async fn get_local_kids(state: tauri::State<'_, EndpointState>) -> Result<se
     let config = get_config(&state);
     match kid_api::list_kids(&config).await {
         Ok(kids) => Ok(serde_json::to_value(kids).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to get local KIDs: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -407,7 +420,7 @@ pub async fn get_local_kid(name: String, state: tauri::State<'_, EndpointState>)
     let config = get_config(&state);
     match kid_api::fetch_kid(&config, &name).await {
         Ok(kid) => Ok(serde_json::to_value(kid).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to get local KID for {}: {:?}", name, e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -428,7 +441,7 @@ pub async fn generate_kid(
     
     match kid_api::generate_kid(&config, req).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to generate KID: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -437,7 +450,7 @@ pub async fn rotate_kid(name: String, state: tauri::State<'_, EndpointState>) ->
     let config = get_private_config(ROLE_PUBLISH, &state);
     match kid_api::rotate_kid(&config, &name).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to rotate KID for {}: {:?}", name, e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -446,7 +459,7 @@ pub async fn revoke_kid(name: String, state: tauri::State<'_, EndpointState>) ->
     let config = get_private_config(ROLE_PUBLISH, &state);
     match kid_api::revoke_kid(&config, &name).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to revoke KID for {}: {:?}", name, e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -461,7 +474,7 @@ pub async fn get_daemon_config(state: tauri::State<'_, EndpointState>) -> Result
     let config = get_private_config(ROLE_ADMIN, &state);
     match system_api::get_config(&config).await {
         Ok(cfg) => Ok(serde_json::to_value(cfg).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to get daemon config: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -474,7 +487,7 @@ pub async fn set_daemon_config(config_data: serde_json::Value, state: tauri::Sta
     
     match system_api::update_config(&config, payload).await {
         Ok(_) => Ok(serde_json::json!({ "status": "success" })),
-        Err(e) => Err(format!("Failed to set daemon config: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -483,7 +496,7 @@ pub async fn get_ca_cert(state: tauri::State<'_, EndpointState>) -> Result<Strin
     let config = get_private_config(ROLE_ADMIN, &state);
     match system_api::get_ca_cert(&config).await {
         Ok(cert) => Ok(cert),
-        Err(e) => Err(format!("Failed to get CA cert: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -496,7 +509,7 @@ pub async fn get_reserved_names(state: tauri::State<'_, EndpointState>) -> Resul
     let config = get_config(&state);
     match nrs_api::get_reserved_names(&config).await {
         Ok(names) => Ok(serde_json::to_value(names).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to get reserved names: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -508,7 +521,7 @@ pub async fn get_local_reserved_zone(name: String, state: tauri::State<'_, Endpo
         Err(kinetic_sdk::apis::Error::ResponseError(res)) if res.status == reqwest::StatusCode::NOT_FOUND => {
             Ok(serde_json::Value::Null)
         },
-        Err(e) => Err(format!("Failed to get local zone {}: {:?}", name, e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -523,7 +536,7 @@ pub async fn save_local_reserved_zone(name: String, records: serde_json::Value, 
 
     match nrs_api::save_local_reserved_zone(&config, &name, zone).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to save local zone {}: {:?}", name, e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -532,7 +545,7 @@ pub async fn delete_local_reserved_zone(name: String, state: tauri::State<'_, En
     let config = get_private_config(ROLE_PUBLISH, &state);
     match nrs_api::delete_local_reserved_zone(&config, &name).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to delete local zone {}: {:?}", name, e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -541,7 +554,7 @@ pub async fn get_kid_manifest(name: String, state: tauri::State<'_, EndpointStat
     let config = get_config(&state);
     match kid_api::fetch_kid_manifest(&config, &name).await {
         Ok(manifest) => Ok(serde_json::to_value(manifest).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to get manifest for {}: {:?}", name, e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -554,7 +567,7 @@ pub async fn update_kid_manifest(name: String, services: serde_json::Value, stat
     
     match kid_api::generate_kid_manifest(&config, &name, body).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to update manifest for {}: {:?}", name, e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -811,7 +824,7 @@ pub async fn get_action_status(state: tauri::State<'_, EndpointState>) -> Result
     let config = get_config(&state);
     match action_api::get_action_status(&config).await {
         Ok(status) => Ok(serde_json::to_value(status).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to get action status: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -820,7 +833,7 @@ pub async fn get_auth_sessions(state: tauri::State<'_, EndpointState>) -> Result
     let config = get_private_config(ROLE_ADMIN, &state);
     match auth_api::list_sessions(&config).await {
         Ok(sessions) => Ok(serde_json::to_value(sessions).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to get auth sessions: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -829,7 +842,7 @@ pub async fn revoke_auth_session(id: String, state: tauri::State<'_, EndpointSta
     let config = get_private_config(ROLE_ADMIN, &state);
     match auth_api::revoke_session(&config, &id).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to revoke auth session: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -838,7 +851,7 @@ pub async fn get_gossip_topics(state: tauri::State<'_, EndpointState>) -> Result
     let config = get_config(&state);
     match gossip_api::get_gossip_topics(&config).await {
         Ok(topics) => Ok(serde_json::to_value(topics).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to get gossip topics: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -847,7 +860,7 @@ pub async fn get_heartbeats(state: tauri::State<'_, EndpointState>) -> Result<se
     let config = get_config(&state);
     match heartbeat_api::get_heartbeats(&config).await {
         Ok(heartbeats) => Ok(serde_json::to_value(heartbeats).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to get heartbeats: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -860,7 +873,7 @@ pub async fn gossip_publish(topic: String, body: serde_json::Value, state: tauri
     let config = get_private_config(ROLE_GOSSIP, &state);
     match gossip_api::gossip_publish(&config, &topic, body).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to publish to gossip: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -869,7 +882,7 @@ pub async fn gossip_subscribe(topic: String, state: tauri::State<'_, EndpointSta
     let config = get_config(&state);
     match gossip_api::gossip_subscribe(&config, &topic).await {
         Ok(res) => Ok(res),
-        Err(e) => Err(format!("Failed to subscribe to gossip: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -878,7 +891,7 @@ pub async fn post_authorized_update(name: String, request: models::PostAuthorize
     let config = get_private_config(ROLE_HEARTBEAT, &state);
     match heartbeat_api::post_authorized_update(&config, &name, request).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to post authorized update: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -887,7 +900,7 @@ pub async fn post_dns_flush(state: tauri::State<'_, EndpointState>) -> Result<se
     let config = get_private_config(ROLE_ADMIN, &state);
     match system_api::post_dns_flush(&config).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to flush DNS: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -896,7 +909,7 @@ pub async fn post_heartbeat(name: String, state: tauri::State<'_, EndpointState>
     let config = get_private_config(ROLE_HEARTBEAT, &state);
     match heartbeat_api::post_heartbeat(&config, &name).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to post heartbeat: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -905,7 +918,7 @@ pub async fn post_nrs_update(name: String, request: models::PostNrsUpdateRequest
     let config = get_private_config(ROLE_NRS, &state);
     match nrs_api::post_nrs_update(&config, &name, request).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to post NRS update: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -914,7 +927,7 @@ pub async fn publish_action(body: serde_json::Value, state: tauri::State<'_, End
     let config = get_config(&state);
     match action_api::publish_action(&config, body).await {
         Ok(res) => Ok(res),
-        Err(e) => Err(format!("Failed to publish action: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -923,7 +936,7 @@ pub async fn sync_atlas(state: tauri::State<'_, EndpointState>) -> Result<serde_
     let config = get_private_config(ROLE_ATLAS, &state);
     match system_api::sync_atlas(&config).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to sync atlas: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -932,7 +945,7 @@ pub async fn system_restart(state: tauri::State<'_, EndpointState>) -> Result<se
     let config = get_private_config(ROLE_ADMIN, &state);
     match system_api::system_restart(&config).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to restart system: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -941,7 +954,7 @@ pub async fn system_shutdown(state: tauri::State<'_, EndpointState>) -> Result<s
     let config = get_private_config(ROLE_ADMIN, &state);
     match system_api::system_shutdown(&config).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to shutdown system: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -950,7 +963,7 @@ pub async fn trigger_network_bootstrap(state: tauri::State<'_, EndpointState>) -
     let config = get_private_config(ROLE_ADMIN, &state);
     match network_api::trigger_network_bootstrap(&config).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to trigger network bootstrap: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -959,7 +972,7 @@ pub async fn validate_name(request: models::ValidateNameRequest, state: tauri::S
     let config = get_config(&state);
     match nrs_api::validate_name(&config, request).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to validate name: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
 
@@ -968,6 +981,6 @@ pub async fn verify_quorum(name: String, request: serde_json::Value, state: taur
     let config = get_config(&state);
     match nrs_api::verify_quorum(&config, &name, request).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
-        Err(e) => Err(format!("Failed to verify quorum: {:?}", e)),
+        Err(e) => Err(format_api_error(e)),
     }
 }
