@@ -134,6 +134,8 @@ export interface KidUpdateManifestResponse {
 }
 
 
+import { interceptApiError } from './error';
+
 async function safeInvoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
   const isTauri = typeof window !== 'undefined' && ('__TAURI_INTERNALS__' in window || '__TAURI__' in window);
   if (!isTauri) {
@@ -143,27 +145,7 @@ async function safeInvoke<T>(cmd: string, args?: Record<string, unknown>): Promi
   try {
     return await invoke<T>(cmd, args);
   } catch (err: any) {
-    // If the error is a string, it might be the JSON string returned by format_api_error in Rust
-    if (typeof err === 'string' && err.startsWith('{')) {
-      try {
-        const parsed = JSON.parse(err);
-        const customErr = new Error(parsed.message || err);
-        (customErr as any).code = parsed.code;
-        (customErr as any).status = parsed.status;
-        throw customErr;
-      } catch (parseErr) {
-        throw new Error(err);
-      }
-    }
-    
-    // Sometimes it's still a raw string like "Connection refused"
-    if (typeof err === 'string' && err.includes('ConnectionRefused')) {
-      const e = new Error("Daemon is offline or connection was refused.");
-      (e as any).code = "ERR_OFFLINE";
-      throw e;
-    }
-
-    throw err instanceof Error ? err : new Error(String(err));
+    throw interceptApiError(err);
   }
 }
 
