@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { daemon } from '../api/daemon';
 import styles from './AuthSessionsModal.module.css';
 
@@ -34,7 +35,7 @@ export default function AuthSessionsModal({ onClose }: Props) {
     try {
       const data = await daemon.getAuthSessions();
       // Ensure we have an array
-      setSessions(Array.isArray(data.sessions) ? data.sessions : Array.isArray(data) ? data : []);
+      setSessions(Array.isArray((data as any).sessions) ? (data as any).sessions : Array.isArray(data) ? data : []);
     } catch (e) {
       console.error(e);
       setSessions([]);
@@ -76,7 +77,7 @@ export default function AuthSessionsModal({ onClose }: Props) {
     }
   };
 
-  return (
+  return createPortal(
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={e => e.stopPropagation()}>
         <div className={styles.header}>
@@ -166,5 +167,7 @@ export default function AuthSessionsModal({ onClose }: Props) {
         </div>
       </div>
     </div>
+,
+    document.body
   );
 }

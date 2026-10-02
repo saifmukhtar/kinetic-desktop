@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { daemon } from '../api/daemon';
 import styles from './RegisterNameModal.module.css';
 import VdfProgress from './VdfProgress';
@@ -64,7 +65,7 @@ export default function RegisterNameModal({ onClose, onSuccess }: RegisterNameMo
     }
   }
 
-  return (
+  return createPortal(
     <div className={styles.overlay} onClick={taskId ? undefined : onClose}>
       <div className={styles.modal} onClick={e => e.stopPropagation()}>
         <div className={styles.header}>
@@ -120,5 +121,7 @@ export default function RegisterNameModal({ onClose, onSuccess }: RegisterNameMo
         </div>
       </div>
     </div>
+,
+    document.body
   );
 }

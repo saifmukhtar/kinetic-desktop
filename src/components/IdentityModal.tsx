@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { daemon } from '../api/daemon';
 import StatusBadge from './StatusBadge';
 import styles from './IdentityModal.module.css';
@@ -91,7 +92,7 @@ export default function IdentityModal({ onClose }: Props) {
     }
   }
 
-  return (
+  return createPortal(
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={e => e.stopPropagation()}>
         <div className={styles.header}>
@@ -221,5 +222,7 @@ export default function IdentityModal({ onClose }: Props) {
         </div>
       </div>
     </div>
+,
+    document.body
   );
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { daemon } from '../api/daemon';
 import styles from './AdvancedSettingsModal.module.css';
 
@@ -65,18 +66,20 @@ export default function AdvancedSettingsModal({ onClose }: Props) {
   };
 
   if (loading) {
-    return (
-      <div className={styles.overlay}>
+    return createPortal(
+    <div className={styles.overlay}>
         <div className={styles.modal}>
           <div className={styles.content}>Loading configuration...</div>
         </div>
       </div>
-    );
+,
+    document.body
+  );
   }
 
   if (!config) return null;
 
-  return (
+  return createPortal(
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={e => e.stopPropagation()}>
         
@@ -211,5 +214,7 @@ export default function AdvancedSettingsModal({ onClose }: Props) {
         </div>
       </div>
     </div>
+,
+    document.body
   );
 }

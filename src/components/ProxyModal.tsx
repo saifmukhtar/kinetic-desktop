@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { daemon } from '../api/daemon';
 import styles from './ProxyModal.module.css';
 
@@ -83,7 +84,7 @@ export default function ProxyModal({ onClose }: ProxyModalProps) {
     }
   }
 
-  return (
+  return createPortal(
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={e => e.stopPropagation()}>
         <div className={styles.header}>
@@ -201,5 +202,7 @@ export default function ProxyModal({ onClose }: ProxyModalProps) {
         </div>
       </div>
     </div>
+,
+    document.body
   );
 }

@@ -9,7 +9,6 @@ import IdentityModal from '../components/IdentityModal';
 import styles from './Settings.module.css';
 
 export default function Settings() {
-  const navigate = useNavigate();
   const [health, setHealth] = useState<HealthStatus | null>(null);
   const [apiUrl, setApiUrl] = useState<string>('Loading...');
   const [showProxyModal, setShowProxyModal] = useState(false);
