@@ -90,7 +90,7 @@ export default function Nrs() {
       <div className={styles.header}>
         <div className={styles.titleGroup}>
           <span className="eyebrow">NRS MANAGEMENT</span>
-          <h1 className={styles.title}>Zone Editor</h1>
+          <h1 className={styles.title}>Record Editor</h1>
         </div>
         
         <div style={{ display: 'flex', gap: '8px', background: 'var(--bg-muted)', padding: '4px', borderRadius: 'var(--r-sm)' }}>
@@ -151,7 +151,7 @@ export default function Nrs() {
 
               <div className={styles.footer}>
                 <button className="btn-ghost" onClick={handleSave} disabled={!isModified}>
-                  Save Zone
+                  Save Records
                 </button>
                 <button className="btn-primary" onClick={handlePublish} disabled={isModified}>
                   Publish to Network
