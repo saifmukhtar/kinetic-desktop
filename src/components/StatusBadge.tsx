@@ -21,22 +21,18 @@ export default function StatusBadge({ status, label }: StatusBadgeProps) {
       style={{
         display: "inline-flex",
         alignItems: "center",
-        gap: "5px",
-        padding: "2px 8px",
-        borderRadius: "var(--r-sm)",
-        background: cfg.bg,
-        color: cfg.color,
-        fontFamily: "var(--font-mono)",
-        fontSize: "var(--text-2xs)",
+        gap: "6px",
+        color: "var(--ink-secondary)", /* Soft text instead of colored text */
+        fontFamily: "var(--font-sans)", /* Match layout font */
+        fontSize: "var(--text-xs)",
         fontWeight: 500,
-        letterSpacing: "0.04em",
         whiteSpace: "nowrap",
       }}
     >
       <span
         style={{
-          width: 5,
-          height: 5,
+          width: 8,
+          height: 8,
           borderRadius: "50%",
           background: cfg.color,
           flexShrink: 0,

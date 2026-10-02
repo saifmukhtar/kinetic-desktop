@@ -40,6 +40,29 @@
   color: var(--status-err);
 }
 
+.healthRow {
+  display: flex;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.healthPill {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+}
+
+.healthPill strong {
+  color: var(--ink-base);
+  font-weight: 500;
+}
+
 /* Stat cards — responsive auto-fit */
 .statGrid {
   display: grid;
@@ -163,4 +186,8 @@
   font-size: var(--text-xs);
   color: var(--ink);
   font-weight: 500;
+}
+
+.nameWarning {
+  color: var(--status-warn);
 }

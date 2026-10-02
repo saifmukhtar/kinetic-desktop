@@ -1,5 +1,6 @@
 @import "tw-animate-css";
-@import "@fontsource-variable/inter";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -82,7 +83,7 @@
   }
   .theme {
     --font-heading: var(--font-sans);
-    --font-sans: 'Inter Variable', sans-serif;
+    --font-sans: 'Geist Variable', sans-serif;
   }
   * {
     border-color: var(--border);

@@ -93,18 +93,16 @@ export default function Nrs() {
           <h1 className={styles.title}>Record Editor</h1>
         </div>
         
-        <div style={{ display: 'flex', gap: '8px', background: 'var(--bg-muted)', padding: '4px', borderRadius: 'var(--r-sm)' }}>
+        <div className={styles.segmentControl}>
           <button 
-            className={`btn-ghost ${activeTab === 'global' ? styles.tabActive : ''}`} 
+            className={`${styles.tabBtn} ${activeTab === 'global' ? styles.tabActive : ''}`} 
             onClick={() => setActiveTab('global')}
-            style={activeTab === 'global' ? { background: 'var(--bg-surface)', boxShadow: '0 1px 2px rgba(0,0,0,0.1)' } : {}}
           >
             Network
           </button>
           <button 
-            className={`btn-ghost ${activeTab === 'local' ? styles.tabActive : ''}`} 
+            className={`${styles.tabBtn} ${activeTab === 'local' ? styles.tabActive : ''}`} 
             onClick={() => setActiveTab('local')}
-            style={activeTab === 'local' ? { background: 'var(--bg-surface)', boxShadow: '0 1px 2px rgba(0,0,0,0.1)' } : {}}
           >
             Local
           </button>
