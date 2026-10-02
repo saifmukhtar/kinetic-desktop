@@ -102,7 +102,7 @@ export default function Dashboard() {
         <StatCard
           eyebrow="Registered Names"
           value={names.length}
-          label="names owned on this node"
+          label="names managed by this identity"
           accent
         />
         <StatCard

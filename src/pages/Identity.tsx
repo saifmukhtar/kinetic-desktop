@@ -94,7 +94,7 @@ export default function Identity() {
     <div className={styles.container}>
       <div className={styles.header}>
         <div className={styles.titleGroup}>
-          <span className="eyebrow">NODE MASTER SEED</span>
+          <span className="eyebrow">MASTER IDENTITY SEED</span>
           <h1 className={styles.title}>Identity</h1>
         </div>
       </div>
@@ -103,7 +103,7 @@ export default function Identity() {
         <div className={styles.card}>
           <h2 className={styles.cardTitle}>Master Identity Key</h2>
           <p className={styles.cardDesc}>
-            Your node's master identity is derived from a 24-word seed phrase. 
+            Your Kinetic master identity is derived from a 24-word seed phrase. 
             This key is used to sign and authorize your KIDs (Kinetic Identity Documents) before they are published to the network.
           </p>
 
@@ -133,7 +133,7 @@ export default function Identity() {
         <div className={styles.card}>
           <h2 className={styles.cardTitle}>🚨 Backup Your Seed Phrase 🚨</h2>
           <p className={styles.cardDesc}>
-            Write down these 24 words and store them safely. This is the only way to recover your node's identity. 
+            Write down these 24 words and store them safely. This is the only way to recover your master identity. 
             <strong> You will never be able to view this phrase again.</strong>
           </p>
 

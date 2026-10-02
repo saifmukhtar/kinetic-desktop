@@ -100,15 +100,15 @@ export default function AdvancedSettingsModal({ onClose }: Props) {
             <div className={styles.fieldRow}>
               <div className={styles.field}>
                 <span className={styles.label}>Network Mode</span>
-                <span className={styles.desc}>FullNode stores DHT records; LightNode only queries.</span>
+                <span className={styles.desc}>Router mode stores DHT records; Edge mode only queries.</span>
               </div>
               <select 
                 className={styles.input} 
-                value={config.daemon?.network_mode || 'FullNode'} 
-                onChange={e => handleChange('daemon', 'network_mode', e.target.value)}
+                value={config.peer?.network_mode || 'Router'} 
+                onChange={e => handleChange('peer', 'network_mode', e.target.value)}
               >
-                <option value="FullNode">FullNode</option>
-                <option value="LightNode">LightNode</option>
+                <option value="Router">Router</option>
+                <option value="Edge">Edge</option>
               </select>
             </div>
 
