@@ -7,7 +7,6 @@ import Names from './pages/Names'
 import Nrs from './pages/Nrs'
 import Network from './pages/Network'
 import Kid from './pages/Kid'
-import Identity from './pages/Identity'
 import Settings from './pages/Settings'
 import { daemon } from './api/daemon'
 import './styles/global.css'
@@ -51,7 +50,6 @@ function AppContent() {
           <Route path="/nrs"      element={<Nrs />} />
           <Route path="/network"  element={<Network />} />
           <Route path="/kid"      element={<Kid />} />
-          <Route path="/identity" element={<Identity />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
       </main>

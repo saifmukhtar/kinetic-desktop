@@ -5,6 +5,7 @@ import StatusBadge from '../components/StatusBadge';
 import ProxyModal from '../components/ProxyModal';
 import AdvancedSettingsModal from '../components/AdvancedSettingsModal';
 import AuthSessionsModal from '../components/AuthSessionsModal';
+import IdentityModal from '../components/IdentityModal';
 import styles from './Settings.module.css';
 
 export default function Settings() {
@@ -14,6 +15,7 @@ export default function Settings() {
   const [showProxyModal, setShowProxyModal] = useState(false);
   const [showAdvancedModal, setShowAdvancedModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showIdentityModal, setShowIdentityModal] = useState(false);
 
   useEffect(() => {
     daemon.getApiUrl().then(setApiUrl).catch(() => setApiUrl('Unavailable'));
@@ -85,7 +87,7 @@ export default function Settings() {
             <h2 className={styles.sectionTitle}>Identity & Security</h2>
             <p className={styles.infoLabel} style={{ marginBottom: 0 }}>View your Master Seed Phrase or restore a new identity.</p>
           </div>
-          <button className="btn-ghost" onClick={() => navigate('/identity')}>
+          <button className="btn-ghost" onClick={() => setShowIdentityModal(true)}>
             Manage Identity
           </button>
         </div>
@@ -148,6 +150,7 @@ export default function Settings() {
       {showProxyModal && <ProxyModal onClose={() => setShowProxyModal(false)} />}
       {showAdvancedModal && <AdvancedSettingsModal onClose={() => setShowAdvancedModal(false)} />}
       {showAuthModal && <AuthSessionsModal onClose={() => setShowAuthModal(false)} />}
+      {showIdentityModal && <IdentityModal onClose={() => setShowIdentityModal(false)} />}
     </div>
   );
 }
