@@ -99,14 +99,14 @@ export default function Nrs() {
             onClick={() => setActiveTab('global')}
             style={activeTab === 'global' ? { background: 'var(--bg-surface)', boxShadow: '0 1px 2px rgba(0,0,0,0.1)' } : {}}
           >
-            Global Network
+            Network
           </button>
           <button 
             className={`btn-ghost ${activeTab === 'local' ? styles.tabActive : ''}`} 
             onClick={() => setActiveTab('local')}
             style={activeTab === 'local' ? { background: 'var(--bg-surface)', boxShadow: '0 1px 2px rgba(0,0,0,0.1)' } : {}}
           >
-            Local Overrides
+            Local
           </button>
         </div>
       </div>
