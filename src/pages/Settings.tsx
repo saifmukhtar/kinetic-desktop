@@ -85,7 +85,7 @@ export default function Settings() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h2 className={styles.sectionTitle}>Identity & Security</h2>
-            <p className={styles.infoLabel} style={{ marginBottom: 0 }}>Manage your local Sovereign Keypair and recovery seed.</p>
+            <p className={styles.infoLabel} style={{ marginBottom: 0 }}>Manage your local Identity Key and BIP39 recovery seed.</p>
           </div>
           <button className="btn-ghost" onClick={() => setShowIdentityModal(true)}>
             Manage Identity

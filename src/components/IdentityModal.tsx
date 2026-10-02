@@ -102,14 +102,14 @@ export default function IdentityModal({ onClose }: Props) {
         <div className={styles.content}>
           {step === 'status' && (
             <div className={styles.card}>
-              <h2 className={styles.cardTitle}>Sovereign Keypair</h2>
+              <h2 className={styles.cardTitle}>Identity Key</h2>
               <p className={styles.cardDesc}>
-                Your Kinetic Sovereign Identity is derived from a 24-word seed phrase. 
-                This keypair is used to cryptographically sign and authorize your KIDs (Kinetic Identity Documents) before they are published to the network.
+                Your Identity Key is derived from a 24-word BIP39 seed phrase. 
+                It is your root of trust — used to sign <code>AuthorizedKid</code> documents and bind your identity to <code>.kin</code> namespaces on the network.
               </p>
 
               <div className={styles.statusRow}>
-                <span className={styles.statusLabel}>Keypair Status</span>
+                <span className={styles.statusLabel}>Identity Key Status</span>
                 {status === 'loading' && <StatusBadge status="pending" label="Checking..." />}
                 {status === 'found' && <StatusBadge status="published" label="Active & Secure" />}
                 {status === 'not_found' && <StatusBadge status="offline" label="Not Found" />}
@@ -134,7 +134,7 @@ export default function IdentityModal({ onClose }: Props) {
             <div className={styles.card}>
               <h2 className={styles.cardTitle}>🚨 Backup Your Seed Phrase 🚨</h2>
               <p className={styles.cardDesc}>
-                Write down these 24 words and store them safely. This is the only way to recover your Sovereign Identity. 
+                Write down these 24 words and store them safely. This is the only way to recover your Identity Key. 
                 <strong> You will never be able to view this phrase again.</strong>
               </p>
 
