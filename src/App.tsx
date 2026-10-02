@@ -10,6 +10,7 @@ import Network from './pages/Network'
 import Kid from './pages/Kid'
 import Settings from './pages/Settings'
 import { daemon } from './api/daemon'
+import { Toaster } from 'sonner'
 import './styles/global.css'
 
 const PageTransition = ({ children }: { children: React.ReactNode }) => (
@@ -53,6 +54,7 @@ function AppContent() {
 
   return (
     <>
+      <Toaster position="bottom-right" theme="light" richColors toastOptions={{ style: { fontFamily: 'var(--font-sans)', borderRadius: 'var(--r-md)', padding: '16px', border: '1px solid var(--border)' } }} />
       <WindowResizer />
       {/* Hide top bar navigation if they are stuck on onboarding */}
       <TopBar hideNav={location.pathname === '/identity'} />

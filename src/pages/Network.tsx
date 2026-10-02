@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { daemon, NetworkStatus } from '../api/daemon';
 import { IconCopy } from '../components/Icons';
+import { toast } from 'sonner';
 import styles from './Network.module.css';
 
 import GossipFeed from '../components/GossipFeed';
@@ -52,9 +53,9 @@ export default function Network() {
   const handleDnsFlush = async () => {
     try {
       await daemon.postDnsFlush();
-      alert("Local DNS cache flushed successfully.");
+      toast.success("Local DNS cache flushed successfully.");
     } catch (err: any) {
-      alert("Failed to flush DNS cache: " + err.toString());
+      toast.error(err.message || "Failed to flush DNS cache");
     }
   };
 
