@@ -12,10 +12,12 @@ export default function AuthSessionsModal({ onClose }: Props) {
   
   const [appName, setAppName] = useState('');
   const [expiryDays, setExpiryDays] = useState(30);
-  const [selectedScopes, setSelectedScopes] = useState<string[]>(['Read']);
+  const [selectedScopes, setSelectedScopes] = useState<string[]>(['Metric']);
   const [newToken, setNewToken] = useState<string | null>(null);
 
-  const AVAILABLE_SCOPES = ['Read', 'Publish', 'Vdf', 'Nrs', 'Heartbeat'];
+  const AVAILABLE_SCOPES = [
+    'Kid', 'Nrs', 'Vdf', 'Action', 'Gossip', 'Metric', 'System', 'Atlas', 'Heartbeat'
+  ];
 
   const toggleScope = (scope: string) => {
     setSelectedScopes(prev => 
@@ -55,7 +57,7 @@ export default function AuthSessionsModal({ onClose }: Props) {
         setNewToken(JSON.stringify(res)); // fallback
       }
       setAppName('');
-      setSelectedScopes(['Read']);
+      setSelectedScopes(['Metric']);
       loadSessions();
     } catch (e: any) {
       alert("Failed to create session: " + e.toString());
