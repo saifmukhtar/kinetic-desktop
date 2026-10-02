@@ -9,11 +9,13 @@ import styles from './Names.module.css';
 export default function Names() {
   const navigate = useNavigate();
   const [names, setNames] = useState<string[]>([]);
+  const [heartbeats, setHeartbeats] = useState<Record<string, any>>({});
   const [search, setSearch] = useState('');
   const [panelOpen, setPanelOpen] = useState(false);
 
   useEffect(() => {
     loadNames();
+    loadHeartbeats();
   }, []);
 
   async function loadNames() {
@@ -24,6 +26,25 @@ export default function Names() {
       console.error(err);
     }
   }
+
+  async function loadHeartbeats() {
+    try {
+      const hb = await daemon.getHeartbeats();
+      setHeartbeats(hb);
+    } catch (err) {
+      console.error("Failed to load heartbeats", err);
+    }
+  }
+
+  const handleHeartbeat = async (name: string) => {
+    try {
+      await daemon.postHeartbeat(name);
+      alert(`Keep-alive heartbeat sent for ${name}.`);
+      loadHeartbeats();
+    } catch (err: any) {
+      alert("Failed to send heartbeat: " + err.toString());
+    }
+  };
 
   const filteredNames = names.filter(n => n.toLowerCase().includes(search.toLowerCase()));
 
@@ -53,26 +74,29 @@ export default function Names() {
         ) : filteredNames.length === 0 ? (
           <p className={styles.empty}>No matches found.</p>
         ) : (
-          filteredNames.map(name => (
-            <div key={name} className={styles.row}>
-              <div className={styles.nameGroup}>
-                <span className={styles.name}>{name}</span>
-                <StatusBadge status="published" />
+          filteredNames.map(name => {
+            const hb = heartbeats[name];
+            return (
+              <div key={name} className={styles.row}>
+                <div className={styles.nameGroup}>
+                  <span className={styles.name}>{name}</span>
+                  <StatusBadge status="published" />
+                </div>
+                <div className={styles.timestamp} style={{ color: hb ? 'var(--status-ok)' : 'var(--ink-muted)', fontSize: 'var(--text-sm)', flex: 1, textAlign: 'center' }}>
+                  {hb ? `TTL: ~${hb.kyns_idle || 0} idle Kyns` : 'TTL: Unknown'}
+                </div>
+                <div className={styles.actions}>
+                  <button className="btn-ghost" onClick={() => handleHeartbeat(name)}>❤️ Keep-Alive</button>
+                  <button
+                    className="btn-arrow"
+                    onClick={() => navigate(`/nrs?name=${encodeURIComponent(name)}`)}
+                  >
+                    Edit NRS <IconArrow />
+                  </button>
+                </div>
               </div>
-              <div className={styles.timestamp} style={{ color: 'var(--ink-muted)', fontSize: 'var(--text-sm)', flex: 1, textAlign: 'center' }}>
-                {new Date().toLocaleDateString()}
-              </div>
-              <div className={styles.actions}>
-                <button
-                  className="btn-arrow"
-                  onClick={() => navigate(`/nrs?name=${encodeURIComponent(name)}`)}
-                >
-                  Edit NRS <IconArrow />
-                </button>
-                <button className="btn-ghost">Renew</button>
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 

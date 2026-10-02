@@ -395,6 +395,26 @@ export const daemon = {
 
   async systemShutdown(): Promise<{ status: string }> {
     return safeInvoke('system_shutdown');
+  },
+
+  // ---------------------------------------------------------------------------
+  // NRS (NAMESPACE) & HEARTBEAT
+  // ---------------------------------------------------------------------------
+
+  async getHeartbeats(): Promise<any> {
+    return safeInvoke('get_heartbeats');
+  },
+
+  async postHeartbeat(name: string): Promise<{ task_id: string, message: string }> {
+    return safeInvoke('post_heartbeat', { name });
+  },
+
+  async postNrsUpdate(name: string, request: any): Promise<{ task_id: string, message: string }> {
+    return safeInvoke('post_nrs_update', { name, request });
+  },
+
+  async postAuthorizedUpdate(name: string, request: any): Promise<{ task_id: string, message: string }> {
+    return safeInvoke('post_authorized_update', { name, request });
   }
 };
 
