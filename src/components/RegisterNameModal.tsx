@@ -12,7 +12,7 @@ export default function RegisterNameModal({ onClose, onSuccess }: RegisterNameMo
   const [registerName, setRegisterName] = useState('');
   const [taskId, setTaskId] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
-  const [iterations, setIterations] = useState<number | null>(null);
+  const [iterations, setIterations] = useState<{ count: number; time?: number } | null>(null);
 
   useEffect(() => {
     if (!taskId) return;
@@ -44,7 +44,7 @@ export default function RegisterNameModal({ onClose, onSuccess }: RegisterNameMo
     const timeoutId = setTimeout(async () => {
       try {
         const res = await daemon.getVdfIterations(registerName);
-        setIterations(res.iterations);
+        setIterations({ count: res.iterations, time: res.estimated_seconds });
       } catch (e) {
         console.error("Failed to get VDF iterations", e);
         setIterations(null);
@@ -98,7 +98,7 @@ export default function RegisterNameModal({ onClose, onSuccess }: RegisterNameMo
             
             {iterations !== null && !taskId && (
               <div style={{ marginTop: '12px', fontSize: '13px', color: 'var(--ink-muted)' }}>
-                <strong>VDF Difficulty:</strong> {iterations.toLocaleString()} iterations required
+                <strong>VDF Difficulty:</strong> {iterations.time ? `~${iterations.time} seconds` : 'Calculating CPU bound...'} <span style={{ opacity: 0.7 }}>({iterations.count.toLocaleString()} iterations)</span>
               </div>
             )}
             

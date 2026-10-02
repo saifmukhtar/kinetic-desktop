@@ -369,11 +369,11 @@ export const daemon = {
     return safeInvoke('get_vdf_tasks');
   },
 
-  async getVdfIterations(name: string): Promise<{ iterations: number }> {
+  async getVdfIterations(name: string): Promise<{ iterations: number; estimated_seconds?: number }> {
     return safeInvoke('get_vdf_iterations', { name });
   },
 
-  async getTakeoverIterations(name: string, kyns_idle: number): Promise<{ iterations: number }> {
+  async getTakeoverIterations(name: string, kyns_idle: number): Promise<{ iterations: number; estimated_seconds?: number }> {
     return safeInvoke('get_takeover_iterations', { name, kyns_idle });
   }
 };
