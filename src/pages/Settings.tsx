@@ -89,6 +89,46 @@ export default function Settings() {
         </div>
       </div>
 
+      <div className="rule"></div>
+
+      <div className={styles.section}>
+        <h2 className={styles.sectionTitle} style={{ color: 'var(--status-err)' }}>System Power</h2>
+        <p className={styles.infoLabel} style={{ marginBottom: 'var(--sp-4)' }}>Control the background Kinetic daemon process.</p>
+        
+        <div style={{ display: 'flex', gap: 'var(--sp-3)' }}>
+          <button 
+            className="btn-ghost" 
+            style={{ flex: 1, border: '1px solid var(--border-muted)', color: 'var(--ink-base)' }}
+            onClick={async () => {
+              if (confirm("Are you sure you want to restart the background daemon? This will interrupt active VDF tasks.")) {
+                try {
+                  await daemon.systemRestart();
+                } catch (e: any) {
+                  alert("Restart failed: " + e.toString());
+                }
+              }
+            }}
+          >
+            🔄 Restart Daemon
+          </button>
+          <button 
+            className="btn-ghost" 
+            style={{ flex: 1, border: '1px solid var(--status-err)', color: 'var(--status-err)' }}
+            onClick={async () => {
+              if (confirm("Are you sure you want to shut down the daemon? The UI will become unresponsive until manually restarted.")) {
+                try {
+                  await daemon.systemShutdown();
+                } catch (e: any) {
+                  alert("Shutdown failed: " + e.toString());
+                }
+              }
+            }}
+          >
+            🛑 Shutdown Daemon
+          </button>
+        </div>
+      </div>
+
       {showProxyModal && <ProxyModal onClose={() => setShowProxyModal(false)} />}
       {showAdvancedModal && <AdvancedSettingsModal onClose={() => setShowAdvancedModal(false)} />}
     </div>
