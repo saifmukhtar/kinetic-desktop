@@ -280,7 +280,7 @@ export default function Kid() {
                   <ul className={styles.keyRing}>
                     {selectedDoc.controller_keys?.map((ck, idx) => (
                       <li key={ck.id || idx}>
-                        <span className={styles.keyType}>{ck.key_type || 'ML-DSA-65'}</span>: 
+                        <span className={styles.keyType}>{ck.key_type || 'KineticKeypair'}</span>: 
                         <span className={styles.monoText}>
                           {' '}
                           {ck.public_key ? `${ck.public_key.substring(0, 24)}...${ck.public_key.substring(ck.public_key.length - 8)}` : '—'}
@@ -318,7 +318,7 @@ export default function Kid() {
                     </button>
                   </div>
                   <p className="text-secondary" style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>
-                    Rotate generates a new ML-DSA-65 keypair. Revoke permanently deactivates this identity across the network.
+                    Rotate generates a new Controller Key. Revoke permanently deactivates this identity across the network.
                   </p>
                 </>
               )}
@@ -477,7 +477,7 @@ export default function Kid() {
                 {/* Save and Publish Button */}
                 <div className={styles.saveManifestRow}>
                   <p className="text-secondary" style={{ fontSize: '0.8rem', margin: 0 }}>
-                    Saving increments manifest version, creates post-quantum signature (ML-DSA-65), and publishes to the DHT.
+                    Saving increments manifest version, creates cryptographic signature, and publishes to the DHT.
                   </p>
                   <button
                     type="button"
