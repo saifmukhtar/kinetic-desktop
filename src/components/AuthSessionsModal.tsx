@@ -10,10 +10,18 @@ export default function AuthSessionsModal({ onClose }: Props) {
   const [sessions, setSessions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // New session state
   const [appName, setAppName] = useState('');
   const [expiryDays, setExpiryDays] = useState(30);
+  const [selectedScopes, setSelectedScopes] = useState<string[]>(['Read']);
   const [newToken, setNewToken] = useState<string | null>(null);
+
+  const AVAILABLE_SCOPES = ['Read', 'Publish', 'Vdf', 'Nrs', 'Heartbeat'];
+
+  const toggleScope = (scope: string) => {
+    setSelectedScopes(prev => 
+      prev.includes(scope) ? prev.filter(s => s !== scope) : [...prev, scope]
+    );
+  };
 
   useEffect(() => {
     loadSessions();
@@ -24,7 +32,7 @@ export default function AuthSessionsModal({ onClose }: Props) {
     try {
       const data = await daemon.getAuthSessions();
       // Ensure we have an array
-      setSessions(Array.isArray(data) ? data : []);
+      setSessions(Array.isArray(data.sessions) ? data.sessions : Array.isArray(data) ? data : []);
     } catch (e) {
       console.error(e);
       setSessions([]);
@@ -35,17 +43,19 @@ export default function AuthSessionsModal({ onClose }: Props) {
 
   const handleCreate = async () => {
     if (!appName) return alert("Please enter an application name.");
+    if (selectedScopes.length === 0) return alert("Please select at least one scope.");
+    
     try {
       // 1 day = approx 86400 seconds. If a Kyn is 10s, 1 day = 8640 Kyns.
-      // We pass it to the backend as requested
       const kyns = expiryDays * 8640; 
-      const res = await daemon.createSession(appName, ["*"], kyns);
+      const res = await daemon.createSession(appName, selectedScopes, kyns);
       if (res && res.token) {
         setNewToken(res.token);
       } else {
         setNewToken(JSON.stringify(res)); // fallback
       }
       setAppName('');
+      setSelectedScopes(['Read']);
       loadSessions();
     } catch (e: any) {
       alert("Failed to create session: " + e.toString());
@@ -84,20 +94,37 @@ export default function AuthSessionsModal({ onClose }: Props) {
               </div>
             )}
 
-            <div className={styles.fieldRow}>
+            <div className={styles.fieldRow} style={{ flexWrap: 'wrap' }}>
               <input 
                 type="text" 
                 className={styles.input} 
+                style={{ flex: '1 1 200px' }}
                 placeholder="App Name (e.g. Browser Extension)" 
                 value={appName}
                 onChange={e => setAppName(e.target.value)}
               />
-              <select className={styles.input} style={{ width: '120px' }} value={expiryDays} onChange={e => setExpiryDays(parseInt(e.target.value))}>
+              <select className={styles.input} style={{ flex: '0 0 120px' }} value={expiryDays} onChange={e => setExpiryDays(parseInt(e.target.value))}>
                 <option value={7}>7 Days</option>
                 <option value={30}>30 Days</option>
                 <option value={90}>90 Days</option>
               </select>
-              <button className="btn-primary" onClick={handleCreate}>Generate</button>
+              <button className="btn-primary" style={{ flex: '0 0 auto' }} onClick={handleCreate}>Generate</button>
+            </div>
+            
+            <div style={{ marginTop: 'var(--sp-2)', marginBottom: 'var(--sp-4)' }}>
+              <strong style={{ fontSize: 'var(--text-sm)', color: 'var(--ink-base)' }}>Permissions (Scopes):</strong>
+              <div style={{ display: 'flex', gap: 'var(--sp-3)', marginTop: 'var(--sp-2)', flexWrap: 'wrap' }}>
+                {AVAILABLE_SCOPES.map(scope => (
+                  <label key={scope} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: 'var(--text-sm)', color: 'var(--ink-muted)' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={selectedScopes.includes(scope)} 
+                      onChange={() => toggleScope(scope)}
+                    />
+                    {scope}
+                  </label>
+                ))}
+              </div>
             </div>
           </div>
 
