@@ -48,8 +48,8 @@ export default function Network() {
           <span className={styles.statValue}>{status?.peer_count ?? 0}</span>
         </div>
         <div className={styles.statCard}>
-          <span className={styles.statLabel}>Drand Pulse</span>
-          <span className={styles.statValue}>{status?.drand_pulse ?? 0}</span>
+          <span className={styles.statLabel}>Network Kyn</span>
+          <span className={styles.statValue}>{status?.network_kyn ?? 0}</span>
         </div>
       </div>
 

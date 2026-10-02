@@ -12,7 +12,7 @@ export interface HealthStatus {
 export interface NetworkStatus {
   peer_count?: number;
   mode?: string;
-  drand_pulse?: number;
+  network_kyn?: number;
   connected?: boolean;
   [key: string]: unknown;
 }

@@ -59,7 +59,7 @@ export default function RegisterNameModal({ onClose, onSuccess }: RegisterNameMo
             <div className={styles.switchInfo}>
               <span className={styles.switchTitle}>Namespace Registration</span>
               <span className={styles.switchDesc}>
-                Register a new namespace by computing a Proof of Work (VDF). This may take several minutes depending on your CPU.
+                Register a new namespace by computing a Verifiable Delay Function (VDF) proof. This may take several minutes depending on your CPU.
               </span>
             </div>
           </div>
