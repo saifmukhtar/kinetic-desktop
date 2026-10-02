@@ -48,24 +48,22 @@ export default function Dashboard() {
 
   useEffect(() => { load(); }, [load]);
 
-  // VDF tasks are stored in sessionStorage so they survive page nav
   useEffect(() => {
-    const stored = sessionStorage.getItem("vdf_tasks");
-    if (!stored) return;
-    const taskIds: string[] = JSON.parse(stored);
+    const fetchTasks = async () => {
+      try {
+        const tasksObj = await daemon.getVdfTasks();
+        const active: VdfEntry[] = Object.entries(tasksObj)
+          .map(([taskId, status]) => ({ taskId, name: taskId, status }))
+          .filter((e) => e.status.status !== "done" && e.status.status !== "error");
+        setVdfTasks(active);
+      } catch (err) {
+        console.error("Failed to fetch VDF tasks:", err);
+      }
+    };
 
-    Promise.allSettled(
-      taskIds.map(async (taskId) => {
-        const s = await daemon.getVdfStatus(taskId);
-        return { taskId, name: taskId, status: s } as VdfEntry;
-      })
-    ).then((results) => {
-      const active = results
-        .filter((r) => r.status === "fulfilled")
-        .map((r) => (r as PromiseFulfilledResult<VdfEntry>).value)
-        .filter((e) => e.status.status !== "done" && e.status.status !== "error");
-      setVdfTasks(active);
-    });
+    fetchTasks();
+    const int = setInterval(fetchTasks, 3000);
+    return () => clearInterval(int);
   }, []);
 
   if (loading) {

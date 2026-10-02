@@ -351,6 +351,30 @@ export const daemon = {
 
   async gossipPublish(topic: string, message: string): Promise<{ success: boolean; messageId: string }> {
     return safeInvoke('gossip_publish', { topic, message });
+  },
+
+  // ---------------------------------------------------------------------------
+  // ACTIONS
+  // ---------------------------------------------------------------------------
+
+  async getActionStatus(): Promise<any> {
+    return safeInvoke('get_action_status');
+  },
+
+  // ---------------------------------------------------------------------------
+  // VDF MATH & TASKS
+  // ---------------------------------------------------------------------------
+
+  async getVdfTasks(): Promise<Record<string, VdfTaskStatus>> {
+    return safeInvoke('get_vdf_tasks');
+  },
+
+  async getVdfIterations(name: string): Promise<{ iterations: number }> {
+    return safeInvoke('get_vdf_iterations', { name });
+  },
+
+  async getTakeoverIterations(name: string, kyns_idle: number): Promise<{ iterations: number }> {
+    return safeInvoke('get_takeover_iterations', { name, kyns_idle });
   }
 };
 

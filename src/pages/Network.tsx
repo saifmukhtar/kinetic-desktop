@@ -13,6 +13,7 @@ export default function Network() {
   const [peers, setPeers] = useState<string[]>([]);
   const [bannedPeers, setBannedPeers] = useState<string[]>([]);
   const [bootstrapping, setBootstrapping] = useState(false);
+  const [actionStatus, setActionStatus] = useState<any>(null);
 
   useEffect(() => {
     daemon.getPeerId().then(setPeerId).catch(console.error);
@@ -22,6 +23,7 @@ export default function Network() {
       daemon.getNetworkNat().then(setNatStatus).catch(console.error);
       daemon.getNetworkPeers().then(setPeers).catch(console.error);
       daemon.getBannedPeers().then(setBannedPeers).catch(console.error);
+      daemon.getActionStatus().then(setActionStatus).catch(() => setActionStatus(null));
     };
     
     fetchStatus();
@@ -84,6 +86,19 @@ export default function Network() {
           <span className={styles.statValue}>{status?.network_kyn ?? 0}</span>
         </div>
       </div>
+
+      {actionStatus && (
+        <div className={styles.peerCard} style={{ marginTop: 'var(--sp-4)', flexDirection: 'column', alignItems: 'flex-start' }}>
+          <span className={styles.tableTitle} style={{ marginBottom: '8px' }}>Active Network Action</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', fontSize: '13px', color: 'var(--ink-muted)' }}>
+            <span><strong>ID:</strong> {actionStatus.action_id}</span>
+            <span><strong>State:</strong> {actionStatus.state}</span>
+          </div>
+          <div style={{ width: '100%', height: '4px', background: 'var(--bg-base)', borderRadius: '2px', marginTop: '8px', overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${actionStatus.progress}%`, background: 'var(--accent-base)' }} />
+          </div>
+        </div>
+      )}
 
       <div className={styles.routingSection}>
         <div className={styles.tablePanel}>
