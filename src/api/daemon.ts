@@ -262,7 +262,7 @@ export const daemon = {
   setDaemonConfig: (config_data: any): Promise<any> =>
     safeInvoke("set_daemon_config", { configData: config_data }),
   // ---------------------------------------------------------------------------
-  // IDENTITY / NODE SEED
+  // IDENTITY / MASTER SEED
   // ---------------------------------------------------------------------------
 
   async checkIdentityStatus(): Promise<{ status: 'found' | 'not_found' | 'corrupted', detail?: string }> {

@@ -49,7 +49,7 @@ export default function Names() {
 
       <div className={styles.list}>
         {names.length === 0 ? (
-          <p className={styles.empty}>No names owned yet.</p>
+          <p className={styles.empty}>No names registered yet.</p>
         ) : filteredNames.length === 0 ? (
           <p className={styles.empty}>No matches found.</p>
         ) : (

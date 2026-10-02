@@ -559,10 +559,10 @@ pub async fn update_kid_manifest(name: String, services: serde_json::Value, stat
 }
 
 // ---------------------------------------------------------------------------
-// Identity — Node Master Seed Commands
+// Identity — Master Seed Commands
 // ---------------------------------------------------------------------------
 
-/// Path to the node identity key file within the kinetic data directory.
+/// Path to the master identity key file within the kinetic data directory.
 const IDENTITY_KEY_FILE: &str = "identity.key";
 
 fn get_identity_key_path() -> PathBuf {
@@ -572,7 +572,7 @@ fn get_identity_key_path() -> PathBuf {
         .join(IDENTITY_KEY_FILE)
 }
 
-/// Returns the status of the node's master identity key on disk.
+/// Returns the status of the daemon's master identity key on disk.
 ///
 /// Possible statuses: `"found"` (32-byte key present), `"not_found"` (no file),
 /// `"corrupted"` (file exists but wrong size).
