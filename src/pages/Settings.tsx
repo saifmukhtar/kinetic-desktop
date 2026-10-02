@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { daemon, HealthStatus } from '../api/daemon';
 import StatusBadge from '../components/StatusBadge';
 import ProxyModal from '../components/ProxyModal';
 import AdvancedSettingsModal from '../components/AdvancedSettingsModal';
 import AuthSessionsModal from '../components/AuthSessionsModal';
 import IdentityModal from '../components/IdentityModal';
+import { IconRefresh, IconPower } from '../components/Icons';
+import { toast } from 'sonner';
 import styles from './Settings.module.css';
 
 export default function Settings() {
@@ -109,39 +110,41 @@ export default function Settings() {
       <div className="rule"></div>
 
       <div className={styles.section}>
-        <h2 className={styles.sectionTitle} style={{ color: 'var(--status-err)' }}>System Power</h2>
+        <h2 className={styles.sectionTitle}>System Power</h2>
         <p className={styles.infoLabel} style={{ marginBottom: 'var(--sp-4)' }}>Control the background Kinetic daemon process.</p>
         
-        <div style={{ display: 'flex', gap: 'var(--sp-3)' }}>
+        <div style={{ display: 'flex', gap: 'var(--sp-4)' }}>
           <button 
             className="btn-ghost" 
-            style={{ flex: 1, border: '1px solid var(--border-muted)', color: 'var(--ink-base)' }}
+            style={{ flex: 1, justifyContent: 'center' }}
             onClick={async () => {
               if (confirm("Are you sure you want to restart the background daemon? This will interrupt active VDF tasks.")) {
                 try {
                   await daemon.systemRestart();
+                  toast.success("Daemon is restarting...");
                 } catch (e: any) {
-                  alert("Restart failed: " + e.toString());
+                  toast.error(e.message || "Restart failed.");
                 }
               }
             }}
           >
-            🔄 Restart Daemon
+            <IconRefresh size={16} /> Restart Daemon
           </button>
           <button 
-            className="btn-ghost" 
-            style={{ flex: 1, border: '1px solid var(--status-err)', color: 'var(--status-err)' }}
+            className="btn-danger" 
+            style={{ flex: 1, justifyContent: 'center' }}
             onClick={async () => {
               if (confirm("Are you sure you want to shut down the daemon? The UI will become unresponsive until manually restarted.")) {
                 try {
                   await daemon.systemShutdown();
+                  toast.success("Daemon has been shut down.");
                 } catch (e: any) {
-                  alert("Shutdown failed: " + e.toString());
+                  toast.error(e.message || "Shutdown failed.");
                 }
               }
             }}
           >
-            🛑 Shutdown Daemon
+            <IconPower size={16} /> Shutdown Daemon
           </button>
         </div>
       </div>
