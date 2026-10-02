@@ -323,5 +323,34 @@ export const daemon = {
 
   async deleteLocalReservedZone(name: string): Promise<void> {
     return safeInvoke('delete_local_reserved_zone', { name });
+  },
+
+  // ---------------------------------------------------------------------------
+  // P2P / GOSSIP
+  // ---------------------------------------------------------------------------
+
+  async getNetworkNat(): Promise<string> {
+    return safeInvoke('get_network_nat');
+  },
+
+  async getNetworkPeers(): Promise<string[]> {
+    return safeInvoke('get_network_peers');
+  },
+
+  async getBannedPeers(): Promise<string[]> {
+    return safeInvoke('get_banned_peers');
+  },
+
+  async triggerNetworkBootstrap(): Promise<{ success: boolean; message: string }> {
+    return safeInvoke('trigger_network_bootstrap');
+  },
+
+  async getGossipTopics(): Promise<string[]> {
+    return safeInvoke('get_gossip_topics');
+  },
+
+  async gossipPublish(topic: string, message: string): Promise<{ success: boolean; messageId: string }> {
+    return safeInvoke('gossip_publish', { topic, message });
   }
 };
+

@@ -8,27 +8,55 @@ import GossipFeed from '../components/GossipFeed';
 export default function Network() {
   const [peerId, setPeerId] = useState<string>('');
   const [status, setStatus] = useState<NetworkStatus | null>(null);
-
+  
+  const [natStatus, setNatStatus] = useState<string>('Unknown');
+  const [peers, setPeers] = useState<string[]>([]);
+  const [bannedPeers, setBannedPeers] = useState<string[]>([]);
+  const [bootstrapping, setBootstrapping] = useState(false);
 
   useEffect(() => {
     daemon.getPeerId().then(setPeerId).catch(console.error);
     
-    const fetchStatus = () => daemon.getNetworkStatus().then(setStatus).catch(console.error);
+    const fetchStatus = () => {
+      daemon.getNetworkStatus().then(setStatus).catch(console.error);
+      daemon.getNetworkNat().then(setNatStatus).catch(console.error);
+      daemon.getNetworkPeers().then(setPeers).catch(console.error);
+      daemon.getBannedPeers().then(setBannedPeers).catch(console.error);
+    };
+    
     fetchStatus();
     const int = setInterval(fetchStatus, 5000);
     return () => clearInterval(int);
   }, []);
 
-
   const copyPeerId = () => {
     navigator.clipboard.writeText(peerId);
   };
 
+  const handleBootstrap = async () => {
+    setBootstrapping(true);
+    try {
+      await daemon.triggerNetworkBootstrap();
+      // immediately refresh peers
+      const p = await daemon.getNetworkPeers();
+      setPeers(p);
+    } catch (err) {
+      console.error("Bootstrap failed", err);
+    } finally {
+      setBootstrapping(false);
+    }
+  };
+
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <span className="eyebrow">NETWORK</span>
-        <h1 className={styles.title}>Network Status</h1>
+      <div className={styles.header} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <span className="eyebrow">NETWORK</span>
+          <h1 className={styles.title}>Network Status</h1>
+        </div>
+        <button className="btn-ghost" onClick={handleBootstrap} disabled={bootstrapping}>
+          {bootstrapping ? 'Bootstrapping...' : 'Force Sync'}
+        </button>
       </div>
 
       <div className={styles.peerCard}>
@@ -44,12 +72,36 @@ export default function Network() {
           <span className={styles.statValue}>{status?.mode || 'Unknown'}</span>
         </div>
         <div className={styles.statCard}>
+          <span className={styles.statLabel}>NAT Status</span>
+          <span className={styles.statValue}>{natStatus}</span>
+        </div>
+        <div className={styles.statCard}>
           <span className={styles.statLabel}>Peers</span>
           <span className={styles.statValue}>{status?.peer_count ?? 0}</span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Network Kyn</span>
           <span className={styles.statValue}>{status?.network_kyn ?? 0}</span>
+        </div>
+      </div>
+
+      <div className={styles.routingSection}>
+        <div className={styles.tablePanel}>
+          <span className={styles.tableTitle}>Routing Table</span>
+          <ul className={styles.peerList}>
+            {peers.length === 0 ? <li className={styles.peerItem}>No active peers</li> : peers.map((p, i) => (
+              <li key={i} className={styles.peerItem}>{p}</li>
+            ))}
+          </ul>
+        </div>
+        
+        <div className={styles.tablePanel}>
+          <span className={styles.tableTitle}>Banned Peers</span>
+          <ul className={styles.peerList}>
+            {bannedPeers.length === 0 ? <li className={styles.peerItem}>No banned peers</li> : bannedPeers.map((p, i) => (
+              <li key={i} className={styles.peerItem} style={{ color: 'var(--status-err)', borderColor: 'var(--status-err)' }}>{p}</li>
+            ))}
+          </ul>
         </div>
       </div>
 
