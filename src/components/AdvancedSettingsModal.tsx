@@ -88,7 +88,7 @@ export default function AdvancedSettingsModal({ onClose }: Props) {
         )}
 
         <div className={styles.header}>
-          <h2 className={styles.title}>Advanced Configuration</h2>
+          <h2 className={styles.title}>Edit config.toml</h2>
           <button className={styles.closeBtn} onClick={onClose}>✕</button>
         </div>
 

@@ -51,11 +51,11 @@ export default function Settings() {
       <div className={styles.section}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <h2 className={styles.sectionTitle}>Advanced Daemon Configuration</h2>
-            <p className={styles.infoLabel} style={{ marginBottom: 0 }}>Configure network ports, protocols, and low-level daemon settings.</p>
+            <h2 className={styles.sectionTitle}>Daemon Config (config.toml)</h2>
+            <p className={styles.infoLabel} style={{ marginBottom: 0 }}>Directly modify the underlying daemon config.toml parameters.</p>
           </div>
           <button className="btn-ghost" onClick={() => setShowAdvancedModal(true)}>
-            Advanced Settings
+            Edit config.toml
           </button>
         </div>
       </div>
