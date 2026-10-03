@@ -47,7 +47,16 @@ function AppContent() {
 
     async function checkSystemState() {
       try {
-        // 1. Check if the daemon binaries are actually installed
+        // 0. Always ensure the user-owned directory tree exists.
+        //    This is idempotent (create_dir_all does nothing if they already exist)
+        //    and requires no root. Calling it on every startup guarantees
+        //    base_dir / networks_dir / nsp_dir / pac_dir are always owned
+        //    by the desktop user before any other logic runs.
+        await daemon.setupUserDirs().catch(() => {
+          // Non-fatal — if this fails the rest of the checks will surface the real error.
+        });
+
+        // 1. Check if the daemon + CLI binaries are actually installed
         const installRes = await daemon.checkInstalled();
         if (!active) return;
         

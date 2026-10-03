@@ -28,11 +28,7 @@ pub struct InstallStatus {
 #[command]
 pub async fn check_installed() -> Result<InstallStatus, String> {
     let is_windows = env::consts::OS == "windows";
-    let daemon_name = format!(
-        "{}-daemon{}",
-        kinetic_env::NSP,
-        if is_windows { ".exe" } else { "" }
-    );
+    let ext = if is_windows { ".exe" } else { "" };
 
     let bin_dir = if is_windows {
         PathBuf::from("C:\\Program Files\\Kinetic\\bin")
@@ -40,9 +36,14 @@ pub async fn check_installed() -> Result<InstallStatus, String> {
         PathBuf::from(BIN_DIR_UNIX)
     };
 
-    let daemon_path = bin_dir.join(&daemon_name);
+    // Both the CLI binary (kin) and the daemon binary (kin-daemon) must exist
+    // for the installation to be considered complete.
+    let cli_path    = bin_dir.join(format!("{}{}", kinetic_env::NSP, ext));
+    let daemon_path = bin_dir.join(format!("{}-daemon{}", kinetic_env::NSP, ext));
 
-    if daemon_path.exists() {
+    let is_installed = cli_path.exists() && daemon_path.exists();
+
+    if is_installed {
         Ok(InstallStatus {
             is_installed: true,
             install_type: Some("desktop".to_string()),
