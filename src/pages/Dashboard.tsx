@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useBinaryStatus } from "../context/BinaryStatus";
 import { daemon, type HealthStatus, type NetworkStatus, type VdfTaskStatus } from "../api/daemon";
 import StatCard from "../components/StatCard";
 import StatusBadge from "../components/StatusBadge";
@@ -21,6 +22,9 @@ interface VdfEntry {
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate();
+  const { status: binStatus } = useBinaryStatus();
+
   const [health, setHealth]       = useState<HealthStatus | null>(null);
   const [network, setNetwork]     = useState<NetworkStatus | null>(null);
   const [names, setNames]         = useState<string[]>([]);
@@ -109,6 +113,36 @@ export default function Dashboard() {
           Refresh
         </button>
       </div>
+
+      {/* ── Binary Status Badges ── */}
+      {binStatus && (
+        <div className={styles.binaryRow}>
+          <div className={styles.binaryGroup}>
+            <span className="eyebrow" style={{ marginRight: '8px' }}>Binaries:</span>
+            <button 
+              className={styles.binaryBadge} 
+              data-status={binStatus.kin ? 'ok' : 'err'}
+              onClick={() => !binStatus.kin && navigate('/installer')}
+            >
+              <span className={styles.binaryDot} /> kin
+            </button>
+            <button 
+              className={styles.binaryBadge} 
+              data-status={binStatus.kin_daemon ? 'ok' : 'err'}
+              onClick={() => !binStatus.kin_daemon && navigate('/installer')}
+            >
+              <span className={styles.binaryDot} /> kin-daemon
+            </button>
+            <button 
+              className={styles.binaryBadge} 
+              data-status={binStatus.kin_pac ? 'ok' : 'err'}
+              onClick={() => !binStatus.kin_pac && navigate('/installer')}
+            >
+              <span className={styles.binaryDot} /> kin-pac
+            </button>
+          </div>
+        </div>
+      )}
 
       {error && (
         <div className={styles.errorBanner}>

@@ -5,6 +5,7 @@ import TopBar from './components/TopBar'
 import WindowResizer from './components/WindowResizer'
 import { daemon } from './api/daemon'
 import { Toaster } from 'sonner'
+import { BinaryStatusProvider, useBinaryStatus } from './context/BinaryStatus'
 import './styles/global.css'
 
 // Lazy load routes to massively cut down initial JS bundle size
@@ -40,6 +41,7 @@ function AppContent() {
   const navigate = useNavigate();
   const location = useLocation();
   const [checking, setChecking] = useState(true);
+  const { setStatus } = useBinaryStatus();
 
   useEffect(() => {
     let active = true;
@@ -55,6 +57,12 @@ function AppContent() {
         await daemon.setupUserDirs().catch(() => {
           // Non-fatal — if this fails the rest of the checks will surface the real error.
         });
+
+        // 0b. Check individual binary status ONCE and store in context.
+        //     Dashboard reads from context — no polling, no re-fetching.
+        daemon.checkBinaryStatus().then((s) => {
+          if (active) setStatus(s);
+        }).catch(() => {});
 
         // 1. Check if the daemon + CLI binaries are actually installed
         const installRes = await daemon.checkInstalled();
@@ -131,8 +139,10 @@ function AppContent() {
 
 export default function App() {
   return (
-    <HashRouter>
-      <AppContent />
-    </HashRouter>
+    <BinaryStatusProvider>
+      <HashRouter>
+        <AppContent />
+      </HashRouter>
+    </BinaryStatusProvider>
   )
 }

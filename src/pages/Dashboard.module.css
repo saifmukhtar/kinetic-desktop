@@ -191,3 +191,54 @@
 .nameWarning {
   color: var(--status-warn);
 }
+
+.binaryRow {
+  display: flex;
+  margin-top: calc(-1 * var(--sp-4));
+}
+.binaryGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.binaryBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--r-full);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  font-family: var(--font-mono);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  color: var(--ink-secondary);
+  cursor: default;
+  transition: all var(--dur-fast);
+}
+.binaryBadge[data-status="err"] {
+  background: var(--status-err-soft);
+  border-color: var(--status-err);
+  color: var(--status-err);
+  cursor: pointer;
+}
+.binaryBadge[data-status="err"]:hover {
+  background: var(--status-err);
+  color: #fff;
+}
+.binaryBadge[data-status="err"]:hover .binaryDot {
+  background: #fff;
+}
+.binaryDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink-muted);
+}
+.binaryBadge[data-status="ok"] .binaryDot {
+  background: var(--status-ok);
+}
+.binaryBadge[data-status="err"] .binaryDot {
+  background: var(--status-err);
+}
+

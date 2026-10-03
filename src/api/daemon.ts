@@ -247,6 +247,9 @@ export const daemon = {
   checkInstalled: (): Promise<{ is_installed: boolean; install_type: string | null }> =>
     safeInvoke("check_installed"),
 
+  checkBinaryStatus: (): Promise<{ kin: boolean; kin_daemon: boolean; kin_pac: boolean }> =>
+    safeInvoke("check_binary_status"),
+
   setupUserDirs: (): Promise<void> =>
     safeInvoke("setup_user_dirs"),
 

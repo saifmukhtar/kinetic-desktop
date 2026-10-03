@@ -9,7 +9,6 @@ use kinetic_sdk::apis::nrs_api;
 use kinetic_sdk::apis::system_api;
 use kinetic_sdk::apis::vdf_api;
 use kinetic_sdk::models;
-use std::path::PathBuf;
 use tauri::command;
 
 use kinetic_sdk::apis::Error as SdkError;

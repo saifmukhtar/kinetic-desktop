@@ -57,6 +57,37 @@ pub async fn check_installed() -> Result<InstallStatus, String> {
 }
 
 // ─────────────────────────────────────────────────────────────
+// Granular binary status — individual presence of each binary.
+// Called ONCE at app startup and stored in React context.
+// No polling. Dashboard reads from context only.
+// ─────────────────────────────────────────────────────────────
+
+#[derive(Serialize)]
+pub struct BinaryStatus {
+    pub kin:        bool,
+    pub kin_daemon: bool,
+    pub kin_pac:    bool,
+}
+
+#[command]
+pub async fn check_binary_status() -> Result<BinaryStatus, String> {
+    let is_windows = env::consts::OS == "windows";
+    let ext = if is_windows { ".exe" } else { "" };
+
+    let bin_dir = if is_windows {
+        PathBuf::from("C:\\Program Files\\Kinetic\\bin")
+    } else {
+        PathBuf::from(BIN_DIR_UNIX)
+    };
+
+    Ok(BinaryStatus {
+        kin:        bin_dir.join(format!("{}{}", kinetic_env::NSP, ext)).exists(),
+        kin_daemon: bin_dir.join(format!("{}-daemon{}", kinetic_env::NSP, ext)).exists(),
+        kin_pac:    bin_dir.join(format!("{}-pac{}", kinetic_env::NSP, ext)).exists(),
+    })
+}
+
+// ─────────────────────────────────────────────────────────────
 // Step 1 — Create the user-owned directory tree
 // Runs as: Normal User (no root required)
 // Does:    Creates the full directory hierarchy owned by the
@@ -177,7 +208,7 @@ pub async fn install_system() -> Result<(), String> {
         .or_else(|_| env::var("USERNAME"))
         .unwrap_or_default();
 
-    let real_home = env::var("HOME")
+    let _real_home = env::var("HOME")
         .or_else(|_| env::var("USERPROFILE"))
         .unwrap_or_default();
 
