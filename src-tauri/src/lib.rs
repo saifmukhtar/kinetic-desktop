@@ -146,6 +146,7 @@ pub fn run() {
             api_commands::check_identity_status,
             api_commands::generate_seed_phrase,
             api_commands::save_seed_phrase,
+            api_commands::check_pac_status,
             api_commands::list_proxy_rules,
             api_commands::add_custom_proxy,
             api_commands::remove_custom_proxy,

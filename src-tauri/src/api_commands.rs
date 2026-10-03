@@ -837,6 +837,22 @@ fn default_proxy_ip() -> String {
 
 /// Lists all active routing rules currently registered in the PAC proxies folder.
 #[command]
+pub async fn check_pac_status() -> bool {
+    let url = format!("http://127.0.0.1:{}/proxy.pac", kinetic_env::DEFAULT_PAC_PORT);
+    let client = match reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(2))
+        .build() {
+            Ok(c) => c,
+            Err(_) => return false,
+        };
+
+    match client.get(&url).send().await {
+        Ok(resp) => resp.status().is_success(),
+        Err(_) => false,
+    }
+}
+
+#[command]
 pub async fn list_proxy_rules() -> Result<Vec<ProxyRuleInfo>, String> {
     let proxies_dir = get_pac_proxies_dir();
     let mut rules = Vec::new();

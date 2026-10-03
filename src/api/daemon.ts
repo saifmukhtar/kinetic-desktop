@@ -301,15 +301,7 @@ export const daemon = {
   },
 
   async checkPacStatus(): Promise<boolean> {
-    try {
-      const ctrl = new AbortController();
-      const timeout = setTimeout(() => ctrl.abort(), 2000);
-      const res = await fetch('http://127.0.0.1:16001/proxy.pac', { signal: ctrl.signal });
-      clearTimeout(timeout);
-      return res.ok;
-    } catch {
-      return false;
-    }
+    return safeInvoke('check_pac_status');
   },
 
   // ---------------------------------------------------------------------------
