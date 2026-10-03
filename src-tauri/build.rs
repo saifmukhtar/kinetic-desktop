@@ -49,7 +49,10 @@ fn main() {
 
     // Emit as comma-separated byte string for use in api_commands.rs via env!()
     let salt_bytes: Vec<String> = salt.iter().map(|b| b.to_string()).collect();
-    println!("cargo:rustc-env=KINETIC_NETWORK_SALT={}", salt_bytes.join(","));
+    println!(
+        "cargo:rustc-env=KINETIC_NETWORK_SALT={}",
+        salt_bytes.join(",")
+    );
 
     // Re-run if either source file changes
     println!(

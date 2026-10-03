@@ -1,31 +1,36 @@
-use std::path::PathBuf;
-use tauri::command;
-use kinetic_sdk::apis::configuration::Configuration;
-use kinetic_sdk::apis::system_api;
-use kinetic_sdk::apis::network_api;
-use kinetic_sdk::apis::nrs_api;
-use kinetic_sdk::apis::kid_api;
-use kinetic_sdk::apis::vdf_api;
-use kinetic_sdk::apis::auth_api;
 use kinetic_sdk::apis::action_api;
+use kinetic_sdk::apis::auth_api;
+use kinetic_sdk::apis::configuration::Configuration;
 use kinetic_sdk::apis::gossip_api;
 use kinetic_sdk::apis::heartbeat_api;
+use kinetic_sdk::apis::kid_api;
+use kinetic_sdk::apis::network_api;
+use kinetic_sdk::apis::nrs_api;
+use kinetic_sdk::apis::system_api;
+use kinetic_sdk::apis::vdf_api;
 use kinetic_sdk::models;
+use std::path::PathBuf;
+use tauri::command;
 
 use kinetic_sdk::apis::Error as SdkError;
 
 fn format_api_error<T>(err: SdkError<T>) -> String {
     match err {
-        SdkError::ResponseError(content) => {
-            content.content.clone()
-        },
-        SdkError::Reqwest(e) => format!("{{\"code\": \"ERR_NETWORK\", \"message\": {}}}", serde_json::to_string(&e.to_string()).unwrap()),
-        SdkError::Serde(e) => format!("{{\"code\": \"ERR_PARSE\", \"message\": {}}}", serde_json::to_string(&e.to_string()).unwrap()),
-        SdkError::Io(e) => format!("{{\"code\": \"ERR_IO\", \"message\": {}}}", serde_json::to_string(&e.to_string()).unwrap()),
+        SdkError::ResponseError(content) => content.content.clone(),
+        SdkError::Reqwest(e) => format!(
+            "{{\"code\": \"ERR_NETWORK\", \"message\": {}}}",
+            serde_json::to_string(&e.to_string()).unwrap()
+        ),
+        SdkError::Serde(e) => format!(
+            "{{\"code\": \"ERR_PARSE\", \"message\": {}}}",
+            serde_json::to_string(&e.to_string()).unwrap()
+        ),
+        SdkError::Io(e) => format!(
+            "{{\"code\": \"ERR_IO\", \"message\": {}}}",
+            serde_json::to_string(&e.to_string()).unwrap()
+        ),
     }
 }
-
-
 
 // ---------------------------------------------------------------------------
 // Auth token role names
@@ -71,7 +76,7 @@ fn get_config(state: &tauri::State<EndpointState>) -> Configuration {
 fn get_private_config(role: &str, state: &tauri::State<EndpointState>) -> Configuration {
     let mut config = get_config(state);
     let net_id = state.network_id.clone();
-    
+
     let token_path = get_base_dir(&net_id)
         .join("tokens")
         .join(format!("{}{}", role, ".token"));
@@ -88,17 +93,19 @@ fn get_private_config(role: &str, state: &tauri::State<EndpointState>) -> Config
 
 #[command]
 pub async fn set_active_endpoint(
-    _ip: String, 
-    _port: u16, 
-    _network_id: String, 
-    _state: tauri::State<'_, EndpointState>
+    _ip: String,
+    _port: u16,
+    _network_id: String,
+    _state: tauri::State<'_, EndpointState>,
 ) -> Result<(), String> {
     // No-op for V1. State is statically defined in lib.rs.
     Ok(())
 }
 
 #[command]
-pub async fn get_active_endpoint(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn get_active_endpoint(
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     Ok(serde_json::json!({
         "url": state.get_url(),
         "network_id": state.network_id
@@ -116,7 +123,9 @@ pub async fn get_api_url(state: tauri::State<'_, EndpointState>) -> Result<Strin
 }
 
 #[command]
-pub async fn get_network_status(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn get_network_status(
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
     match network_api::get_network_status(&config).await {
         Ok(status) => Ok(serde_json::to_value(status).map_err(|e| e.to_string())?),
@@ -125,7 +134,9 @@ pub async fn get_network_status(state: tauri::State<'_, EndpointState>) -> Resul
 }
 
 #[command]
-pub async fn get_network_nat(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn get_network_nat(
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
     match network_api::get_network_nat(&config).await {
         Ok(nat) => Ok(serde_json::to_value(nat).map_err(|e| e.to_string())?),
@@ -134,7 +145,9 @@ pub async fn get_network_nat(state: tauri::State<'_, EndpointState>) -> Result<s
 }
 
 #[command]
-pub async fn get_network_peers(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn get_network_peers(
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
     match network_api::get_network_peers(&config).await {
         Ok(peers) => Ok(serde_json::to_value(peers).map_err(|e| e.to_string())?),
@@ -143,7 +156,10 @@ pub async fn get_network_peers(state: tauri::State<'_, EndpointState>) -> Result
 }
 
 #[command]
-pub async fn resolve_name(name: String, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn resolve_name(
+    name: String,
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
     match nrs_api::resolve_name(&config, &name).await {
         Ok(zone) => Ok(serde_json::to_value(zone).map_err(|e| e.to_string())?),
@@ -152,7 +168,9 @@ pub async fn resolve_name(name: String, state: tauri::State<'_, EndpointState>) 
 }
 
 #[command]
-pub async fn get_config_info(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn get_config_info(
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_ADMIN, &state);
     match system_api::get_config(&config).await {
         Ok(info) => Ok(serde_json::to_value(info).map_err(|e| e.to_string())?),
@@ -162,10 +180,10 @@ pub async fn get_config_info(state: tauri::State<'_, EndpointState>) -> Result<s
 
 #[command]
 pub async fn create_session(
-    app_name: String, 
-    scopes: Vec<String>, 
-    expiry_kyn: i32, 
-    state: tauri::State<'_, EndpointState>
+    app_name: String,
+    scopes: Vec<String>,
+    expiry_kyn: i32,
+    state: tauri::State<'_, EndpointState>,
 ) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_ADMIN, &state);
 
@@ -188,7 +206,7 @@ pub async fn create_session(
     }
 
     let request = models::CreateSessionRequest::new(app_name, enum_scopes, expiry_kyn);
-    
+
     match auth_api::create_session(&config, request).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
         Err(e) => Err(format_api_error(e)),
@@ -196,7 +214,9 @@ pub async fn create_session(
 }
 
 #[command]
-pub async fn get_health(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn get_health(
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
     match system_api::get_health(&config).await {
         Ok(status) => Ok(serde_json::to_value(status).map_err(|e| e.to_string())?),
@@ -214,7 +234,9 @@ pub async fn get_peer_id(state: tauri::State<'_, EndpointState>) -> Result<Strin
 }
 
 #[command]
-pub async fn get_banned_peers(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn get_banned_peers(
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
     match network_api::get_banned_peers(&config).await {
         Ok(banned) => Ok(serde_json::to_value(banned).map_err(|e| e.to_string())?),
@@ -232,7 +254,10 @@ pub async fn get_time(state: tauri::State<'_, EndpointState>) -> Result<serde_js
 }
 
 #[command]
-pub async fn resolve_kid(did: String, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn resolve_kid(
+    did: String,
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
     match kid_api::resolve_kid(&config, &did).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
@@ -241,7 +266,10 @@ pub async fn resolve_kid(did: String, state: tauri::State<'_, EndpointState>) ->
 }
 
 #[command]
-pub async fn get_zone(name: String, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn get_zone(
+    name: String,
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
     match nrs_api::get_zone(&config, &name).await {
         Ok(zone) => Ok(serde_json::to_value(zone).map_err(|e| e.to_string())?),
@@ -254,7 +282,9 @@ pub async fn get_zone(name: String, state: tauri::State<'_, EndpointState>) -> R
 // ---------------------------------------------------------------------------
 
 #[command]
-pub async fn get_owned_names(state: tauri::State<'_, EndpointState>) -> Result<Vec<String>, String> {
+pub async fn get_owned_names(
+    state: tauri::State<'_, EndpointState>,
+) -> Result<Vec<String>, String> {
     let config = get_private_config(ROLE_PUBLISH, &state);
     match nrs_api::get_owned_names(&config).await {
         Ok(names) => Ok(names),
@@ -263,7 +293,11 @@ pub async fn get_owned_names(state: tauri::State<'_, EndpointState>) -> Result<V
 }
 
 #[command]
-pub async fn publish_zone(name: String, zone_data: models::NrsZone, state: tauri::State<'_, EndpointState>) -> Result<(), String> {
+pub async fn publish_zone(
+    name: String,
+    zone_data: models::NrsZone,
+    state: tauri::State<'_, EndpointState>,
+) -> Result<(), String> {
     let config = get_private_config(ROLE_PUBLISH, &state);
     match nrs_api::save_zone(&config, &name, zone_data).await {
         Ok(_) => Ok(()),
@@ -272,7 +306,10 @@ pub async fn publish_zone(name: String, zone_data: models::NrsZone, state: tauri
 }
 
 #[command]
-pub async fn sign_and_publish_zone(name: String, state: tauri::State<'_, EndpointState>) -> Result<(), String> {
+pub async fn sign_and_publish_zone(
+    name: String,
+    state: tauri::State<'_, EndpointState>,
+) -> Result<(), String> {
     let config = get_private_config(ROLE_PUBLISH, &state);
     match nrs_api::publish_zone(&config, &name).await {
         Ok(_) => Ok(()),
@@ -281,7 +318,10 @@ pub async fn sign_and_publish_zone(name: String, state: tauri::State<'_, Endpoin
 }
 
 #[command]
-pub async fn commit_name(commit_request: models::CommitRequest, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn commit_name(
+    commit_request: models::CommitRequest,
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_PUBLISH, &state);
     match nrs_api::commit_name(&config, commit_request).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
@@ -290,7 +330,10 @@ pub async fn commit_name(commit_request: models::CommitRequest, state: tauri::St
 }
 
 #[command]
-pub async fn publish_name(publish_request: models::PublishRequest, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn publish_name(
+    publish_request: models::PublishRequest,
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_PUBLISH, &state);
     match nrs_api::publish_name(&config, publish_request).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
@@ -299,7 +342,10 @@ pub async fn publish_name(publish_request: models::PublishRequest, state: tauri:
 }
 
 #[command]
-pub async fn publish_kid(authorized_kid: models::AuthorizedKid, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn publish_kid(
+    authorized_kid: models::AuthorizedKid,
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_PUBLISH, &state);
     match kid_api::publish_kid(&config, authorized_kid).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
@@ -308,7 +354,10 @@ pub async fn publish_kid(authorized_kid: models::AuthorizedKid, state: tauri::St
 }
 
 #[command]
-pub async fn publish_manifest(authorized_manifest: models::AuthorizedManifest, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn publish_manifest(
+    authorized_manifest: models::AuthorizedManifest,
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_PUBLISH, &state);
     match kid_api::publish_manifest(&config, authorized_manifest).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
@@ -321,7 +370,10 @@ pub async fn publish_manifest(authorized_manifest: models::AuthorizedManifest, s
 // ---------------------------------------------------------------------------
 
 #[command]
-pub async fn update_config(update_config_request: serde_json::Value, state: tauri::State<'_, EndpointState>) -> Result<(), String> {
+pub async fn update_config(
+    update_config_request: serde_json::Value,
+    state: tauri::State<'_, EndpointState>,
+) -> Result<(), String> {
     let config = get_private_config(ROLE_ADMIN, &state);
     match system_api::update_config(&config, update_config_request).await {
         Ok(_) => Ok(()),
@@ -334,7 +386,11 @@ pub async fn update_config(update_config_request: serde_json::Value, state: taur
 // ---------------------------------------------------------------------------
 
 #[command]
-pub async fn get_takeover_iterations(name: String, kyns_idle: i32, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn get_takeover_iterations(
+    name: String,
+    kyns_idle: i32,
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
     match vdf_api::get_takeover_iterations(&config, &name, kyns_idle).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
@@ -343,7 +399,10 @@ pub async fn get_takeover_iterations(name: String, kyns_idle: i32, state: tauri:
 }
 
 #[command]
-pub async fn get_vdf_iterations(name: String, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn get_vdf_iterations(
+    name: String,
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
     match vdf_api::get_vdf_iterations(&config, &name).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
@@ -356,7 +415,10 @@ pub async fn get_vdf_iterations(name: String, state: tauri::State<'_, EndpointSt
 // ---------------------------------------------------------------------------
 
 #[command]
-pub async fn register_vdf(request: models::VdfRegisterRequest, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn register_vdf(
+    request: models::VdfRegisterRequest,
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_VDF, &state);
     match vdf_api::vdf_register(&config, request).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
@@ -365,7 +427,10 @@ pub async fn register_vdf(request: models::VdfRegisterRequest, state: tauri::Sta
 }
 
 #[command]
-pub async fn renew_vdf(request: models::NameRenewRequest, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn renew_vdf(
+    request: models::NameRenewRequest,
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_VDF, &state);
     match vdf_api::vdf_renew(&config, request).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
@@ -374,7 +439,10 @@ pub async fn renew_vdf(request: models::NameRenewRequest, state: tauri::State<'_
 }
 
 #[command]
-pub async fn get_vdf_status(task_id: String, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn get_vdf_status(
+    task_id: String,
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_VDF, &state);
     match vdf_api::get_vdf_status(&config, &task_id).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
@@ -383,7 +451,9 @@ pub async fn get_vdf_status(task_id: String, state: tauri::State<'_, EndpointSta
 }
 
 #[command]
-pub async fn get_vdf_tasks(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn get_vdf_tasks(
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_VDF, &state);
     match vdf_api::get_vdf_tasks(&config).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
@@ -392,7 +462,10 @@ pub async fn get_vdf_tasks(state: tauri::State<'_, EndpointState>) -> Result<ser
 }
 
 #[command]
-pub async fn delete_vdf_task(task_id: String, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn delete_vdf_task(
+    task_id: String,
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_VDF, &state);
     match vdf_api::delete_vdf_task(&config, &task_id).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
@@ -400,14 +473,14 @@ pub async fn delete_vdf_task(task_id: String, state: tauri::State<'_, EndpointSt
     }
 }
 
-
-
 // ---------------------------------------------------------------------------
 // Local KID Management Commands
 // ---------------------------------------------------------------------------
 
 #[command]
-pub async fn get_local_kids(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn get_local_kids(
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
     match kid_api::list_kids(&config).await {
         Ok(kids) => Ok(serde_json::to_value(kids).map_err(|e| e.to_string())?),
@@ -416,7 +489,10 @@ pub async fn get_local_kids(state: tauri::State<'_, EndpointState>) -> Result<se
 }
 
 #[command]
-pub async fn get_local_kid(name: String, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn get_local_kid(
+    name: String,
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
     match kid_api::fetch_kid(&config, &name).await {
         Ok(kid) => Ok(serde_json::to_value(kid).map_err(|e| e.to_string())?),
@@ -433,12 +509,12 @@ pub async fn generate_kid(
     state: tauri::State<'_, EndpointState>,
 ) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_PUBLISH, &state);
-    
+
     let mut req = models::GenerateKidRequest::new(base_name);
     req.sub_name = sub_name;
     req.inherit_subname = Some(inherit_subname.unwrap_or(true));
     req.force = Some(force.unwrap_or(false));
-    
+
     match kid_api::generate_kid(&config, req).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
         Err(e) => Err(format_api_error(e)),
@@ -446,7 +522,10 @@ pub async fn generate_kid(
 }
 
 #[command]
-pub async fn rotate_kid(name: String, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn rotate_kid(
+    name: String,
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_PUBLISH, &state);
     match kid_api::rotate_kid(&config, &name).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
@@ -455,7 +534,10 @@ pub async fn rotate_kid(name: String, state: tauri::State<'_, EndpointState>) ->
 }
 
 #[command]
-pub async fn revoke_kid(name: String, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn revoke_kid(
+    name: String,
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_PUBLISH, &state);
     match kid_api::revoke_kid(&config, &name).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
@@ -463,14 +545,14 @@ pub async fn revoke_kid(name: String, state: tauri::State<'_, EndpointState>) ->
     }
 }
 
-
-
 // ---------------------------------------------------------------------------
 // Daemon Config
 // ---------------------------------------------------------------------------
 
 #[command]
-pub async fn get_daemon_config(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn get_daemon_config(
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_ADMIN, &state);
     match system_api::get_config(&config).await {
         Ok(cfg) => Ok(serde_json::to_value(cfg).map_err(|e| e.to_string())?),
@@ -479,12 +561,15 @@ pub async fn get_daemon_config(state: tauri::State<'_, EndpointState>) -> Result
 }
 
 #[command]
-pub async fn set_daemon_config(config_data: serde_json::Value, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn set_daemon_config(
+    config_data: serde_json::Value,
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_ADMIN, &state);
-    
+
     // We send { "config": config_data } as expected by the daemon
     let payload = serde_json::json!({ "config": config_data });
-    
+
     match system_api::update_config(&config, payload).await {
         Ok(_) => Ok(serde_json::json!({ "status": "success" })),
         Err(e) => Err(format_api_error(e)),
@@ -505,7 +590,9 @@ pub async fn get_ca_cert(state: tauri::State<'_, EndpointState>) -> Result<Strin
 // ---------------------------------------------------------------------------
 
 #[command]
-pub async fn get_reserved_names(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn get_reserved_names(
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
     match nrs_api::get_reserved_names(&config).await {
         Ok(names) => Ok(serde_json::to_value(names).map_err(|e| e.to_string())?),
@@ -514,21 +601,30 @@ pub async fn get_reserved_names(state: tauri::State<'_, EndpointState>) -> Resul
 }
 
 #[command]
-pub async fn get_local_reserved_zone(name: String, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn get_local_reserved_zone(
+    name: String,
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
     match nrs_api::get_local_reserved_zone(&config, &name).await {
         Ok(zone) => Ok(serde_json::to_value(zone).map_err(|e| e.to_string())?),
-        Err(kinetic_sdk::apis::Error::ResponseError(res)) if res.status == reqwest::StatusCode::NOT_FOUND => {
+        Err(kinetic_sdk::apis::Error::ResponseError(res))
+            if res.status == reqwest::StatusCode::NOT_FOUND =>
+        {
             Ok(serde_json::Value::Null)
-        },
+        }
         Err(e) => Err(format_api_error(e)),
     }
 }
 
 #[command]
-pub async fn save_local_reserved_zone(name: String, records: serde_json::Value, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn save_local_reserved_zone(
+    name: String,
+    records: serde_json::Value,
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_PUBLISH, &state);
-    
+
     let zone: models::NrsZone = match serde_json::from_value(records) {
         Ok(z) => z,
         Err(e) => return Err(format!("Invalid zone data: {}", e)),
@@ -541,7 +637,10 @@ pub async fn save_local_reserved_zone(name: String, records: serde_json::Value, 
 }
 
 #[command]
-pub async fn delete_local_reserved_zone(name: String, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn delete_local_reserved_zone(
+    name: String,
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_PUBLISH, &state);
     match nrs_api::delete_local_reserved_zone(&config, &name).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
@@ -550,7 +649,10 @@ pub async fn delete_local_reserved_zone(name: String, state: tauri::State<'_, En
 }
 
 #[command]
-pub async fn get_kid_manifest(name: String, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn get_kid_manifest(
+    name: String,
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
     match kid_api::fetch_kid_manifest(&config, &name).await {
         Ok(manifest) => Ok(serde_json::to_value(manifest).map_err(|e| e.to_string())?),
@@ -559,12 +661,16 @@ pub async fn get_kid_manifest(name: String, state: tauri::State<'_, EndpointStat
 }
 
 #[command]
-pub async fn update_kid_manifest(name: String, services: serde_json::Value, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn update_kid_manifest(
+    name: String,
+    services: serde_json::Value,
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_PUBLISH, &state);
-    
+
     // The SDK expects the raw JSON body
     let body = serde_json::json!({ "services": services });
-    
+
     match kid_api::generate_kid_manifest(&config, &name, body).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
         Err(e) => Err(format_api_error(e)),
@@ -670,8 +776,12 @@ pub async fn save_seed_phrase(phrase: String) -> Result<serde_json::Value, Strin
     let env_salt_str = env!("KINETIC_NETWORK_SALT");
     let mut network_salt = [0u8; 32];
     for (i, byte_str) in env_salt_str.split(',').enumerate() {
-        if i >= 32 { break; }
-        network_salt[i] = byte_str.parse::<u8>().map_err(|e| format!("Invalid compiled salt byte: {}", e))?;
+        if i >= 32 {
+            break;
+        }
+        network_salt[i] = byte_str
+            .parse::<u8>()
+            .map_err(|e| format!("Invalid compiled salt byte: {}", e))?;
     }
 
     // 3. Compute domain-separated PBKDF2 salt
@@ -685,7 +795,7 @@ pub async fn save_seed_phrase(phrase: String) -> Result<serde_json::Value, Strin
     let iterations = 1000;
     #[cfg(not(debug_assertions))]
     let iterations = 5_000_000;
-    
+
     pbkdf2_hmac::<Sha512>(&seed, &salt, iterations, &mut derived);
 
     // 5. Write the 32-byte derived seed atomically with 0o600 permissions
@@ -693,14 +803,17 @@ pub async fn save_seed_phrase(phrase: String) -> Result<serde_json::Value, Strin
     opts.write(true).create(true).truncate(true);
     #[cfg(unix)]
     opts.mode(0o600);
-    
-    let mut file = opts.open(&path).map_err(|e| format!("Failed to open identity key file: {}", e))?;
-    file.write_all(&derived).map_err(|e| format!("Failed to write identity key file: {}", e))?;
+
+    let mut file = opts
+        .open(&path)
+        .map_err(|e| format!("Failed to open identity key file: {}", e))?;
+    file.write_all(&derived)
+        .map_err(|e| format!("Failed to write identity key file: {}", e))?;
 
     // 6. Zeroize buffers
     use zeroize::Zeroize;
     derived.zeroize();
-    
+
     Ok(serde_json::json!({ "success": true }))
 }
 
@@ -773,7 +886,11 @@ pub async fn list_proxy_rules() -> Result<Vec<ProxyRuleInfo>, String> {
     }
 
     // Sort: custom first, then alphabetical
-    rules.sort_by(|a, b| b.is_custom.cmp(&a.is_custom).then(a.filename.cmp(&b.filename)));
+    rules.sort_by(|a, b| {
+        b.is_custom
+            .cmp(&a.is_custom)
+            .then(a.filename.cmp(&b.filename))
+    });
 
     Ok(rules)
 }
@@ -784,7 +901,10 @@ pub async fn add_custom_proxy(nsp: String, ip: String, port: u16) -> Result<(), 
     let proxies_dir = get_pac_proxies_dir();
     std::fs::create_dir_all(&proxies_dir).map_err(|e| e.to_string())?;
 
-    let filename = format!("custom_{}.json", nsp.replace(|c: char| !c.is_alphanumeric(), "_"));
+    let filename = format!(
+        "custom_{}.json",
+        nsp.replace(|c: char| !c.is_alphanumeric(), "_")
+    );
     let path = proxies_dir.join(filename);
 
     let proxy = RegisteredProxy {
@@ -814,13 +934,14 @@ pub async fn remove_custom_proxy(filename: String) -> Result<(), String> {
     Ok(())
 }
 
-
 // ---------------------------------------------------------------------------
 // Action & Auth
 // ---------------------------------------------------------------------------
 
 #[command]
-pub async fn get_action_status(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn get_action_status(
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
     match action_api::get_action_status(&config).await {
         Ok(status) => Ok(serde_json::to_value(status).map_err(|e| e.to_string())?),
@@ -829,7 +950,9 @@ pub async fn get_action_status(state: tauri::State<'_, EndpointState>) -> Result
 }
 
 #[command]
-pub async fn get_auth_sessions(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn get_auth_sessions(
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_ADMIN, &state);
     match auth_api::list_sessions(&config).await {
         Ok(sessions) => Ok(serde_json::to_value(sessions).map_err(|e| e.to_string())?),
@@ -838,7 +961,10 @@ pub async fn get_auth_sessions(state: tauri::State<'_, EndpointState>) -> Result
 }
 
 #[command]
-pub async fn revoke_auth_session(id: String, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn revoke_auth_session(
+    id: String,
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_ADMIN, &state);
     match auth_api::revoke_session(&config, &id).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
@@ -847,7 +973,9 @@ pub async fn revoke_auth_session(id: String, state: tauri::State<'_, EndpointSta
 }
 
 #[command]
-pub async fn get_gossip_topics(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn get_gossip_topics(
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
     match gossip_api::get_gossip_topics(&config).await {
         Ok(topics) => Ok(serde_json::to_value(topics).map_err(|e| e.to_string())?),
@@ -856,7 +984,9 @@ pub async fn get_gossip_topics(state: tauri::State<'_, EndpointState>) -> Result
 }
 
 #[command]
-pub async fn get_heartbeats(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn get_heartbeats(
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
     match heartbeat_api::get_heartbeats(&config).await {
         Ok(heartbeats) => Ok(serde_json::to_value(heartbeats).map_err(|e| e.to_string())?),
@@ -869,7 +999,11 @@ pub async fn get_heartbeats(state: tauri::State<'_, EndpointState>) -> Result<se
 // ---------------------------------------------------------------------------
 
 #[command]
-pub async fn gossip_publish(topic: String, body: serde_json::Value, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn gossip_publish(
+    topic: String,
+    body: serde_json::Value,
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_GOSSIP, &state);
     match gossip_api::gossip_publish(&config, &topic, body).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
@@ -878,7 +1012,10 @@ pub async fn gossip_publish(topic: String, body: serde_json::Value, state: tauri
 }
 
 #[command]
-pub async fn gossip_subscribe(topic: String, state: tauri::State<'_, EndpointState>) -> Result<String, String> {
+pub async fn gossip_subscribe(
+    topic: String,
+    state: tauri::State<'_, EndpointState>,
+) -> Result<String, String> {
     let config = get_config(&state);
     match gossip_api::gossip_subscribe(&config, &topic).await {
         Ok(res) => Ok(res),
@@ -887,7 +1024,11 @@ pub async fn gossip_subscribe(topic: String, state: tauri::State<'_, EndpointSta
 }
 
 #[command]
-pub async fn post_authorized_update(name: String, request: models::PostAuthorizedUpdateRequest, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn post_authorized_update(
+    name: String,
+    request: models::PostAuthorizedUpdateRequest,
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_HEARTBEAT, &state);
     match heartbeat_api::post_authorized_update(&config, &name, request).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
@@ -896,7 +1037,9 @@ pub async fn post_authorized_update(name: String, request: models::PostAuthorize
 }
 
 #[command]
-pub async fn post_dns_flush(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn post_dns_flush(
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_ADMIN, &state);
     match system_api::post_dns_flush(&config).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
@@ -905,7 +1048,10 @@ pub async fn post_dns_flush(state: tauri::State<'_, EndpointState>) -> Result<se
 }
 
 #[command]
-pub async fn post_heartbeat(name: String, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn post_heartbeat(
+    name: String,
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_HEARTBEAT, &state);
     match heartbeat_api::post_heartbeat(&config, &name).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
@@ -914,7 +1060,11 @@ pub async fn post_heartbeat(name: String, state: tauri::State<'_, EndpointState>
 }
 
 #[command]
-pub async fn post_nrs_update(name: String, request: models::PostNrsUpdateRequest, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn post_nrs_update(
+    name: String,
+    request: models::PostNrsUpdateRequest,
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_NRS, &state);
     match nrs_api::post_nrs_update(&config, &name, request).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
@@ -923,7 +1073,10 @@ pub async fn post_nrs_update(name: String, request: models::PostNrsUpdateRequest
 }
 
 #[command]
-pub async fn publish_action(body: serde_json::Value, state: tauri::State<'_, EndpointState>) -> Result<String, String> {
+pub async fn publish_action(
+    body: serde_json::Value,
+    state: tauri::State<'_, EndpointState>,
+) -> Result<String, String> {
     let config = get_config(&state);
     match action_api::publish_action(&config, body).await {
         Ok(res) => Ok(res),
@@ -932,7 +1085,9 @@ pub async fn publish_action(body: serde_json::Value, state: tauri::State<'_, End
 }
 
 #[command]
-pub async fn sync_atlas(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn sync_atlas(
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_ATLAS, &state);
     match system_api::sync_atlas(&config).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
@@ -941,7 +1096,9 @@ pub async fn sync_atlas(state: tauri::State<'_, EndpointState>) -> Result<serde_
 }
 
 #[command]
-pub async fn system_restart(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn system_restart(
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_ADMIN, &state);
     match system_api::system_restart(&config).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
@@ -950,7 +1107,9 @@ pub async fn system_restart(state: tauri::State<'_, EndpointState>) -> Result<se
 }
 
 #[command]
-pub async fn system_shutdown(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn system_shutdown(
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_ADMIN, &state);
     match system_api::system_shutdown(&config).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
@@ -959,7 +1118,9 @@ pub async fn system_shutdown(state: tauri::State<'_, EndpointState>) -> Result<s
 }
 
 #[command]
-pub async fn trigger_network_bootstrap(state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn trigger_network_bootstrap(
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_private_config(ROLE_ADMIN, &state);
     match network_api::trigger_network_bootstrap(&config).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
@@ -968,7 +1129,10 @@ pub async fn trigger_network_bootstrap(state: tauri::State<'_, EndpointState>) -
 }
 
 #[command]
-pub async fn validate_name(request: models::ValidateNameRequest, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn validate_name(
+    request: models::ValidateNameRequest,
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
     match nrs_api::validate_name(&config, request).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
@@ -977,7 +1141,11 @@ pub async fn validate_name(request: models::ValidateNameRequest, state: tauri::S
 }
 
 #[command]
-pub async fn verify_quorum(name: String, request: serde_json::Value, state: tauri::State<'_, EndpointState>) -> Result<serde_json::Value, String> {
+pub async fn verify_quorum(
+    name: String,
+    request: serde_json::Value,
+    state: tauri::State<'_, EndpointState>,
+) -> Result<serde_json::Value, String> {
     let config = get_config(&state);
     match nrs_api::verify_quorum(&config, &name, request).await {
         Ok(res) => Ok(serde_json::to_value(res).map_err(|e| e.to_string())?),
