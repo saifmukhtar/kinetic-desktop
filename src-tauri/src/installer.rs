@@ -23,11 +23,7 @@ pub async fn check_installed() -> Result<InstallStatus, String> {
     );
 
     let bin_dir = if is_windows {
-        let mut nsp_capitalized = kinetic_env::NSP.to_string();
-        if let Some(r) = nsp_capitalized.get_mut(0..1) {
-            r.make_ascii_uppercase();
-        }
-        let dir = format!("C:\\Program Files\\{}\\bin", nsp_capitalized);
+        let dir = "C:\\Program Files\\Kinetic\\bin".to_string();
         PathBuf::from(dir)
     } else {
         PathBuf::from(BIN_DIR_UNIX)
@@ -105,11 +101,7 @@ pub async fn install_binaries(_install_type: String) -> Result<String, String> {
     let seed_out_str = seed_out.to_string_lossy().to_string();
 
     let dest_dir = if is_windows {
-        let mut nsp_capitalized = kinetic_env::NSP.to_string();
-        if let Some(r) = nsp_capitalized.get_mut(0..1) {
-            r.make_ascii_uppercase();
-        }
-        format!("C:\\Program Files\\{}\\bin", nsp_capitalized)
+        "C:\\Program Files\\Kinetic\\bin".to_string()
     } else {
         BIN_DIR_UNIX.to_string()
     };
