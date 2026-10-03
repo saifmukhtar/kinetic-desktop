@@ -70,7 +70,6 @@ export interface KidDocument {
   kid: string;
   controller_keys: ControllerKey[];
   created_at: number;
-  network_id?: string;
   version?: number;
   name?: string;
   [key: string]: unknown;
@@ -156,10 +155,10 @@ export const daemon = {
   getApiUrl: (): Promise<string> =>
     safeInvoke("get_api_url"),
 
-  setActiveEndpoint: (ip: string, port: number, networkId: string): Promise<void> =>
-    safeInvoke("set_active_endpoint", { ip, port, networkId }),
+  setActiveEndpoint: (ip: string, port: number, nsp: string): Promise<void> =>
+    safeInvoke("set_active_endpoint", { ip, port, nsp }),
 
-  getActiveEndpoint: (): Promise<{ url: string; network_id: string }> =>
+  getActiveEndpoint: (): Promise<{ url: string; nsp: string }> =>
     safeInvoke("get_active_endpoint"),
 
   getHealth: (): Promise<HealthStatus> =>
@@ -245,17 +244,17 @@ export const daemon = {
     safeInvoke("delete_vdf_task", { taskId }),
 
   // Private — Installer
-  checkInstalled: (networkId: string): Promise<{ is_installed: boolean; install_type: string | null }> =>
-    safeInvoke("check_installed", { networkId }),
+  checkInstalled: (): Promise<{ is_installed: boolean; install_type: string | null }> =>
+    safeInvoke("check_installed"),
 
-  extractBundledBinaries: (networkId: string): Promise<string> =>
-    safeInvoke("extract_bundled_binaries", { networkId }),
+  extractBundledBinaries: (): Promise<string> =>
+    safeInvoke("extract_bundled_binaries"),
 
-  downloadBinaries: (networkId: string, installType: string, baseUrl: string): Promise<string> =>
-    safeInvoke("download_binaries", { networkId, installType, baseUrl }),
+  downloadBinaries: (installType: string, baseUrl: string): Promise<string> =>
+    safeInvoke("download_binaries", { installType, baseUrl }),
 
-  installBinaries: (networkId: string, installType: string): Promise<string> =>
-    safeInvoke("install_binaries", { networkId, installType }),
+  installBinaries: (installType: string): Promise<string> =>
+    safeInvoke("install_binaries", { installType }),
 
   // Private — config
   getConfigInfo: (): Promise<unknown> =>

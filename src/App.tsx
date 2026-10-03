@@ -48,7 +48,7 @@ function AppContent() {
     async function checkSystemState() {
       try {
         // 1. Check if the daemon binaries are actually installed
-        const installRes = await daemon.checkInstalled('mainnet');
+        const installRes = await daemon.checkInstalled();
         if (!active) return;
         
         if (!installRes.is_installed) {

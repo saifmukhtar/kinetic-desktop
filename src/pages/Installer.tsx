@@ -12,11 +12,11 @@ export default function Installer() {
     setInstalling(true);
     try {
       setStep('Extracting binaries...');
-      await daemon.extractBundledBinaries('mainnet');
+      await daemon.extractBundledBinaries();
 
       setStep('Requesting privileges (Please enter your password)...');
       // This will trigger pkexec/osascript/powershell and install the daemon
-      await daemon.installBinaries('mainnet', 'desktop');
+      await daemon.installBinaries('desktop');
 
       toast.success('Kinetic Daemon successfully installed and started!');
       

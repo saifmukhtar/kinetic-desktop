@@ -56,8 +56,8 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .manage(api_commands::EndpointState {
             bind_ip: "127.0.255.2".to_string(),
-            api_port: 16002,
-            network_id: "kin-1a9a".to_string(),
+            api_port: kinetic_env::DEFAULT_API_PORT,
+            nsp: kinetic_env::NSP.to_string(),
         })
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {

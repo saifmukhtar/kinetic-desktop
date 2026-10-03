@@ -14,7 +14,7 @@ pub struct InstallStatus {
 }
 
 #[command]
-pub async fn check_installed(_network_id: String) -> Result<InstallStatus, String> {
+pub async fn check_installed() -> Result<InstallStatus, String> {
     let is_windows = env::consts::OS == "windows";
     let daemon_name = if is_windows {
         "kin-daemon.exe".to_string()
@@ -47,7 +47,6 @@ pub async fn check_installed(_network_id: String) -> Result<InstallStatus, Strin
 #[command]
 pub async fn extract_bundled_binaries(
     app: tauri::AppHandle,
-    network_id: String,
 ) -> Result<String, String> {
     use tauri::Manager;
 
@@ -61,7 +60,7 @@ pub async fn extract_bundled_binaries(
         return Err("Binaries resource folder not found in app bundle.".into());
     }
 
-    let temp_dir = env::temp_dir().join(format!("kinetic-install-{}", network_id));
+    let temp_dir = env::temp_dir().join(format!("kinetic-install-{}", kinetic_env::NSP));
     if temp_dir.exists() {
         fs::remove_dir_all(&temp_dir).map_err(|e| e.to_string())?;
     }
@@ -83,8 +82,8 @@ pub async fn extract_bundled_binaries(
 }
 
 #[command]
-pub async fn install_binaries(network_id: String, _install_type: String) -> Result<String, String> {
-    let temp_dir = env::temp_dir().join(format!("kinetic-install-{}", network_id));
+pub async fn install_binaries(_install_type: String) -> Result<String, String> {
+    let temp_dir = env::temp_dir().join(format!("kinetic-install-{}", kinetic_env::NSP));
     if !temp_dir.exists() {
         return Err("Installation files not found in temp directory.".into());
     }

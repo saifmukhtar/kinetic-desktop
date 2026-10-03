@@ -50,21 +50,13 @@ const ROLE_ATLAS: &str = "atlas";
 pub struct EndpointState {
     pub bind_ip: String,
     pub api_port: u16,
-    pub network_id: String,
+    pub nsp: String,
 }
 
 impl EndpointState {
     pub fn get_url(&self) -> String {
         format!("http://{}:{}", self.bind_ip, self.api_port)
     }
-}
-
-fn get_base_dir(network_dir: &str) -> PathBuf {
-    dirs::data_local_dir()
-        .unwrap_or_else(|| PathBuf::from("."))
-        .join("kinetic")
-        .join("networks")
-        .join(network_dir)
 }
 
 fn get_config(state: &tauri::State<EndpointState>) -> Configuration {
@@ -75,9 +67,8 @@ fn get_config(state: &tauri::State<EndpointState>) -> Configuration {
 
 fn get_private_config(role: &str, state: &tauri::State<EndpointState>) -> Configuration {
     let mut config = get_config(state);
-    let net_id = state.network_id.clone();
 
-    let token_path = get_base_dir(&net_id)
+    let token_path = kinetic_env::get_base_dir()
         .join("tokens")
         .join(format!("{}{}", role, ".token"));
 
@@ -95,7 +86,7 @@ fn get_private_config(role: &str, state: &tauri::State<EndpointState>) -> Config
 pub async fn set_active_endpoint(
     _ip: String,
     _port: u16,
-    _network_id: String,
+    _nsp: String,
     _state: tauri::State<'_, EndpointState>,
 ) -> Result<(), String> {
     // No-op for V1. State is statically defined in lib.rs.
@@ -108,7 +99,7 @@ pub async fn get_active_endpoint(
 ) -> Result<serde_json::Value, String> {
     Ok(serde_json::json!({
         "url": state.get_url(),
-        "network_id": state.network_id
+        "nsp": state.nsp
     }))
 }
 
@@ -681,23 +672,13 @@ pub async fn update_kid_manifest(
 // Identity — Master Seed Commands
 // ---------------------------------------------------------------------------
 
-/// Path to the master identity key file within the kinetic data directory.
-const IDENTITY_KEY_FILE: &str = "identity.key";
-
-fn get_identity_key_path() -> PathBuf {
-    dirs::data_local_dir()
-        .unwrap_or_else(|| PathBuf::from("."))
-        .join("kinetic")
-        .join(IDENTITY_KEY_FILE)
-}
-
 /// Returns the status of the daemon's master identity key on disk.
 ///
 /// Possible statuses: `"found"` (32-byte key present), `"not_found"` (no file),
 /// `"corrupted"` (file exists but wrong size).
 #[command]
 pub async fn check_identity_status() -> Result<serde_json::Value, String> {
-    let path = get_identity_key_path();
+    let path = kinetic_env::get_identity_key_path();
     if !path.exists() {
         return Ok(serde_json::json!({ "status": "not_found" }));
     }
@@ -759,7 +740,7 @@ pub async fn save_seed_phrase(phrase: String) -> Result<serde_json::Value, Strin
     #[cfg(unix)]
     use std::os::unix::fs::OpenOptionsExt;
 
-    let path = get_identity_key_path();
+    let path = kinetic_env::get_identity_key_path();
 
     // Ensure parent directory exists
     if let Some(parent) = path.parent() {

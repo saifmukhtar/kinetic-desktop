@@ -36,6 +36,7 @@ pbkdf2 = "0.13.0"
 sha2 = "0.11.0"
 zeroize = "1"
 tauri-plugin-dialog = "2"
+kinetic-env = { git = "https://github.com/saifmukhtar/kinetic.git", branch = "fix/clients_codes" }
 
 [profile.dev]
 incremental = true

@@ -2134,6 +2134,7 @@ dependencies = [
  "dirs 6.0.0",
  "getrandom 0.2.17",
  "hex",
+ "kinetic-env",
  "kinetic-sdk",
  "pbkdf2",
  "reqwest 0.12.28",
@@ -2147,6 +2148,18 @@ dependencies = [
  "tokio",
  "toml 0.8.2",
  "zeroize",
+]
+
+[[package]]
+name = "kinetic-env"
+version = "0.2.0"
+source = "git+https://github.com/saifmukhtar/kinetic.git?branch=fix%2Fclients_codes#ae0ed751c608c6de0d77cebd245a409045c8a6ff"
+dependencies = [
+ "dirs 7.0.0",
+ "hex",
+ "serde",
+ "serde_json",
+ "sha2 0.11.0",
 ]
 
 [[package]]
