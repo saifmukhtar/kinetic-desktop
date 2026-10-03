@@ -68,7 +68,7 @@ fn get_config(state: &tauri::State<EndpointState>) -> Configuration {
 fn get_private_config(role: &str, state: &tauri::State<EndpointState>) -> Configuration {
     let mut config = get_config(state);
 
-    let token_path = kinetic_env::get_base_dir()
+    let token_path = kinetic_env::get_nsp_dir()
         .join("tokens")
         .join(format!("{}{}", role, ".token"));
 
@@ -807,11 +807,7 @@ pub async fn save_seed_phrase(phrase: String) -> Result<serde_json::Value, Strin
 /// kinetic-daemon writes its own NSP entry here (e.g. kin.json) on startup.
 /// Custom rules added here (prefixed with custom_) are picked up by kinetic-pac automatically.
 fn get_pac_proxies_dir() -> std::path::PathBuf {
-    dirs::data_local_dir()
-        .unwrap_or_else(|| std::path::PathBuf::from("."))
-        .join("kinetic")
-        .join("pac_router")
-        .join("natives")
+    kinetic_env::get_pac_dir().join("natives")
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]

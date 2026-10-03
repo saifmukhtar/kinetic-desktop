@@ -7,11 +7,23 @@ use tauri::command;
 
 const BIN_DIR_UNIX: &str = "/usr/local/bin";
 
+// ─────────────────────────────────────────────────────────────
+// Shared types
+// ─────────────────────────────────────────────────────────────
+
 #[derive(Serialize)]
 pub struct InstallStatus {
     pub is_installed: bool,
     pub install_type: Option<String>,
 }
+
+// ─────────────────────────────────────────────────────────────
+// Step 0 — Check if already installed
+// Runs as: Normal User
+// Does:    Looks for the daemon binary in the system bin folder.
+//          The frontend calls this on every startup. If the binary
+//          exists, skip straight to the dashboard.
+// ─────────────────────────────────────────────────────────────
 
 #[command]
 pub async fn check_installed() -> Result<InstallStatus, String> {
@@ -23,8 +35,7 @@ pub async fn check_installed() -> Result<InstallStatus, String> {
     );
 
     let bin_dir = if is_windows {
-        let dir = "C:\\Program Files\\Kinetic\\bin".to_string();
-        PathBuf::from(dir)
+        PathBuf::from("C:\\Program Files\\Kinetic\\bin")
     } else {
         PathBuf::from(BIN_DIR_UNIX)
     };
@@ -44,10 +55,61 @@ pub async fn check_installed() -> Result<InstallStatus, String> {
     }
 }
 
+// ─────────────────────────────────────────────────────────────
+// Step 1 — Create the user-owned directory tree
+// Runs as: Normal User (no root required)
+// Does:    Creates the full directory hierarchy owned by the
+//          current desktop user BEFORE any root process touches
+//          the filesystem. This guarantees the global kinetic/
+//          and networks/ folders are permanently user-owned.
+//
+//          base_dir()     → ~/.local/share/kinetic
+//          networks_dir() → ~/.local/share/kinetic/networks
+//          nsp_dir()      → ~/.local/share/kinetic/networks/<nsp>-<salt>
+//          pac_dir()      → ~/.local/share/kinetic/pac_router
+// ─────────────────────────────────────────────────────────────
+
 #[command]
-pub async fn extract_bundled_binaries(
-    app: tauri::AppHandle,
-) -> Result<String, String> {
+pub async fn setup_user_dirs() -> Result<(), String> {
+    fs::create_dir_all(kinetic_env::get_base_dir())
+        .map_err(|e| format!("Failed to create base_dir: {}", e))?;
+
+    fs::create_dir_all(kinetic_env::get_networks_dir())
+        .map_err(|e| format!("Failed to create networks_dir: {}", e))?;
+
+    fs::create_dir_all(kinetic_env::get_nsp_dir())
+        .map_err(|e| format!("Failed to create nsp_dir: {}", e))?;
+
+    fs::create_dir_all(kinetic_env::get_pac_dir())
+        .map_err(|e| format!("Failed to create pac_dir: {}", e))?;
+
+    Ok(())
+}
+
+// ─────────────────────────────────────────────────────────────
+// Step 2a — Check if the identity key already exists
+// Runs as: Normal User (no root required)
+// Does:    Returns true if nsp_dir/identity.key already exists.
+//          The frontend uses this to decide whether to show
+//          the key generation screen or skip it.
+// ─────────────────────────────────────────────────────────────
+
+#[command]
+pub async fn check_identity_key() -> Result<bool, String> {
+    let key_path = kinetic_env::get_identity_key_path();
+    Ok(key_path.exists())
+}
+
+// ─────────────────────────────────────────────────────────────
+// Step 2b — Extract bundled binaries to a temp staging directory
+// Runs as: Normal User (no root required)
+// Does:    Copies the binaries bundled inside the Tauri app
+//          package out to a temporary directory so the
+//          privileged install script can copy them from there.
+// ─────────────────────────────────────────────────────────────
+
+#[command]
+pub async fn extract_bundled_binaries(app: tauri::AppHandle) -> Result<String, String> {
     use tauri::Manager;
 
     let resource_path = app
@@ -66,14 +128,14 @@ pub async fn extract_bundled_binaries(
     }
     fs::create_dir_all(&temp_dir).map_err(|e| e.to_string())?;
 
-    // Copy all files from resources/binaries to temp_dir
     if let Ok(entries) = fs::read_dir(&resource_path) {
         for entry in entries.flatten() {
             let path = entry.path();
             if path.is_file() {
                 let file_name = path.file_name().unwrap();
                 let dest = temp_dir.join(file_name);
-                fs::copy(&path, &dest).map_err(|e| format!("Failed to copy binary: {}", e))?;
+                fs::copy(&path, &dest)
+                    .map_err(|e| format!("Failed to copy binary: {}", e))?;
             }
         }
     }
@@ -81,77 +143,117 @@ pub async fn extract_bundled_binaries(
     Ok(temp_dir.to_string_lossy().to_string())
 }
 
-#[command]
-pub async fn install_binaries(_install_type: String) -> Result<String, String> {
-    let temp_dir = env::temp_dir().join(format!("kinetic-install-{}", kinetic_env::NSP));
-    if !temp_dir.exists() {
-        return Err("Installation files not found in temp directory.".into());
-    }
+// ─────────────────────────────────────────────────────────────
+// Step 3 — Install system binaries and services (ONE root call)
+// Runs as: Root/Admin (single password prompt)
+// Does:    1. Copies binaries from temp staging to system bin.
+//          2. Installs the daemon as a system-level service.
+//          3. Starts the daemon service.
+//          4. Runs chown to return ownership of the nsp_dir
+//             back to the desktop user so the UI can write
+//             identity.key and other user-owned data without
+//             hitting permission errors.
+//
+// After this command returns OK, the frontend can immediately
+// run PAC install/start as the normal user (Step 4 below).
+// ─────────────────────────────────────────────────────────────
 
+#[command]
+pub async fn install_system() -> Result<(), String> {
     let is_windows = env::consts::OS == "windows";
     let is_macos = env::consts::OS == "macos";
 
-    let real_user = std::env::var("USER")
-        .or_else(|_| std::env::var("USERNAME"))
+    let temp_dir = env::temp_dir().join(format!("kinetic-install-{}", kinetic_env::NSP));
+    if !temp_dir.exists() {
+        return Err(
+            "Staged binaries not found. Run extract_bundled_binaries first.".into(),
+        );
+    }
+
+    // Capture the real desktop username and home BEFORE we escalate to root.
+    // These are injected into the privileged script so we can chown correctly.
+    let real_user = env::var("USER")
+        .or_else(|_| env::var("USERNAME"))
         .unwrap_or_default();
-    let real_home = std::env::var("HOME")
-        .or_else(|_| std::env::var("USERPROFILE"))
+
+    let real_home = env::var("HOME")
+        .or_else(|_| env::var("USERPROFILE"))
         .unwrap_or_default();
-    let seed_out = temp_dir.join("seed.txt");
-    let seed_out_str = seed_out.to_string_lossy().to_string();
 
     let dest_dir = if is_windows {
         "C:\\Program Files\\Kinetic\\bin".to_string()
     } else {
         BIN_DIR_UNIX.to_string()
     };
-    let temp_dir_str = temp_dir.to_string_lossy().to_string();
 
-    // Stop PAC gracefully as the user BEFORE elevating
-    let cli_exec = if is_windows {
+    let temp_dir_str = temp_dir.to_string_lossy().to_string();
+    let cli_path = if is_windows {
         format!("{}\\{}.exe", dest_dir, kinetic_env::NSP)
     } else {
         format!("{}/{}", dest_dir, kinetic_env::NSP)
     };
-    let _ = std::process::Command::new(&cli_exec)
+
+    // The networks_dir path we will chown after the service boots.
+    // This is the critical step that returns user-data ownership
+    // back to the desktop user after root creates the daemon's
+    // working directories inside nsp_dir.
+    let networks_dir_str = kinetic_env::get_networks_dir()
+        .to_string_lossy()
+        .to_string();
+
+    // Stop any existing PAC gracefully as the normal user BEFORE escalating.
+    let _ = Command::new(&cli_path)
         .args(&["system", "pac", "stop"])
         .status();
 
-    let mut shell_script = String::new();
-
     if is_windows {
-        // Windows script: Copy files and run daemon install
-        shell_script.push_str(&format!("$DestDir = '{}'; ", dest_dir));
-        shell_script.push_str("if (!(Test-Path $DestDir)) { New-Item -ItemType Directory -Force -Path $DestDir | Out-Null }; ");
-        // Stop services first
-        shell_script.push_str(&format!(
-            "& '{}\\{}.exe' system daemon stop -ErrorAction SilentlyContinue; ",
-            dest_dir, kinetic_env::NSP
+        let mut script = String::new();
+
+        // 1. Create destination directory
+        script.push_str(&format!("$Dest = '{}'; ", dest_dir));
+        script.push_str(
+            "if (!(Test-Path $Dest)) { New-Item -ItemType Directory -Force -Path $Dest | Out-Null }; ",
+        );
+
+        // 2. Stop old daemon if running
+        script.push_str(&format!(
+            "& '{}' system daemon stop -ErrorAction SilentlyContinue; ",
+            cli_path
         ));
 
-        // Copy files
-        shell_script.push_str(&format!(
-            "Copy-Item -Path '{}*' -Destination $DestDir -Force; ",
-            temp_dir_str.replace("\\", "\\\\") + "\\\\"
+        // 3. Copy staged binaries
+        script.push_str(&format!(
+            "Copy-Item -Path '{}\\*' -Destination $Dest -Force; ",
+            temp_dir_str.replace('\\', "\\\\")
         ));
 
-        // Add to machine PATH if not exists
-        shell_script
-            .push_str("$OldPath = [Environment]::GetEnvironmentVariable('PATH', 'Machine'); ");
-        shell_script.push_str(&format!(
-            "if ($OldPath -notmatch [regex]::Escape($DestDir)) {{ [Environment]::SetEnvironmentVariable('PATH', $OldPath + ';' + $DestDir, 'Machine') }}; "
+        // 4. Add to machine PATH if not already present
+        script.push_str(
+            "$OldPath = [Environment]::GetEnvironmentVariable('PATH', 'Machine'); ",
+        );
+        script.push_str(&format!(
+            "if ($OldPath -notmatch [regex]::Escape($Dest)) {{ [Environment]::SetEnvironmentVariable('PATH', $OldPath + ';' + $Dest, 'Machine') }}; "
         ));
 
-        // Install & Start services
-        shell_script.push_str(&format!("& '{}\\{}.exe' system daemon install; ", dest_dir, kinetic_env::NSP));
-        // Seed init is skipped as it is generated by UI
-        shell_script.push_str(&format!("Set-Content -Path '{}' -Value 'seed_generated_by_ui'; ", seed_out_str.replace("\\", "\\\\")));
-        shell_script.push_str(&format!("& '{}\\{}.exe' system daemon start; ", dest_dir, kinetic_env::NSP));
+        // 5. Install and start the daemon system service
+        script.push_str(&format!("& '{}' system daemon install; ", cli_path));
+        script.push_str(&format!("& '{}' system daemon start; ", cli_path));
+
+        // 6. Grant full control of the networks_dir back to the desktop user
+        //    so the UI can write identity keys without admin rights.
+        let networks_win = networks_dir_str.replace('/', "\\");
+        script.push_str(&format!(
+            "icacls '{}' /grant '{}':(OI)(CI)F /T; ",
+            networks_win, real_user
+        ));
 
         let status = Command::new("powershell")
             .args(&[
                 "-Command",
-                &format!("Start-Process powershell -ArgumentList '-NoProfile -ExecutionPolicy Bypass -Command \"{}\"' -Verb RunAs -Wait", shell_script.replace("\"", "\"\""))
+                &format!(
+                    "Start-Process powershell -ArgumentList '-NoProfile -ExecutionPolicy Bypass -Command \"{}\"' -Verb RunAs -Wait",
+                    script.replace('"', "\"\"")
+                ),
             ])
             .status()
             .map_err(|e| e.to_string())?;
@@ -160,28 +262,34 @@ pub async fn install_binaries(_install_type: String) -> Result<String, String> {
             return Err("Failed to elevate privileges or install on Windows.".into());
         }
     } else if is_macos {
-        // macOS script
-        shell_script.push_str(&format!("mkdir -p {}; ", dest_dir));
+        let mut script = String::new();
 
-        let cli_path = format!("{}/{}", dest_dir, kinetic_env::NSP);
-        // Stop services first (if they exist)
-        shell_script.push_str(&format!("{} system daemon stop || true; ", cli_path));
+        // 1. Create destination directory
+        script.push_str(&format!("mkdir -p {}; ", dest_dir));
 
-        shell_script.push_str(&format!("cp {}/* {}; ", temp_dir_str, dest_dir));
+        // 2. Stop old daemon if running
+        script.push_str(&format!("{} system daemon stop || true; ", cli_path));
 
-        shell_script.push_str(&format!("export USER='{}'; ", real_user));
-        shell_script.push_str(&format!("export HOME='{}'; ", real_home));
-        shell_script.push_str(&format!("{} system daemon install; ", cli_path));
-        // Seed init is handled by the UI now via Tauri native commands, so we skip it here.
-        shell_script.push_str(&format!("echo 'seed_generated_by_ui' > '{}'; ", seed_out_str));
-        shell_script.push_str(&format!("{} system daemon start; ", cli_path));
+        // 3. Copy staged binaries and make them executable
+        script.push_str(&format!("cp {}/* {}; ", temp_dir_str, dest_dir));
+        script.push_str(&format!("chmod +x {}/*; ", dest_dir));
+
+        // 4. Install and start the daemon as a LaunchDaemon (system-level)
+        script.push_str(&format!("{} system daemon install; ", cli_path));
+        script.push_str(&format!("{} system daemon start; ", cli_path));
+
+        // 5. Return networks_dir ownership to the desktop user
+        script.push_str(&format!(
+            "chown -R {}:{} '{}'; ",
+            real_user, real_user, networks_dir_str
+        ));
 
         let status = Command::new("osascript")
             .args(&[
                 "-e",
                 &format!(
                     "do shell script \"{}\" with administrator privileges",
-                    shell_script.replace("\"", "\\\"")
+                    script.replace('"', "\\\"")
                 ),
             ])
             .status()
@@ -191,25 +299,35 @@ pub async fn install_binaries(_install_type: String) -> Result<String, String> {
             return Err("Failed to elevate privileges or install on macOS.".into());
         }
     } else {
-        // Linux script
-        shell_script.push_str(&format!("mkdir -p {}; ", dest_dir));
+        // Linux
+        let mut script = String::new();
 
-        let cli_path = format!("{}/{}", dest_dir, kinetic_env::NSP);
-        // Stop services first (if they exist)
-        shell_script.push_str(&format!("{} system daemon stop || true; ", cli_path));
+        // 1. Create destination directory
+        script.push_str(&format!("mkdir -p {}; ", dest_dir));
 
-        shell_script.push_str(&format!("cp -r {}/* {}; ", temp_dir_str, dest_dir));
+        // 2. Stop old daemon if running
+        script.push_str(&format!("{} system daemon stop || true; ", cli_path));
 
-        shell_script.push_str(&format!("export USER='{}'; ", real_user));
-        shell_script.push_str(&format!("export HOME='{}'; ", real_home));
-        shell_script.push_str(&format!("{} system daemon install; ", cli_path));
-        // Seed init is handled by the UI now via Tauri native commands, so we skip it here.
-        shell_script.push_str(&format!("echo 'seed_generated_by_ui' > '{}'; ", seed_out_str));
-        shell_script.push_str(&format!("{} system daemon start; ", cli_path));
+        // 3. Copy staged binaries and make them executable
+        script.push_str(&format!("cp -r {}/* {}; ", temp_dir_str, dest_dir));
+        script.push_str(&format!("chmod +x {}/*; ", dest_dir));
 
-        // Write to temp sh file and pkexec
+        // 4. Install and start the daemon as a systemd system service
+        script.push_str(&format!("{} system daemon install; ", cli_path));
+        script.push_str(&format!("{} system daemon start; ", cli_path));
+
+        // 5. Return networks_dir ownership to the desktop user.
+        //    The daemon will have created nsp_dir internals as root during
+        //    startup. This chown hands them back so the UI can write
+        //    identity.key and other user data without permission errors.
+        script.push_str(&format!(
+            "chown -R {}:{} '{}'; ",
+            real_user, real_user, networks_dir_str
+        ));
+
+        // Write the script to a temp file and execute via pkexec
         let script_path = temp_dir.join("install.sh");
-        fs::write(&script_path, &shell_script).map_err(|e| e.to_string())?;
+        fs::write(&script_path, &script).map_err(|e| e.to_string())?;
 
         let status = Command::new("pkexec")
             .args(&["bash", script_path.to_str().unwrap()])
@@ -218,27 +336,49 @@ pub async fn install_binaries(_install_type: String) -> Result<String, String> {
 
         if !status.success() {
             return Err(
-                "Failed to elevate privileges or install on Linux. Ensure pkexec is available."
-                    .into(),
+                "Failed to elevate privileges or install on Linux. Is pkexec available?".into(),
             );
         }
     }
 
-    // Read the seed phrase generated by the script
-    let seed_phrase = fs::read_to_string(&seed_out)
-        .unwrap_or_else(|_| "Error: Failed to read seed phrase from temp file.".to_string())
-        .trim()
-        .to_string();
+    Ok(())
+}
 
-    // Now run PAC installation safely as the desktop user, NOT as root
-    let cli_exec = if is_windows {
-        format!("{}\\kinetic.exe", dest_dir)
+// ─────────────────────────────────────────────────────────────
+// Step 4 — Install and start the PAC router (normal user)
+// Runs as: Normal User (no root required)
+// Does:    Installs and starts kinetic-pac as a user-level
+//          background service AFTER the daemon is running.
+//          This is deliberately kept separate from install_system
+//          because kinetic-pac must NOT run as root. It is a
+//          global host router that reads user-owned pac_dir files.
+// ─────────────────────────────────────────────────────────────
+
+#[command]
+pub async fn install_pac() -> Result<(), String> {
+    let is_windows = env::consts::OS == "windows";
+
+    let dest_dir = if is_windows {
+        "C:\\Program Files\\Kinetic\\bin".to_string()
     } else {
-        format!("{}/kinetic", dest_dir)
+        BIN_DIR_UNIX.to_string()
     };
 
-    let _ = Command::new(&cli_exec).args(&["system", "pac", "install"]).status();
+    let cli_exec = if is_windows {
+        format!("{}\\{}.exe", dest_dir, kinetic_env::NSP)
+    } else {
+        format!("{}/{}", dest_dir, kinetic_env::NSP)
+    };
 
-    let _ = Command::new(&cli_exec).args(&["system", "pac", "start"]).status();
-    Ok(seed_phrase)
+    Command::new(&cli_exec)
+        .args(&["system", "pac", "install"])
+        .status()
+        .map_err(|e| format!("Failed to install PAC service: {}", e))?;
+
+    Command::new(&cli_exec)
+        .args(&["system", "pac", "start"])
+        .status()
+        .map_err(|e| format!("Failed to start PAC service: {}", e))?;
+
+    Ok(())
 }

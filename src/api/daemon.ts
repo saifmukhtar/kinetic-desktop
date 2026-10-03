@@ -243,18 +243,24 @@ export const daemon = {
   deleteVdfTask: (taskId: string): Promise<void> =>
     safeInvoke("delete_vdf_task", { taskId }),
 
-  // Private — Installer
+  // ── Installer commands (called one-by-one by the installer UI) ──
   checkInstalled: (): Promise<{ is_installed: boolean; install_type: string | null }> =>
     safeInvoke("check_installed"),
+
+  setupUserDirs: (): Promise<void> =>
+    safeInvoke("setup_user_dirs"),
+
+  checkIdentityKey: (): Promise<boolean> =>
+    safeInvoke("check_identity_key"),
 
   extractBundledBinaries: (): Promise<string> =>
     safeInvoke("extract_bundled_binaries"),
 
-  downloadBinaries: (installType: string, baseUrl: string): Promise<string> =>
-    safeInvoke("download_binaries", { installType, baseUrl }),
+  installSystem: (): Promise<void> =>
+    safeInvoke("install_system"),
 
-  installBinaries: (installType: string): Promise<string> =>
-    safeInvoke("install_binaries", { installType }),
+  installPac: (): Promise<void> =>
+    safeInvoke("install_pac"),
 
   // Private — config
   getConfigInfo: (): Promise<unknown> =>
