@@ -14,6 +14,7 @@ const Nrs = lazy(() => import('./pages/Nrs'));
 const Network = lazy(() => import('./pages/Network'));
 const Kid = lazy(() => import('./pages/Kid'));
 const Settings = lazy(() => import('./pages/Settings'));
+const Identity = lazy(() => import('./pages/Identity'));
 
 const PageTransition = ({ children }: { children: React.ReactNode }) => (
   <motion.div
@@ -92,6 +93,7 @@ function AppContent() {
               <Route path="/network"  element={<PageTransition><Network /></PageTransition>} />
               <Route path="/kid"      element={<PageTransition><Kid /></PageTransition>} />
               <Route path="/settings" element={<PageTransition><Settings /></PageTransition>} />
+              <Route path="/identity" element={<PageTransition><Identity /></PageTransition>} />
             </Routes>
           </Suspense>
         </AnimatePresence>
