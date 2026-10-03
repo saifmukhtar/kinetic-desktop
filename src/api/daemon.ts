@@ -248,6 +248,9 @@ export const daemon = {
   checkInstalled: (networkId: string): Promise<{ is_installed: boolean; install_type: string | null }> =>
     safeInvoke("check_installed", { networkId }),
 
+  extractBundledBinaries: (networkId: string): Promise<string> =>
+    safeInvoke("extract_bundled_binaries", { networkId }),
+
   downloadBinaries: (networkId: string, installType: string, baseUrl: string): Promise<string> =>
     safeInvoke("download_binaries", { networkId, installType, baseUrl }),
 

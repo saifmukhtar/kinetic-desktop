@@ -15,6 +15,7 @@ const Network = lazy(() => import('./pages/Network'));
 const Kid = lazy(() => import('./pages/Kid'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Identity = lazy(() => import('./pages/Identity'));
+const Installer = lazy(() => import('./pages/Installer'));
 
 const PageTransition = ({ children }: { children: React.ReactNode }) => (
   <motion.div
@@ -44,30 +45,46 @@ function AppContent() {
     let active = true;
     let timer: NodeJS.Timeout | null = null;
 
-    async function checkIdentity() {
+    async function checkSystemState() {
       try {
-        const res = await daemon.checkIdentityStatus();
+        // 1. Check if the daemon binaries are actually installed
+        const installRes = await daemon.checkInstalled('mainnet');
+        if (!active) return;
+        
+        if (!installRes.is_installed) {
+          if (location.pathname !== '/installer') {
+            navigate('/installer');
+          }
+          if (active) setChecking(false);
+          return; // Stop checking identity if not installed
+        }
+
+        // 2. If installed, check if they have an identity
+        const idRes = await daemon.checkIdentityStatus();
         if (!active) return;
 
-        if (res.status !== 'found') {
+        if (idRes.status !== 'found') {
           if (location.pathname !== '/identity') {
             navigate('/identity');
           }
-          // Poll again since user is onboarding
-          timer = setTimeout(checkIdentity, 2000);
+          timer = setTimeout(checkSystemState, 2000);
         } else {
-          // Found! Stop polling permanently to save CPU and battery
+          // Found identity! We are fully operational.
           if (timer) clearTimeout(timer);
+          // If they are stuck on installer/identity pages but are actually set up, redirect home
+          if (location.pathname === '/installer' || location.pathname === '/identity') {
+            navigate('/');
+          }
         }
       } catch (err) {
-        // Daemon offline / starting up. Poll less aggressively
-        if (active) timer = setTimeout(checkIdentity, 5000);
+        // Network/daemon offline. Poll slowly.
+        if (active) timer = setTimeout(checkSystemState, 5000);
       } finally {
         if (active) setChecking(false);
       }
     }
     
-    checkIdentity();
+    checkSystemState();
     
     return () => {
       active = false;
@@ -82,7 +99,7 @@ function AppContent() {
       <Toaster position="bottom-right" theme="light" richColors toastOptions={{ style: { fontFamily: 'var(--font-sans)', borderRadius: 'var(--r-md)', padding: '16px', border: '1px solid var(--border)' } }} />
       <WindowResizer />
       {/* Hide top bar navigation if they are stuck on onboarding */}
-      <TopBar hideNav={location.pathname === '/identity'} />
+      <TopBar hideNav={location.pathname === '/identity' || location.pathname === '/installer'} />
       <main style={{ paddingTop: 'var(--pill-offset)', height: '100dvh', overflowY: 'auto' }}>
         <AnimatePresence mode="wait">
           <Suspense fallback={<PageLoader />}>
@@ -94,6 +111,7 @@ function AppContent() {
               <Route path="/kid"      element={<PageTransition><Kid /></PageTransition>} />
               <Route path="/settings" element={<PageTransition><Settings /></PageTransition>} />
               <Route path="/identity" element={<PageTransition><Identity /></PageTransition>} />
+              <Route path="/installer" element={<PageTransition><Installer /></PageTransition>} />
             </Routes>
           </Suspense>
         </AnimatePresence>
