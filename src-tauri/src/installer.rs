@@ -17,9 +17,9 @@ pub struct InstallStatus {
 pub async fn check_installed(_network_id: String) -> Result<InstallStatus, String> {
     let is_windows = env::consts::OS == "windows";
     let daemon_name = if is_windows {
-        "kinetic-daemon.exe".to_string()
+        "kin-daemon.exe".to_string()
     } else {
-        "kinetic-daemon".to_string()
+        "kin-daemon".to_string()
     };
 
     let bin_dir = if is_windows {
