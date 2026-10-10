@@ -238,28 +238,30 @@ pub async fn install_system() -> Result<(), String> {
         .args(&["system", "pac", "stop"])
         .status();
 
+    // ─────────────────────────────────────────────────────────────
+    // We MUST pass the real user and home into the root shell.
+    // If we don't, `sudo` or `pkexec` will set HOME=/root and USER=root.
+    // This causes `kin system daemon install` to use `/root/.local/share/kinetic`
+    // for the daemon's working directory, breaking desktop permissions.
+    // ─────────────────────────────────────────────────────────────
     if is_windows {
         let mut script = String::new();
 
-        // 1. Create destination directory
         script.push_str(&format!("$Dest = '{}'; ", dest_dir));
         script.push_str(
             "if (!(Test-Path $Dest)) { New-Item -ItemType Directory -Force -Path $Dest | Out-Null }; ",
         );
 
-        // 2. Stop old daemon if running
         script.push_str(&format!(
             "& '{}' system daemon stop -ErrorAction SilentlyContinue; ",
             cli_path
         ));
 
-        // 3. Copy staged binaries
         script.push_str(&format!(
             "Copy-Item -Path '{}\\*' -Destination $Dest -Force; ",
             temp_dir_str.replace('\\', "\\\\")
         ));
 
-        // 4. Add to machine PATH if not already present
         script.push_str(
             "$OldPath = [Environment]::GetEnvironmentVariable('PATH', 'Machine'); ",
         );
@@ -267,12 +269,9 @@ pub async fn install_system() -> Result<(), String> {
             "if ($OldPath -notmatch [regex]::Escape($Dest)) {{ [Environment]::SetEnvironmentVariable('PATH', $OldPath + ';' + $Dest, 'Machine') }}; "
         ));
 
-        // 5. Install and start the daemon system service
         script.push_str(&format!("& '{}' system daemon install; ", cli_path));
         script.push_str(&format!("& '{}' system daemon start; ", cli_path));
 
-        // 6. Grant full control of the networks_dir back to the desktop user
-        //    so the UI can write identity keys without admin rights.
         let networks_win = networks_dir_str.replace('/', "\\");
         script.push_str(&format!(
             "icacls '{}' /grant '{}':(OI)(CI)F /T; ",
@@ -306,7 +305,10 @@ pub async fn install_system() -> Result<(), String> {
         script.push_str(&format!("cp {}/* {}; ", temp_dir_str, dest_dir));
         script.push_str(&format!("chmod +x {}/*; ", dest_dir));
 
-        // 4. Install and start the daemon as a LaunchDaemon (system-level)
+        // 4. Inject real desktop context before installing the daemon!
+        script.push_str(&format!("export HOME='{}'; ", _real_home));
+        script.push_str(&format!("export SUDO_USER='{}'; ", real_user));
+        
         script.push_str(&format!("{} system daemon install; ", cli_path));
         script.push_str(&format!("{} system daemon start; ", cli_path));
 
@@ -334,30 +336,23 @@ pub async fn install_system() -> Result<(), String> {
         // Linux
         let mut script = String::new();
 
-        // 1. Create destination directory
         script.push_str(&format!("mkdir -p {}; ", dest_dir));
-
-        // 2. Stop old daemon if running
         script.push_str(&format!("{} system daemon stop || true; ", cli_path));
-
-        // 3. Copy staged binaries and make them executable
         script.push_str(&format!("cp -r {}/* {}; ", temp_dir_str, dest_dir));
         script.push_str(&format!("chmod +x {}/*; ", dest_dir));
 
-        // 4. Install and start the daemon as a systemd system service
+        // Inject real desktop context before installing the daemon!
+        script.push_str(&format!("export HOME='{}'; ", _real_home));
+        script.push_str(&format!("export SUDO_USER='{}'; ", real_user));
+
         script.push_str(&format!("{} system daemon install; ", cli_path));
         script.push_str(&format!("{} system daemon start; ", cli_path));
 
-        // 5. Return networks_dir ownership to the desktop user.
-        //    The daemon will have created nsp_dir internals as root during
-        //    startup. This chown hands them back so the UI can write
-        //    identity.key and other user data without permission errors.
         script.push_str(&format!(
             "chown -R {}:{} '{}'; ",
             real_user, real_user, networks_dir_str
         ));
 
-        // Write the script to a temp file and execute via pkexec
         let script_path = temp_dir.join("install.sh");
         fs::write(&script_path, &script).map_err(|e| e.to_string())?;
 
