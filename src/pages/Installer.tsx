@@ -103,8 +103,8 @@ export default function Installer() {
   };
 
   const handleGenerateIdentity = () => {
-    // We stay at step 2 in session storage, so when /seed comes back, it resumes here.
-    navigate('/seed', { state: { returnTo: 'installer' } });
+    // We stay at step 2 in session storage, so when /identity comes back, it resumes here.
+    navigate('/identity', { state: { returnTo: '/installer' } });
   };
 
   // ─────────────────────────────────────────────────────────

@@ -1,19 +1,22 @@
 import IdentityModal from '../components/IdentityModal';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { daemon } from '../api/daemon';
 
 export default function Identity() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [checking, setChecking] = useState(true);
 
   // When IdentityModal finishes its job, it calls onClose.
-  // We should navigate to the dashboard when it finishes.
+  // We should navigate to the dashboard when it finishes,
+  // OR return to the installer if we came from there.
   const handleClose = async () => {
     try {
       const res = await daemon.checkIdentityStatus();
       if (res.status === 'found') {
-        navigate('/');
+        const returnTo = location.state?.returnTo || '/';
+        navigate(returnTo);
       }
     } catch (err) {
       console.error(err);
@@ -26,7 +29,8 @@ export default function Identity() {
       try {
         const res = await daemon.checkIdentityStatus();
         if (res.status === 'found') {
-          navigate('/');
+          const returnTo = location.state?.returnTo || '/';
+          navigate(returnTo);
         }
       } catch (err) {
         // Ignore
