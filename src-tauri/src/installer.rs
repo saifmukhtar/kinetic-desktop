@@ -294,6 +294,7 @@ pub async fn install_system() -> Result<(), String> {
         }
     } else if is_macos {
         let mut script = String::new();
+        script.push_str("set -e; ");
 
         // 1. Create destination directory
         script.push_str(&format!("mkdir -p {}; ", dest_dir));
@@ -335,6 +336,7 @@ pub async fn install_system() -> Result<(), String> {
     } else {
         // Linux
         let mut script = String::new();
+        script.push_str("set -e; ");
 
         script.push_str(&format!("mkdir -p {}; ", dest_dir));
         script.push_str(&format!("{} system daemon stop || true; ", cli_path));
