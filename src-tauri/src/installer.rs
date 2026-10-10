@@ -303,6 +303,7 @@ pub async fn install_system() -> Result<(), String> {
         script.push_str(&format!("{} system daemon stop || true; ", cli_path));
 
         // 3. Copy staged binaries and make them executable
+        script.push_str(&format!("rm -f {}/kin*; ", dest_dir));
         script.push_str(&format!("cp {}/* {}; ", temp_dir_str, dest_dir));
         script.push_str(&format!("chmod +x {}/*; ", dest_dir));
 
@@ -340,6 +341,7 @@ pub async fn install_system() -> Result<(), String> {
 
         script.push_str(&format!("mkdir -p {}; ", dest_dir));
         script.push_str(&format!("{} system daemon stop || true; ", cli_path));
+        script.push_str(&format!("rm -f {}/kin*; ", dest_dir));
         script.push_str(&format!("cp -r {}/* {}; ", temp_dir_str, dest_dir));
         script.push_str(&format!("chmod +x {}/*; ", dest_dir));
 
@@ -358,14 +360,16 @@ pub async fn install_system() -> Result<(), String> {
         let script_path = temp_dir.join("install.sh");
         fs::write(&script_path, &script).map_err(|e| e.to_string())?;
 
-        let status = Command::new("pkexec")
+        let output = Command::new("pkexec")
             .args(&["bash", script_path.to_str().unwrap()])
-            .status()
+            .output()
             .map_err(|e| e.to_string())?;
 
-        if !status.success() {
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            let stdout = String::from_utf8_lossy(&output.stdout);
             return Err(
-                "Failed to elevate privileges or install on Linux. Is pkexec available?".into(),
+                format!("Failed to elevate privileges or install on Linux.\nStdout: {}\nStderr: {}", stdout, stderr),
             );
         }
     }
