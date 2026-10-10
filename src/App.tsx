@@ -69,7 +69,7 @@ function AppContent() {
         if (!active) return;
         
         if (!installRes.is_installed) {
-          if (location.pathname !== '/installer') {
+          if (location.pathname !== '/installer' && location.pathname !== '/identity') {
             navigate('/installer');
           }
           if (active) setChecking(false);
