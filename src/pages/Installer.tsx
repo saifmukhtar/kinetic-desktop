@@ -1,108 +1,19 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { daemon } from '../api/daemon';
 import { toast } from 'sonner';
 
 // ─────────────────────────────────────────────────────────────
-// Types
+// Types & Constants
 // ─────────────────────────────────────────────────────────────
 
-type PhaseId =
-  | 'init'
-  | 'dirs'
-  | 'identity'
-  | 'extract'
-  | 'system'
-  | 'pac'
-  | 'done';
-
-type PhaseStatus = 'pending' | 'running' | 'done' | 'error' | 'waiting';
-
-interface Phase {
-  id: PhaseId;
-  label: string;
-  sublabel: string;
-  requiresRoot: boolean;
-}
-
-// ─────────────────────────────────────────────────────────────
-// Phase definitions (in order of execution)
-// ─────────────────────────────────────────────────────────────
-
-const PHASES: Phase[] = [
-  {
-    id: 'dirs',
-    label: 'Preparing workspace',
-    sublabel: 'Creating your secure local directories',
-    requiresRoot: false,
-  },
-  {
-    id: 'identity',
-    label: 'Checking identity',
-    sublabel: 'Verifying cryptographic identity key',
-    requiresRoot: false,
-  },
-  {
-    id: 'extract',
-    label: 'Staging engine files',
-    sublabel: 'Unpacking bundled binaries to temp directory',
-    requiresRoot: false,
-  },
-  {
-    id: 'system',
-    label: 'Installing system service',
-    sublabel: 'Requires your administrator password — one time only',
-    requiresRoot: true,
-  },
-  {
-    id: 'pac',
-    label: 'Starting network router',
-    sublabel: 'Installing the local proxy auto-config service',
-    requiresRoot: false,
-  },
-  {
-    id: 'done',
-    label: 'Ready',
-    sublabel: 'Kinetic Engine is running',
-    requiresRoot: false,
-  },
+const STEPS = [
+  { id: 0, label: 'Welcome' },
+  { id: 1, label: 'Preparation' },
+  { id: 2, label: 'Identity' },
+  { id: 3, label: 'System Service' },
+  { id: 4, label: 'Finalize' }
 ];
-
-// ─────────────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────────────
-
-function PhaseIcon({ status }: { status: PhaseStatus }) {
-  if (status === 'done') {
-    return (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <circle cx="8" cy="8" r="7.5" stroke="var(--amber)" strokeWidth="1"/>
-        <path d="M5 8l2 2 4-4" stroke="var(--amber)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-      </svg>
-    );
-  }
-  if (status === 'error') {
-    return (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <circle cx="8" cy="8" r="7.5" stroke="var(--status-err)" strokeWidth="1"/>
-        <path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="var(--status-err)" strokeWidth="1.5" strokeLinecap="round"/>
-      </svg>
-    );
-  }
-  if (status === 'running') {
-    return (
-      <svg width="16" height="16" viewBox="0 0 16 16" style={{ animation: 'spin 1s linear infinite' }}>
-        <circle cx="8" cy="8" r="6.5" stroke="var(--border-strong)" strokeWidth="1.5" fill="none"/>
-        <path d="M8 1.5A6.5 6.5 0 0 1 14.5 8" stroke="var(--amber)" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
-      </svg>
-    );
-  }
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <circle cx="8" cy="8" r="7.5" stroke="var(--border-strong)" strokeWidth="1"/>
-    </svg>
-  );
-}
 
 // ─────────────────────────────────────────────────────────────
 // Main Component
@@ -110,287 +21,257 @@ function PhaseIcon({ status }: { status: PhaseStatus }) {
 
 export default function Installer() {
   const navigate = useNavigate();
-  const [started, setStarted] = useState(false);
-  const [statuses, setStatuses] = useState<Record<PhaseId, PhaseStatus>>({
-    init: 'pending',
-    dirs: 'pending',
-    identity: 'pending',
-    extract: 'pending',
-    system: 'pending',
-    pac: 'pending',
-    done: 'pending',
+  
+  const [step, setStep] = useState<number>(() => {
+    const saved = sessionStorage.getItem('installerStep');
+    return saved ? parseInt(saved, 10) : 0;
   });
+
+  const [hasKey, setHasKey] = useState<boolean | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [needsIdentity, setNeedsIdentity] = useState(false);
-  const [log, setLog] = useState<string[]>([]);
-  const logRef = useRef<HTMLDivElement>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const pushLog = (msg: string) =>
-    setLog((prev) => [...prev, msg]);
-
-  useEffect(() => {
-    if (logRef.current) {
-      logRef.current.scrollTop = logRef.current.scrollHeight;
-    }
-  }, [log]);
-
-  const setPhase = (id: PhaseId, status: PhaseStatus) => {
-    setStatuses((prev) => ({ ...prev, [id]: status }));
-  };
-
-  // ── Orchestrator ──────────────────────────────────────────
-
-  const runInstall = async () => {
-    setStarted(true);
+  const goToStep = (s: number) => {
+    setStep(s);
+    sessionStorage.setItem('installerStep', s.toString());
     setErrorMsg(null);
-    setLog([]);
+  };
 
+  // ── Step 1: Preparation ──
+  useEffect(() => {
+    if (step === 1) {
+      let isMounted = true;
+      (async () => {
+        try {
+          await daemon.setupUserDirs();
+          await daemon.extractBundledBinaries();
+          const keyExists = await daemon.checkIdentityKey();
+          if (isMounted) {
+            setHasKey(keyExists);
+            setTimeout(() => goToStep(2), 1000);
+          }
+        } catch (e: any) {
+          if (isMounted) setErrorMsg(e?.message || String(e));
+        }
+      })();
+      return () => { isMounted = false; };
+    }
+  }, [step]);
+
+  // ── Step 2: Identity Check ──
+  // If we arrive at step 2 (e.g. returning from /seed), re-check the key just in case.
+  useEffect(() => {
+    if (step === 2) {
+      daemon.checkIdentityKey().then(setHasKey);
+    }
+  }, [step]);
+
+  // ── Step 4: Finalize ──
+  useEffect(() => {
+    if (step === 4) {
+      let isMounted = true;
+      (async () => {
+        try {
+          await daemon.installPac();
+          if (isMounted) {
+            setTimeout(() => {
+              sessionStorage.removeItem('installerStep');
+              toast.success('Kinetic Engine installed successfully!');
+              navigate('/');
+            }, 1500);
+          }
+        } catch (e: any) {
+          if (isMounted) setErrorMsg(e?.message || String(e));
+        }
+      })();
+      return () => { isMounted = false; };
+    }
+  }, [step, navigate]);
+
+  // ── Actions ──
+  const handleSystemInstall = async () => {
+    setIsProcessing(true);
+    setErrorMsg(null);
     try {
-      // Step 1 — Create user-owned directories (no root)
-      setPhase('dirs', 'running');
-      pushLog('Creating local data directories…');
-      await daemon.setupUserDirs();
-      setPhase('dirs', 'done');
-      pushLog('Directories ready.');
-
-      // Step 2 — Check for identity key (no root)
-      setPhase('identity', 'running');
-      pushLog('Checking for existing identity key…');
-      const hasKey = await daemon.checkIdentityKey();
-      if (!hasKey) {
-        setNeedsIdentity(true);
-        setPhase('identity', 'waiting');
-        pushLog('No identity key found — waiting for you to generate one…');
-        return; // pause here, resume via continueAfterIdentity()
-      }
-      setPhase('identity', 'done');
-      pushLog('Identity key found.');
-
-      await continueFromExtract();
-    } catch (err: any) {
-      const msg = err?.message ?? String(err);
-      setErrorMsg(msg);
-      toast.error('Installation failed: ' + msg);
-      // mark current running phase as errored
-      setStatuses((prev) => {
-        const updated = { ...prev };
-        (Object.keys(updated) as PhaseId[]).forEach((k) => {
-          if (updated[k] === 'running') updated[k] = 'error';
-        });
-        return updated;
-      });
+      await daemon.installSystem();
+      goToStep(4);
+    } catch (e: any) {
+      setErrorMsg(e?.message || String(e));
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  const continueAfterIdentity = async () => {
-    setNeedsIdentity(false);
-    setPhase('identity', 'done');
-    pushLog('Identity key generated.');
-    try {
-      await continueFromExtract();
-    } catch (err: any) {
-      const msg = err?.message ?? String(err);
-      setErrorMsg(msg);
-      toast.error('Installation failed: ' + msg);
-    }
-  };
-
-  const continueFromExtract = async () => {
-    // Step 3 — Extract bundled binaries (no root)
-    setPhase('extract', 'running');
-    pushLog('Staging engine binaries to temp directory…');
-    await daemon.extractBundledBinaries();
-    setPhase('extract', 'done');
-    pushLog('Binaries staged.');
-
-    // Step 4 — Install system service (ROOT — single popup)
-    setPhase('system', 'running');
-    pushLog('Requesting administrator privileges…');
-    pushLog('Please enter your password in the system dialog.');
-    await daemon.installSystem();
-    setPhase('system', 'done');
-    pushLog('System service installed and started.');
-
-    // Step 5 — Install PAC router (no root)
-    setPhase('pac', 'running');
-    pushLog('Installing network proxy router…');
-    await daemon.installPac();
-    setPhase('pac', 'done');
-    pushLog('Proxy router running.');
-
-    // Done!
-    setPhase('done', 'done');
-    pushLog('Installation complete. Launching dashboard…');
-    toast.success('Kinetic Engine is running.');
-    setTimeout(() => navigate('/'), 1200);
+  const handleGenerateIdentity = () => {
+    // We stay at step 2 in session storage, so when /seed comes back, it resumes here.
+    navigate('/seed', { state: { returnTo: 'installer' } });
   };
 
   // ─────────────────────────────────────────────────────────
-  // Render helpers
+  // Renders
   // ─────────────────────────────────────────────────────────
-
-  const visiblePhases = PHASES.filter((p) => p.id !== 'done');
-  const allDone = statuses['done'] === 'done';
-  const hasError = errorMsg !== null;
 
   return (
     <div style={styles.root}>
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-        @keyframes progressFill { from { width: 0%; } to { width: 100%; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
       `}</style>
 
-      <div style={styles.card}>
-        {/* ── Header ── */}
-        <div style={styles.header}>
-          <div style={styles.logoMark}>
-            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-              <rect width="28" height="28" rx="8" fill="var(--amber)"/>
-              <path d="M8 20L14 8L20 20" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M10 16h8" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
+      <div style={styles.container}>
+        {/* ── Sidebar ── */}
+        <div style={styles.sidebar}>
+          <div style={styles.sidebarHeader}>
+            <div style={styles.logoMark}>
+              <svg width="24" height="24" viewBox="0 0 28 28" fill="none">
+                <rect width="28" height="28" rx="8" fill="var(--amber)"/>
+                <path d="M8 20L14 8L20 20" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M10 16h8" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            </div>
+            <span style={styles.sidebarTitle}>Kinetic Setup</span>
           </div>
-          <div>
-            <h1 style={styles.title}>Install Kinetic Engine</h1>
-            <p style={styles.subtitle}>Setting up the background system service</p>
-          </div>
-        </div>
 
-        <div style={styles.divider} />
-
-        {/* ── Phase list ── */}
-        {started && (
-          <div style={styles.phases}>
-            {visiblePhases.map((phase, i) => {
-              const status = statuses[phase.id];
-              const isActive = status === 'running' || status === 'waiting';
+          <div style={styles.stepList}>
+            {STEPS.map((s) => {
+              const isActive = s.id === step;
+              const isPast = s.id < step;
               return (
-                <div
-                  key={phase.id}
-                  style={{
-                    ...styles.phaseRow,
-                    ...(isActive ? styles.phaseRowActive : {}),
-                    animation: `fadeIn ${100 + i * 60}ms var(--ease-out) both`,
-                  }}
-                >
-                  <div style={styles.phaseIcon}>
-                    <PhaseIcon status={status} />
+                <div key={s.id} style={{
+                  ...styles.stepItem,
+                  opacity: (isActive || isPast) ? 1 : 0.4,
+                }}>
+                  <div style={{
+                    ...styles.stepIndicator,
+                    background: isActive ? 'var(--amber)' : isPast ? 'var(--status-ok)' : 'transparent',
+                    borderColor: isActive ? 'var(--amber)' : isPast ? 'var(--status-ok)' : 'var(--border-strong)',
+                    color: (isActive || isPast) ? '#fff' : 'var(--ink-muted)',
+                  }}>
+                    {isPast ? '✓' : (s.id + 1)}
                   </div>
-                  <div style={styles.phaseText}>
-                    <span style={{
-                      ...styles.phaseLabel,
-                      color: status === 'done'
-                        ? 'var(--ink-secondary)'
-                        : status === 'error'
-                        ? 'var(--status-err)'
-                        : isActive
-                        ? 'var(--ink)'
-                        : 'var(--ink-muted)',
-                    }}>
-                      {phase.label}
-                    </span>
-                    {isActive && (
-                      <span style={styles.phaseSublabel}>{phase.sublabel}</span>
-                    )}
-                    {phase.requiresRoot && status === 'running' && (
-                      <span style={styles.rootBadge}>Requires password</span>
-                    )}
-                  </div>
+                  <span style={{
+                    ...styles.stepLabel,
+                    fontWeight: isActive ? 600 : 500,
+                    color: isActive ? 'var(--ink)' : 'inherit',
+                  }}>{s.label}</span>
                 </div>
               );
             })}
           </div>
-        )}
+        </div>
 
-        {/* ── Identity key prompt ── */}
-        {needsIdentity && (
-          <div style={styles.identityBox}>
-            <p style={styles.identityText}>
-              No identity key found. You need to generate a cryptographic key before the engine can join the network.
-            </p>
-            <div style={styles.identityActions}>
-              <button
-                style={styles.btnPrimary}
-                onClick={async () => {
-                  // Navigate to seed generation, then come back to continue
-                  // For now we trigger continue directly after UI generates key
-                  // The frontend seed flow should call continueAfterIdentity when done.
-                  // As a temporary bridge, we navigate to seed then back.
-                  navigate('/seed', { state: { returnTo: 'installer' } });
-                }}
-              >
-                Generate Identity Key
-              </button>
-              <button
-                style={styles.btnSecondary}
-                onClick={continueAfterIdentity}
-              >
-                I already have one
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ── Log output ── */}
-        {started && log.length > 0 && (
-          <div style={styles.logBox} ref={logRef}>
-            {log.map((line, i) => (
-              <div key={i} style={styles.logLine}>
-                <span style={styles.logPrefix}>›</span>
-                {line}
+        {/* ── Main Content Area ── */}
+        <div style={styles.content}>
+          <div style={styles.contentInner}>
+            
+            {/* Step 0 */}
+            {step === 0 && (
+              <div style={styles.animBox}>
+                <h1 style={styles.h1}>Welcome to Kinetic</h1>
+                <p style={styles.p}>
+                  The Kinetic Engine runs silently in the background to handle your peer-to-peer networking, global routing, and local DNS. Let's get it installed.
+                </p>
+                <button style={styles.btnPrimary} onClick={() => goToStep(1)}>
+                  Begin Installation
+                </button>
               </div>
-            ))}
-          </div>
-        )}
+            )}
 
-        {/* ── Error ── */}
-        {hasError && (
-          <div style={styles.errorBox}>
-            <strong>Installation failed</strong>
-            <p style={{ marginTop: 4, fontSize: 'var(--text-xs)', color: 'var(--status-err)' }}>
-              {errorMsg}
-            </p>
-            <button
-              style={{ ...styles.btnSecondary, marginTop: 12 }}
-              onClick={() => {
-                setStarted(false);
-                setErrorMsg(null);
-                setStatuses({
-                  init: 'pending', dirs: 'pending', identity: 'pending',
-                  extract: 'pending', system: 'pending', pac: 'pending', done: 'pending',
-                });
-                setLog([]);
-                setNeedsIdentity(false);
-              }}
-            >
-              Retry
-            </button>
-          </div>
-        )}
+            {/* Step 1 */}
+            {step === 1 && (
+              <div style={styles.animBox}>
+                <h1 style={styles.h1}>Preparing Workspace</h1>
+                <p style={styles.p}>Setting up secure local directories and staging system binaries...</p>
+                {!errorMsg && <div style={styles.spinner} />}
+              </div>
+            )}
 
-        {/* ── Primary action ── */}
-        {!started && !allDone && (
-          <div style={styles.footer}>
-            <p style={styles.footerNote}>
-              The engine runs as a system background service so it stays active even when this window is closed.
-              A one-time administrator password prompt will appear during installation.
-            </p>
-            <button style={styles.btnPrimary} onClick={runInstall}>
-              Install Engine
-            </button>
-          </div>
-        )}
+            {/* Step 2 */}
+            {step === 2 && (
+              <div style={styles.animBox}>
+                {hasKey ? (
+                  <>
+                    <div style={styles.successCircle}>✓</div>
+                    <h1 style={styles.h1}>Identity Confirmed</h1>
+                    <p style={styles.p}>
+                      We found a cryptographic identity key securely stored on your system.
+                    </p>
+                    <div style={styles.greyBox}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+                      </svg>
+                      identity.key (Active)
+                    </div>
+                    <button style={styles.btnPrimary} onClick={() => goToStep(3)}>
+                      Continue
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <h1 style={styles.h1}>Network Identity</h1>
+                    <p style={styles.p}>
+                      To participate in the Kinetic network, you need a secure cryptographic identity. This acts as your private address.
+                    </p>
+                    <div style={styles.actionRow}>
+                      <button style={styles.btnPrimary} onClick={handleGenerateIdentity}>
+                        Generate Identity
+                      </button>
+                      <button style={styles.btnSecondary} onClick={handleGenerateIdentity}>
+                        Import Existing
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
 
-        {/* ── Done state ── */}
-        {allDone && (
-          <div style={styles.doneBox}>
-            <div style={styles.doneIcon}>✓</div>
-            <span style={{ fontWeight: 500, color: 'var(--status-ok)' }}>
-              Engine running — launching dashboard…
-            </span>
+            {/* Step 3 */}
+            {step === 3 && (
+              <div style={styles.animBox}>
+                <h1 style={styles.h1}>System Installation</h1>
+                <p style={styles.p}>
+                  The engine requires background system permissions to bind to local routing ports. 
+                  Your operating system will now prompt you for your administrator password.
+                </p>
+                <div style={styles.warnBox}>
+                  <strong style={{ display: 'block', marginBottom: '4px' }}>Security Note</strong>
+                  This is a one-time setup. The engine will run securely in the background without needing prompts again.
+                </div>
+                <button 
+                  style={{ ...styles.btnPrimary, opacity: isProcessing ? 0.7 : 1 }} 
+                  onClick={handleSystemInstall}
+                  disabled={isProcessing}
+                >
+                  {isProcessing ? 'Installing...' : 'Authorize & Install'}
+                </button>
+              </div>
+            )}
+
+            {/* Step 4 */}
+            {step === 4 && (
+              <div style={styles.animBox}>
+                <h1 style={styles.h1}>Finalizing Setup</h1>
+                <p style={styles.p}>Configuring the local proxy auto-router...</p>
+                {!errorMsg && <div style={styles.spinner} />}
+              </div>
+            )}
+
+            {/* Error State */}
+            {errorMsg && (
+              <div style={styles.errorBox}>
+                <strong>Error</strong>
+                <p style={{ margin: '4px 0 0' }}>{errorMsg}</p>
+                <button 
+                  style={{ ...styles.btnSecondary, marginTop: '12px', background: 'transparent' }} 
+                  onClick={() => goToStep(step)}
+                >
+                  Retry Step
+                </button>
+              </div>
+            )}
+
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
@@ -403,140 +284,141 @@ export default function Installer() {
 const styles: Record<string, React.CSSProperties> = {
   root: {
     display: 'flex',
-    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: '100vh',
     width: '100%',
-    background: 'var(--bg-base)',
+    background: 'var(--bg-subtle)',
     padding: '24px',
   },
-  card: {
-    background: 'var(--bg-elevated)',
+  container: {
+    display: 'flex',
+    width: '100%',
+    maxWidth: '720px',
+    height: '460px',
+    background: 'var(--bg-base)',
     border: '1px solid var(--border)',
     borderRadius: 'var(--r-lg)',
     boxShadow: 'var(--shadow-lg)',
-    width: '100%',
-    maxWidth: '460px',
-    padding: '28px',
+    overflow: 'hidden',
+  },
+  sidebar: {
+    width: '240px',
+    background: 'var(--bg-elevated)',
+    borderRight: '1px solid var(--border)',
+    padding: '32px 24px',
     display: 'flex',
     flexDirection: 'column',
-    gap: '0',
-  },
-  header: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '14px',
-    marginBottom: '20px',
-  },
-  logoMark: {
     flexShrink: 0,
   },
-  title: {
-    fontSize: 'var(--text-lg)',
+  sidebarHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    marginBottom: '48px',
+  },
+  sidebarTitle: {
+    fontSize: 'var(--text-base)',
+    fontWeight: 600,
+    color: 'var(--ink)',
+  },
+  logoMark: {
+    display: 'flex',
+  },
+  stepList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '24px',
+  },
+  stepItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    transition: 'opacity var(--dur-base)',
+  },
+  stepIndicator: {
+    width: '24px',
+    height: '24px',
+    borderRadius: '12px',
+    border: '2px solid',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '11px',
+    fontWeight: 600,
+    transition: 'all var(--dur-base)',
+  },
+  stepLabel: {
+    fontSize: 'var(--text-sm)',
+  },
+  content: {
+    flex: 1,
+    padding: '48px',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  contentInner: {
+    maxWidth: '380px',
+    margin: '0 auto',
+    width: '100%',
+  },
+  animBox: {
+    animation: 'fadeIn 300ms var(--ease-out) both',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px',
+  },
+  h1: {
+    fontSize: 'var(--text-xl)',
     fontWeight: 600,
     color: 'var(--ink)',
     margin: 0,
     lineHeight: 1.2,
   },
-  subtitle: {
-    fontSize: 'var(--text-xs)',
-    color: 'var(--ink-muted)',
-    margin: '2px 0 0',
+  p: {
+    fontSize: 'var(--text-sm)',
+    color: 'var(--ink-secondary)',
+    margin: 0,
+    lineHeight: 1.6,
   },
-  divider: {
-    height: 1,
-    background: 'var(--border)',
-    marginBottom: '20px',
-  },
-  phases: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px',
-    marginBottom: '20px',
-  },
-  phaseRow: {
-    display: 'flex',
-    alignItems: 'flex-start',
-    gap: '10px',
-    padding: '8px 10px',
-    borderRadius: 'var(--r-md)',
-    transition: 'background var(--dur-base) var(--ease-smooth)',
-  },
-  phaseRowActive: {
+  greyBox: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
     background: 'var(--bg-subtle)',
-  },
-  phaseIcon: {
-    marginTop: '1px',
-    flexShrink: 0,
-  },
-  phaseText: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '2px',
-  },
-  phaseLabel: {
+    border: '1px solid var(--border)',
+    padding: '10px 14px',
+    borderRadius: 'var(--r-md)',
+    color: 'var(--ink-secondary)',
     fontSize: 'var(--text-sm)',
     fontWeight: 500,
-    transition: 'color var(--dur-base)',
+    marginTop: '4px',
+    marginBottom: '8px',
   },
-  phaseSublabel: {
-    fontSize: 'var(--text-xs)',
-    color: 'var(--ink-muted)',
-    animation: 'fadeIn 180ms var(--ease-out) both',
+  successCircle: {
+    width: '40px',
+    height: '40px',
+    borderRadius: '20px',
+    background: 'var(--status-ok-soft)',
+    color: 'var(--status-ok)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '20px',
+    fontWeight: 'bold',
+    marginBottom: '8px',
   },
-  rootBadge: {
-    display: 'inline-block',
-    fontSize: 'var(--text-2xs)',
-    fontWeight: 500,
-    letterSpacing: '0.04em',
-    padding: '1px 6px',
-    borderRadius: 'var(--r-full)',
+  warnBox: {
     background: 'var(--status-warn-soft)',
-    color: 'var(--status-warn)',
-    marginTop: '2px',
-    animation: 'fadeIn 180ms var(--ease-out) both',
-  },
-  identityBox: {
-    background: 'var(--status-pending-soft)',
-    border: '1px solid var(--border)',
+    border: '1px solid var(--status-warn)',
     borderRadius: 'var(--r-md)',
-    padding: '16px',
-    marginBottom: '20px',
-  },
-  identityText: {
+    padding: '12px 16px',
     fontSize: 'var(--text-sm)',
     color: 'var(--ink-secondary)',
-    margin: '0 0 14px',
-    lineHeight: 1.5,
-  },
-  identityActions: {
-    display: 'flex',
-    gap: '8px',
-  },
-  logBox: {
-    background: 'var(--bg-subtle)',
-    border: '1px solid var(--border)',
-    borderRadius: 'var(--r-md)',
-    padding: '12px 14px',
-    maxHeight: '120px',
-    overflowY: 'auto',
-    marginBottom: '20px',
-    fontFamily: 'var(--font-mono)',
-    fontSize: 'var(--text-xs)',
-    color: 'var(--ink-secondary)',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '3px',
-  },
-  logLine: {
-    display: 'flex',
-    gap: '8px',
-    animation: 'fadeIn 120ms var(--ease-out) both',
-  },
-  logPrefix: {
-    color: 'var(--amber)',
-    flexShrink: 0,
+    marginTop: '4px',
+    marginBottom: '8px',
   },
   errorBox: {
     background: 'var(--status-err-soft)',
@@ -545,22 +427,16 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '14px 16px',
     fontSize: 'var(--text-sm)',
     color: 'var(--status-err)',
-    marginBottom: '20px',
+    marginTop: '24px',
+    animation: 'fadeIn 200ms var(--ease-out)',
   },
-  footer: {
+  actionRow: {
     display: 'flex',
-    flexDirection: 'column',
-    gap: '14px',
-  },
-  footerNote: {
-    fontSize: 'var(--text-xs)',
-    color: 'var(--ink-muted)',
-    lineHeight: 1.6,
-    margin: 0,
+    gap: '12px',
+    marginTop: '8px',
   },
   btnPrimary: {
-    width: '100%',
-    padding: '10px 16px',
+    padding: '10px 18px',
     borderRadius: 'var(--r-md)',
     background: 'var(--amber)',
     color: '#fff',
@@ -569,32 +445,27 @@ const styles: Record<string, React.CSSProperties> = {
     border: 'none',
     cursor: 'pointer',
     transition: 'opacity var(--dur-fast)',
+    alignSelf: 'flex-start',
   },
   btnSecondary: {
-    flex: 1,
-    padding: '9px 14px',
+    padding: '9px 18px',
     borderRadius: 'var(--r-md)',
     background: 'transparent',
-    color: 'var(--ink-secondary)',
+    color: 'var(--ink)',
     fontWeight: 500,
     fontSize: 'var(--text-sm)',
     border: '1px solid var(--border-strong)',
     cursor: 'pointer',
     transition: 'background var(--dur-fast)',
+    alignSelf: 'flex-start',
   },
-  doneBox: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '10px',
-    padding: '14px',
-    borderRadius: 'var(--r-md)',
-    background: 'var(--status-ok-soft)',
-    animation: 'fadeIn 200ms var(--ease-out) both',
-  },
-  doneIcon: {
-    fontSize: '18px',
-    color: 'var(--status-ok)',
-    fontWeight: 700,
-  },
+  spinner: {
+    width: '24px',
+    height: '24px',
+    border: '2px solid var(--border-strong)',
+    borderTopColor: 'var(--amber)',
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite',
+    marginTop: '8px',
+  }
 };
